@@ -7,6 +7,12 @@ export const metadata = {
   description: 'AI-native CRM + ERP platform for freight forwarders. Manage leads, shipments, air waybills, tracking, and customs clearance.',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>

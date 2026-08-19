@@ -217,4 +217,23 @@
     -webkit-overflow-scrolling: touch;
     width: 100%;
   }
+
+  .toolbar {
+    padding: 16px;
+  }
+  
+  .td {
+    padding: 12px 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  
+  .th {
+    padding: 12px 16px;
+    font-size: 11px;
+  }
+  
+  .footer {
+    padding: 12px 16px;
+  }
 }

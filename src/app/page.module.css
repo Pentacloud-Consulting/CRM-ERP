@@ -522,3 +522,58 @@
 .analyticsFooter .kpiTrend {
   position: static;
 }
+
+@media (max-width: 1024px) {
+  .topNav {
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  
+  .topLeft {
+    flex: 1;
+    min-width: 50%;
+  }
+  
+  .topRight {
+    flex: 1;
+    min-width: 30%;
+    justify-content: flex-end;
+  }
+  
+  .topCenter {
+    order: 3;
+    flex: 100%;
+    margin-top: var(--space-2);
+  }
+  
+  .searchBar {
+    max-width: 100%;
+  }
+  
+  .kpiGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analyticsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .exceptionItem {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .analyticsGrid {
+    grid-template-columns: 1fr;
+  }
+}
