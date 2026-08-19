@@ -1,0 +1,81 @@
+.chartContainer {
+  margin-top: var(--space-4);
+  width: 100%;
+}
+
+.flowContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-8);
+  padding: 0 var(--space-4);
+  position: relative;
+}
+
+.flowLine {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+  transform: translateY(-50%);
+}
+
+.flowLineActive {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 65%; /* Represents progress */
+  height: 2px;
+  background: var(--primary);
+  z-index: 1;
+  transform: translateY(-50%);
+  transition: width 1s ease-in-out;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  gap: var(--space-2);
+}
+
+.nodeIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all 0.3s ease;
+}
+
+.node.active .nodeIcon {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-tint);
+  box-shadow: 0 0 0 4px rgba(106, 76, 255, 0.1);
+}
+
+.node.completed .nodeIcon {
+  border-color: var(--primary);
+  color: #FFFFFF;
+  background: var(--primary);
+}
+
+.nodeLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.node.active .nodeLabel {
+  color: var(--primary);
+}

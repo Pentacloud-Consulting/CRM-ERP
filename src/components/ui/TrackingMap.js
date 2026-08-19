@@ -1,0 +1,120 @@
+'use client';
+import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import styles from './TrackingMap.module.css';
+
+// Dynamic import for Leaflet since it requires the window object
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
+const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
+
+import 'leaflet/dist/leaflet.css';
+
+// Leaflet icon fix for Next.js
+const setupLeaflet = async () => {
+  const L = (await import('leaflet')).default;
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  });
+  return L;
+};
+
+export default function TrackingMap({ shipments = [], airports = {} }) {
+  const [L, setL] = useState(null);
+
+  useEffect(() => {
+    setupLeaflet().then(setL);
+  }, []);
+
+  if (!L || typeof window === 'undefined') {
+    return <div className={styles.loading}>Loading map...</div>;
+  }
+
+  // Create a custom icon for active shipments
+  const activeIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  const exceptionIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  // Calculate center based on all airports or default to Middle East/Europe
+  const center = [35, 30]; 
+  const zoom = 3;
+
+  return (
+    <div className={styles.mapContainer}>
+      <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className={styles.map}>
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        />
+        
+        {/* Draw routes and markers for each shipment */}
+        {shipments.map(shipment => {
+          const origin = airports[shipment.origin_airport];
+          const dest = airports[shipment.destination_airport];
+          
+          if (!origin || !dest) return null;
+
+          const isException = shipment.status === 'Exception' || shipment.status === 'Customs Hold';
+          const icon = isException ? exceptionIcon : activeIcon;
+          
+          return (
+            <div key={shipment.shipment_id}>
+              {/* Route line */}
+              <Polyline 
+                positions={[[origin.lat, origin.lng], [dest.lat, dest.lng]]} 
+                color={isException ? '#E5484D' : '#5FC7BE'} 
+                weight={2}
+                opacity={0.6}
+                dashArray="5, 10"
+              />
+              
+              {/* Origin Marker */}
+              <Marker position={[origin.lat, origin.lng]} title={origin.code}>
+                <Popup>
+                  <strong>{origin.code}</strong><br />
+                  {origin.name}
+                </Popup>
+              </Marker>
+              
+              {/* Destination Marker */}
+              <Marker position={[dest.lat, dest.lng]} title={dest.code}>
+                <Popup>
+                  <strong>{dest.code}</strong><br />
+                  {dest.name}
+                </Popup>
+              </Marker>
+
+              {/* Current position (simplified to origin for demo, ideally interpolated based on milestone) */}
+              <Marker position={[origin.lat, origin.lng]} icon={icon}>
+                <Popup>
+                  <strong>{shipment.shipment_reference}</strong><br/>
+                  Status: {shipment.status}<br/>
+                  Route: {shipment.origin_airport} → {shipment.destination_airport}
+                </Popup>
+              </Marker>
+            </div>
+          );
+        })}
+      </MapContainer>
+    </div>
+  );
+}

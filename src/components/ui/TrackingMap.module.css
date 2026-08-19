@@ -1,0 +1,31 @@
+.mapContainer {
+  height: 400px;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  background: var(--bg-sidebar);
+}
+
+.map {
+  height: 100%;
+  width: 100%;
+}
+
+.loading {
+  height: 400px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-sidebar);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+/* Fix leaflet z-index issues with modals */
+:global(.leaflet-container) {
+  z-index: 1;
+}

@@ -1,0 +1,494 @@
+/* ===== Lookup Pills ===== */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.pill:hover .pillLabel {
+  text-decoration: underline;
+}
+
+.pillLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pillSmall {
+  padding: 2px 8px;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.accountPill {
+  background: rgba(13, 148, 136, 0.08);
+  color: #0D9488;
+  border-color: rgba(13, 148, 136, 0.15);
+}
+
+.accountPill:hover {
+  background: rgba(13, 148, 136, 0.14);
+  border-color: rgba(13, 148, 136, 0.3);
+}
+
+.contactPill {
+  background: rgba(139, 92, 246, 0.08);
+  color: #7C3AED;
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+.contactPill:hover {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.pillNull {
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: default;
+  font-weight: 500;
+  border: none;
+  padding: 0;
+}
+
+.pillNull:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== Breadcrumbs ===== */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.breadcrumbItem {
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  text-decoration: none;
+}
+
+.breadcrumbItem:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.breadcrumbSep {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbCurrent {
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: default;
+}
+
+/* ===== Tabs ===== */
+.tabBar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #E2E8F0;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+  background: rgba(0,0,0,0.02);
+}
+
+.tabActive {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tabCount {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #F1F5F9;
+  color: var(--text-tertiary);
+}
+
+.tabActive .tabCount {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--primary);
+}
+
+/* ===== Accordion ===== */
+.accordion {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s ease;
+}
+
+.accordion:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  background: #FAFBFC;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.accordionHeader:hover {
+  background: #F1F5F9;
+}
+
+.accordionChevron {
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.accordionChevronOpen {
+  transform: rotate(90deg);
+}
+
+.accordionBody {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.4);
+  border-top: 1px solid rgba(0,0,0,0.04);
+  animation: accordionIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes accordionIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Related Data Sections ===== */
+.relatedSection {
+  margin-bottom: 16px;
+}
+
+.relatedSectionTitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: #14B8A6;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(20, 184, 166, 0.1);
+}
+
+.relatedCard {
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.relatedCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.04), 0 0 0 1px rgba(20, 184, 166, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.relatedRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px dashed rgba(0,0,0,0.06);
+}
+
+.relatedRow:last-child {
+  border-bottom: none;
+}
+
+.relatedLabel {
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.relatedValue {
+  color: #0F172A;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ===== Timeline ===== */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 4px;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.timelineItem:last-child {
+  padding-bottom: 0;
+}
+
+.timelineLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.timelineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid rgba(13, 148, 136, 0.2);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.timelineConnector {
+  width: 2px;
+  flex: 1;
+  background: #E2E8F0;
+  margin-top: 4px;
+}
+
+.timelineContent {
+  flex: 1;
+  padding-top: 0;
+}
+
+.timelineCode {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.timelineDesc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.timelineTime {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ===== Empty State ===== */
+.emptyState {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ===== Account Summary Card ===== */
+.accountSummaryCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(13, 148, 136, 0.04);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.accountSummaryCard:hover {
+  background: rgba(13, 148, 136, 0.08);
+  border-color: rgba(13, 148, 136, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+}
+
+.accountSummaryIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(13, 148, 136, 0.1);
+  color: #0D9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.accountSummaryInfo {
+  flex: 1;
+}
+
+.accountSummaryName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accountSummaryMeta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ===== Vertical Layout (Premium) ===== */
+.vLayout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 500px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+
+.vTabBar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 16px;
+  background: rgba(255, 255, 255, 0.4);
+  border-right: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.vTab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748B;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.vTabLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vTab:hover {
+  background: rgba(20, 184, 166, 0.04);
+  color: #334155;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.vTabActive {
+  color: #0F172A;
+}
+
+.vTabIndicator {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.1) 0%, rgba(20, 184, 166, 0.02) 100%);
+  border-radius: 12px;
+  border-left: 3px solid #14B8A6;
+  z-index: 1;
+}
+
+.vTabActive:hover {
+  color: #0F172A;
+  transform: none;
+  box-shadow: none;
+}
+
+.vTabCount {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748B;
+  transition: all 0.2s ease;
+}
+
+.vTabActive .vTabCount {
+  background: rgba(20, 184, 166, 0.15);
+  color: #14B8A6;
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.1);
+}
+
+.vContent {
+  padding: 32px;
+  background: #ffffff;
+}

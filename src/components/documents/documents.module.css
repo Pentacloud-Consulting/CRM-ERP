@@ -1,0 +1,648 @@
+/* Document Templates Styles */
+.documentPage {
+  background: #fff;
+  color: #1a1a2e;
+  padding: 40px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.docHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.docHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.docHeaderRight {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.docLogo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.companyName {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.companySubtitle {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.companyAddress {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+.docType {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0d9488;
+  letter-spacing: 0.05em;
+}
+
+.awbNumber {
+  font-family: var(--font-mono, monospace);
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.05em;
+}
+
+.awbBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.invoiceNumber {
+  font-family: var(--font-mono, monospace);
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.invoiceDate {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.docDivider {
+  height: 3px;
+  background: linear-gradient(90deg, #0d9488, #14b8a6, #99f6e4);
+  border-radius: 2px;
+  margin-bottom: 24px;
+}
+
+/* Routing */
+.routingSection {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.routeBox {
+  text-align: center;
+}
+
+.routeLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.routeCode {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.05em;
+}
+
+.routeCity {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.routeAirport {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.routeArrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #0d9488;
+}
+
+.routeCarrier {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Parties */
+.partiesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.partyBox {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.partyLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.partyName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.partyDetail {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* Tables */
+.detailsTable {
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tableHeader {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.docTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.docTable th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafbfc;
+}
+
+.docTable td {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.docTable tr:last-child td {
+  border-bottom: none;
+}
+
+/* Charges Grid */
+.chargesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.chargeBox {
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chargeLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.chargeValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalCharge {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border-color: #bbf7d0;
+}
+
+.chargeTotalValue {
+  font-size: 18px;
+  font-weight: 800;
+  color: #16a34a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Invoice Totals */
+.invoiceTotals {
+  width: 320px;
+  margin-left: auto;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.totalsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.totalsRow:last-child {
+  border-bottom: none;
+}
+
+.grandTotal {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  font-size: 16px;
+  font-weight: 800;
+  color: #16a34a;
+  padding: 14px 16px;
+}
+
+/* Terms */
+.termsSection {
+  padding: 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.termsTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.termsText {
+  font-size: 12px;
+  color: #a16207;
+  line-height: 1.6;
+}
+
+/* Special Handling */
+.shcSection {
+  padding: 16px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.shcLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #92400e;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.shcCodes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shcBadge {
+  padding: 4px 12px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* Footer / Signatures */
+.docFooter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #e2e8f0;
+}
+
+.signatureBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sigLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+}
+
+.sigImage {
+  max-width: 200px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+.sigPlaceholder {
+  height: 60px;
+  border-bottom: 2px dashed #d1d5db;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 4px;
+  color: #d1d5db;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.sigCarrier {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.sigDate {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Watermark */
+.docWatermark {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+/* Client Signing Page */
+.signingPage {
+  height: 100vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 40px 20px;
+}
+
+.signingContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.signingHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.signingLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.signingTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.signingSubtitle {
+  font-size: 14px;
+  color: #64748b;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.signingCard {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.signingCardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.signingCardSubtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.signingActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.signingBtn {
+  padding: 12px 32px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.signingBtnPrimary {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+
+.signingBtnPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4);
+}
+
+.signingBtnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.signingBtnSecondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Success Screen */
+.successScreen {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  color: #16a34a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 40px;
+}
+
+.successTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.successSubtitle {
+  font-size: 14px;
+  color: #64748b;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Document Viewer */
+.viewerPage {
+  max-width: 1000px;
+  animation: fadeInUp var(--transition-slow, 0.3s) ease both;
+}
+
+.viewerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.viewerMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.shareLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.shareLinkUrl {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: #64748b;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Print styles */
+@media print {
+  .documentPage {
+    border: none;
+    box-shadow: none;
+    padding: 20px;
+    max-width: 100%;
+  }
+
+  .signingPage, .viewerActions, .signingActions {
+    display: none;
+  }
+}

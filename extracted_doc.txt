@@ -1,0 +1,807 @@
+AI-Native Logistics & Air Freight
+Management System
+End-to-End Technical Specification & Architectural Breakdown
+CRM Lead Lifecycle · Air Freight Data Schema · AI-Assisted UI/UX · Cargo-IMP/XML Integration
+Version 1.0
+Prepared as an implementation-ready specification for engineering handoff
+Extends: AI-Native CRM + ERP Platform Specification (v1.0) and UI Architecture & Interaction Guide (v1.0)
+Table of Contents
+1. Introduction & Scope
+This document specifies the CRM-to-ERP lead lifecycle and the air freight logistics data model, AI-assisted UI/UX, and system integration architecture for an AI-native Logistics and Air Freight management system. It builds directly on the shared CRM foundation defined in the base platform specification — Lead, Account, Contact, and Opportunity — and extends it into a full air freight operating model: booking, documentation, flight allocation, tracking, and customs clearance.
+The specification is organized into three parts, matching the scope requested for engineering handoff:
+CRM Lead Lifecycle — the standard lead-to-Opportunity conversion process, including the trigger logic and data persistence requirements fired by the “Convert” action.
+Logistics & Air Freight Data Schema — end-to-end objects (Shipment, Booking Request, Air Waybill, Flight Manifest, ULD, Tracking/FSU, Customs Clearance) with field types and relational mapping, using IATA-standard terminology.
+Technical UI/UX Specification and System Architecture & Integration Logic — AI-assisted data entry, dynamic tracking visualization, exception-handling UI patterns, and the backend event/message architecture that maps Cargo-IMP/XML traffic onto the schema.
+As with the base platform, every table below carries the standard audit and multi-tenancy columns defined in §2.5, and every cross-domain hand-off is implemented as a published domain event rather than a direct cross-service database write.
+2. CRM Lead Lifecycle & Conversion Logic
+The Lead object is extended with freight-specific qualification fields so a forwarding sales rep can qualify an air freight opportunity without leaving the Lead record. Conversion behavior — the “Convert” button — follows the same governed, transactional pattern as the base CRM specification, mapping one Lead into exactly one Account, one primary Contact, and one Opportunity.
+2.1 Lead Object (Air Freight Extension)
+Lead
+  crm.leads (freight-extended)
+Field
+Type
+Description
+Key / Relationship
+lead_id
+UUID (PK)
+Primary key.
+PK
+company_name
+VARCHAR(200)
+Prospective shipper / consignee / forwarder company name.
+contact_name
+VARCHAR(150)
+Primary contact at the prospect.
+source
+ENUM
+Inbound RFQ portal, referral, tender, outbound, event.
+trade_lane
+VARCHAR(20)
+Origin–destination IATA airport pair, e.g. DOH–FRA.
+FK → ref.airports.iata_code (x2)
+cargo_type
+ENUM
+General, Perishable, Dangerous Goods, Live Animals, Pharma, Valuable, Human Remains.
+est_chargeable_weight_kg
+DECIMAL(12,2)
+Rough chargeable weight at capture time.
+incoterm
+ENUM
+EXW, FCA, FOB, CPT, CIP, DAP, DPU, DDP.
+estimated_value
+DECIMAL(18,2)
+Rough opportunity size at capture time.
+currency_code
+CHAR(3)
+ISO 4217 currency of estimated_value.
+FK → currency.code
+status
+ENUM
+New, Qualifying, Qualified, Disqualified, Converted.
+owner_id
+UUID
+Sales rep responsible for the lead.
+FK → users.user_id
+converted_account_id
+UUID, nullable
+Set once the lead is converted.
+FK → accounts.account_id
+converted_contact_id
+UUID, nullable
+Set once the lead is converted.
+FK → contacts.contact_id
+converted_opportunity_id
+UUID, nullable
+Set once the lead is converted.
+FK → opportunities.opportunity_id
+converted_at
+TIMESTAMP, nullable
+Conversion timestamp; also acts as the conversion lock (see §2.3).
+2.2 Standard Conversion Targets
+Conversion always produces the same three downstream objects, reusing the base platform’s Account, Contact, and Opportunity tables unchanged. Freight-specific detail captured on the Lead is carried onto the Opportunity via a set of custom fields shown in §2.4, not by altering the core object shapes — which keeps Account/Contact/Opportunity generic across CRM verticals.
+Opportunity (Freight Extension Fields)
+  crm.opportunities — additive columns used by air freight deals
+Field
+Type
+Description
+Key / Relationship
+trade_lane
+VARCHAR(20)
+Copied from the Lead at conversion; editable afterward.
+cargo_type
+ENUM
+Copied from the Lead at conversion.
+incoterm
+ENUM
+Copied from the Lead at conversion.
+est_chargeable_weight_kg
+DECIMAL(12,2)
+Copied from the Lead at conversion.
+won_shipment_id
+UUID, nullable
+First Shipment auto-created when the deal is marked Won (see §5.2).
+FK → logi.shipments.shipment_id
+2.3 Trigger Logic: The “Convert” Action
+Clicking “Convert” on a Qualified lead is a single user-initiated command handled entirely inside the CRM service; it does not touch the ERP/logistics schema at this stage. The command executes as one atomic server-side transaction with the following steps, in order:
+Eligibility check — the button is only enabled when Lead.status = ‘Qualified’; the server re-validates status at request time to guard against a stale UI state or a double-click.
+Duplicate resolution — the Account table is searched by tax_id (if captured) and a fuzzy match on legal_name/country; if a probable match is found, the UI presents “Link to existing Account” as an alternative to creating a new one, rather than silently creating a duplicate.
+Field mapping — the mapping table in §2.4 is applied to build the three new (or linked) records in memory: Account, Contact, Opportunity.
+Atomic persistence — all writes (Account insert/update, Contact insert, Opportunity insert, Lead update) execute inside a single database transaction. If any write fails — e.g. a uniqueness constraint on Contact.email — the entire transaction rolls back and the Lead remains Qualified with no partial objects created.
+Conversion lock — on commit, Lead.status is set to ‘Converted’ and Lead.converted_at is stamped in the same transaction. The Convert button becomes permanently disabled for that Lead the moment converted_at is non-null, making the operation idempotent — a retried or duplicate request is rejected before it reaches the write path.
+Domain event — a LeadConverted event (lead_id, account_id, contact_id, opportunity_id, converted_by, converted_at) is published to the shared event bus after commit, for activity-feed, notification, and audit-log consumers; no consumer can block or fail the conversion itself, since the event fires only after the transaction has already succeeded.
+UI redirect — the user is navigated directly to the new Opportunity record with the Account and Contact already linked in its header, so the rep can continue straight into quoting without re-entering data.
+2.4 Field Mapping: Lead → Account / Contact / Opportunity
+Source (Lead)
+Target Object.Field
+Mapping Rule
+company_name
+Account.legal_name
+Direct copy on create; ignored if linking to an existing Account (§2.3 step 2).
+— (fixed default)
+Account.account_tier
+Defaults to ‘Standard’; not sourced from the Lead.
+currency_code
+Account.default_currency
+Direct copy; used as the Account’s default billing currency going forward.
+contact_name
+Contact.full_name
+Direct copy.
+—
+Contact.account_id
+Set to the Account created/linked in the same transaction.
+— (fixed default)
+Contact.is_primary
+Set to TRUE — this becomes the Account’s primary point of contact.
+company_name + trade_lane
+Opportunity.name
+Concatenated to a default deal name, e.g. “Acme Textiles — DOH–FRA”; user-editable post-conversion.
+—
+Opportunity.account_id / primary_contact_id
+Set to the Account and Contact created/linked in the same transaction.
+estimated_value / currency_code
+Opportunity.pipeline_value / currency_code
+Direct copy — the Lead’s rough estimate becomes the deal’s initial pipeline value.
+trade_lane / cargo_type / incoterm / est_chargeable_weight_kg
+Opportunity.trade_lane / cargo_type / incoterm / est_chargeable_weight_kg
+Direct copy into the freight extension fields (§2.2).
+— (fixed default)
+Opportunity.stage
+Set to ‘Qualifying’ — conversion starts the deal at the top of the pipeline, it does not pre-win it.
+owner_id
+Opportunity.owner_id
+Direct copy — the lead owner becomes the deal owner by default.
+2.5 Data Persistence Requirements
+Transactional scope: the four writes in §2.3 (Account, Contact, Opportunity, Lead) must share one database transaction with SERIALIZABLE or equivalent isolation on the Lead row, so two simultaneous Convert requests on the same Lead cannot both succeed.
+Referential integrity: Contact.account_id and Opportunity.account_id / primary_contact_id are foreign keys populated within the same transaction that creates their targets — no eventually-consistent linkage for this hand-off, unlike the CRM→ERP boundary in §5.2, because all three objects live in the same CRM service and schema.
+Audit trail: every field copied in §2.4 is written once at conversion time with normal audit columns (created_by, created_at); subsequent edits to the Opportunity do not retroactively change the Lead, which remains a frozen historical record.
+Non-destructive Lead retention: the Lead row is never deleted on conversion (is_deleted stays FALSE); it is kept, status = Converted, as the permanent source-of-truth for lead-to-deal conversion-rate reporting.
+Rollback safety: if the transaction fails at any step, no LeadConverted event is published — event publication is strictly post-commit, preventing downstream consumers from ever observing a conversion that didn’t actually happen.
+3. Logistics & Air Freight Data Schema
+The logistics domain (logi.*) picks up where the CRM domain leaves off: a Won Opportunity creates the first Shipment (§5.2), and every object below carries the trade lane, cargo characteristics, and account/contact references established during CRM qualification. Field and status terminology follows IATA Cargo-IMP / Cargo-XML and ONE Record conventions so the schema maps directly onto real EDI/API traffic (§6).
+3.1 Shipment
+logi.shipments — the top-level operational record for one air freight movement.
+Shipment
+  logi.shipments
+Field
+Type
+Description
+Key / Relationship
+shipment_id
+UUID (PK)
+Primary key.
+PK
+shipment_reference
+VARCHAR(20)
+Internal forwarder file number.
+Unique
+opportunity_id
+UUID, nullable
+Originating Won deal, if the shipment came through CRM.
+FK → crm.opportunities.opportunity_id
+account_id
+UUID
+Shipper or freight-forwarding client account.
+FK → accounts.account_id
+service_type
+ENUM
+Airport-to-Airport, Door-to-Airport, Airport-to-Door, Door-to-Door.
+origin_airport
+CHAR(3)
+IATA origin airport code.
+FK → ref.airports.iata_code
+destination_airport
+CHAR(3)
+IATA destination airport code.
+FK → ref.airports.iata_code
+incoterm
+ENUM
+EXW, FCA, FOB, CPT, CIP, DAP, DPU, DDP.
+cargo_type
+ENUM
+General, Perishable (PER), Dangerous Goods (DGR), Live Animals (AVI), Pharma (PIL/COL), Valuable (VAL), Human Remains (HUM).
+special_handling_codes
+ARRAY(VARCHAR)
+IATA special handling codes, e.g. PER, DGR, AVI, VAL, HEA, ELI.
+pieces
+INTEGER
+Total piece count.
+gross_weight_kg
+DECIMAL(12,3)
+Actual gross weight.
+volume_cbm
+DECIMAL(12,3)
+Total volume.
+chargeable_weight_kg
+DECIMAL(12,3)
+Greater of gross and volumetric weight; basis for rating.
+Derived
+mawb_id
+UUID, nullable
+Governing Master Air Waybill once issued.
+FK → logi.air_waybills.awb_id
+status
+ENUM
+Booked, Documentation, Ready for Carriage, In Transit, Customs Hold, Delivered, POD Confirmed, Closed, Exception.
+current_milestone_code
+CHAR(3)
+Latest FSU status code applied to this shipment (see §3.6).
+Denormalized from logi.tracking_events
+pod_signed_at
+TIMESTAMP, nullable
+Proof-of-delivery timestamp.
+3.2 Booking Request
+logi.booking_requests — the space-allocation request to a carrier for a Shipment.
+Booking Request
+  logi.booking_requests
+Field
+Type
+Description
+Key / Relationship
+booking_request_id
+UUID (PK)
+Primary key.
+PK
+shipment_id
+UUID
+Shipment this booking is for.
+FK → logi.shipments.shipment_id
+carrier_id
+UUID
+Requested airline.
+FK → ref.carriers.carrier_id
+requested_flight_date
+DATE
+Requested uplift date.
+ready_for_carriage_at
+TIMESTAMP
+Cargo-ready time communicated to the carrier.
+requested_pieces / requested_weight_kg
+INTEGER / DECIMAL(12,3)
+Space requested.
+special_handling_codes
+ARRAY(VARCHAR)
+Copied from Shipment; may add carrier-specific codes.
+status
+ENUM
+Requested, Space Confirmed (SC), Waitlisted, Rejected, Cancelled.
+allotment_reference
+VARCHAR(30)
+Carrier’s allotment / booking reference, if applicable.
+confirmed_flight_number
+VARCHAR(10)
+Set once the carrier confirms space.
+FK → logi.flight_manifests.flight_number (composite)
+confirmed_flight_date
+DATE
+Set once the carrier confirms space.
+response_received_at
+TIMESTAMP, nullable
+When the carrier’s FSU/booking response was received.
+3.3 Air Waybill (Master / House)
+logi.air_waybills — the contract of carriage; issued as a Master (MAWB) and, for consolidated cargo, one or more House AWBs (HAWB) referencing it.
+Air Waybill
+  logi.air_waybills
+Field
+Type
+Description
+Key / Relationship
+awb_id
+UUID (PK)
+Primary key.
+PK
+awb_number
+CHAR(11)
+11-digit IATA AWB number: 3-digit airline prefix + 8-digit serial incl. check digit.
+Unique
+awb_type
+ENUM
+Master (MAWB), House (HAWB).
+parent_mawb_id
+UUID, nullable
+For a House AWB, the Master AWB it is consolidated under.
+FK → logi.air_waybills.awb_id (self)
+shipment_id
+UUID
+Shipment this AWB documents.
+FK → logi.shipments.shipment_id
+carrier_id
+UUID
+Issuing / operating carrier.
+FK → ref.carriers.carrier_id
+shipper_contact_id / consignee_contact_id
+UUID
+Named shipper and consignee.
+FK → contacts.contact_id
+origin_airport / destination_airport
+CHAR(3)
+Airport of departure / destination per the AWB.
+FK → ref.airports.iata_code
+pieces / gross_weight_kg / chargeable_weight_kg
+INTEGER / DECIMAL(12,3)
+As declared on the AWB face.
+rate_class
+ENUM
+IATA rate class: M (minimum), N (normal/general), Q (quantity), C (specific commodity), U/E (ULD rate).
+declared_value_for_carriage
+DECIMAL(18,2)
+Shipper-declared value for carrier liability (NVD if none).
+declared_value_for_customs
+DECIMAL(18,2)
+Shipper-declared customs value (NCV if none).
+freight_terms
+ENUM
+Prepaid, Collect.
+weight_charge / other_charges / total_charges
+DECIMAL(18,2)
+Rated charges per the AWB.
+currency_code
+CHAR(3)
+Currency of all charge fields.
+FK → currency.code
+fwb_status
+ENUM
+Not Transmitted, Transmitted, Acknowledged, Rejected — status of the Cargo-IMP/XML FWB message (§6.1).
+issued_at / issued_by
+TIMESTAMP / UUID
+Issuance timestamp and issuing user/agent.
+FK → users.user_id
+3.4 Flight Manifest
+logi.flight_manifests and logi.manifest_line_items — the carrier’s per-flight cargo manifest (FFM), listing every AWB uplifted.
+Flight Manifest
+  logi.flight_manifests
+Field
+Type
+Description
+Key / Relationship
+manifest_id
+UUID (PK)
+Primary key.
+PK
+flight_number
+VARCHAR(10)
+Operating flight number, e.g. QR8410.
+flight_date
+DATE
+Scheduled departure date.
+carrier_id
+UUID
+Operating carrier.
+FK → ref.carriers.carrier_id
+origin_airport / destination_airport
+CHAR(3)
+Flight leg covered by this manifest.
+FK → ref.airports.iata_code
+status
+ENUM
+Draft, Filed, Departed, Closed.
+filed_at
+TIMESTAMP, nullable
+When the pre-departure customs manifest (e.g. AMS/ACE, ICS2) was filed.
+actual_departure_at / actual_arrival_at
+TIMESTAMP, nullable
+Populated from FSU DEP / ARR events (§3.6).
+Manifest Line Item
+  logi.manifest_line_items — join table between an AWB and the flight it travels on
+Field
+Type
+Description
+Key / Relationship
+manifest_line_item_id
+UUID (PK)
+Primary key.
+PK
+manifest_id
+UUID
+Parent flight manifest.
+FK → logi.flight_manifests.manifest_id
+awb_id
+UUID
+AWB uplifted on this flight leg.
+FK → logi.air_waybills.awb_id
+pieces_on_leg / weight_on_leg_kg
+INTEGER / DECIMAL(12,3)
+Supports split shipments carried across multiple flights.
+leg_sequence
+SMALLINT
+Leg number for multi-leg / interline routings.
+3.5 ULD (Unit Load Device)
+logi.ulds and logi.uld_allocations — physical containers/pallets and the AWBs built into them.
+ULD
+  logi.ulds
+Field
+Type
+Description
+Key / Relationship
+uld_id
+UUID (PK)
+Primary key.
+PK
+uld_number
+VARCHAR(11)
+IATA ULD identifier: 3-char type code + 5-digit serial + 3-char owner code, e.g. AKE12345QR.
+Unique
+uld_type
+ENUM
+AKE, AKH, PMC, PAG, PLA, and other IATA ULD type codes.
+owner_code
+CHAR(3)
+IATA owner/operator code for the ULD.
+tare_weight_kg / max_gross_weight_kg
+DECIMAL(10,2)
+Empty weight and structural weight limit.
+current_location
+VARCHAR(20)
+Airport or warehouse code where the ULD currently sits.
+FK → ref.airports.iata_code
+status
+ENUM
+Available, Build-Up in Progress, Built-Up, Loaded, In Transit, Empty Return, Damaged, Under Repair.
+ULD Allocation
+  logi.uld_allocations — many-to-many join between ULDs and the AWBs built into them
+Field
+Type
+Description
+Key / Relationship
+uld_allocation_id
+UUID (PK)
+Primary key.
+PK
+uld_id
+UUID
+ULD the cargo is built into.
+FK → logi.ulds.uld_id
+awb_id
+UUID
+AWB (or a piece-level subset of it) loaded into the ULD.
+FK → logi.air_waybills.awb_id
+manifest_id
+UUID
+Flight manifest this build-up applies to.
+FK → logi.flight_manifests.manifest_id
+pieces_loaded / weight_loaded_kg
+INTEGER / DECIMAL(12,3)
+Quantity of this AWB loaded into this ULD.
+built_up_at / built_up_by
+TIMESTAMP / UUID
+Build-up completion and responsible warehouse staff.
+FK → users.user_id
+3.6 Tracking Events / FSU (Freight Status Update)
+logi.tracking_events — the immutable milestone log driving shipment visibility, sourced from carrier FSU messages, manual scans, or partner APIs.
+Tracking Event
+  logi.tracking_events
+Field
+Type
+Description
+Key / Relationship
+event_id
+UUID (PK)
+Primary key.
+PK
+awb_id
+UUID
+AWB this milestone applies to.
+FK → logi.air_waybills.awb_id
+shipment_id
+UUID
+Denormalized for fast shipment-level timeline queries.
+FK → logi.shipments.shipment_id
+event_code
+CHAR(3)
+IATA standard milestone code — see status code table below.
+event_description
+VARCHAR(200)
+Free-text elaboration accompanying the code, if provided.
+location_airport
+CHAR(3)
+Airport where the event occurred.
+FK → ref.airports.iata_code
+event_timestamp
+TIMESTAMP
+Time the milestone occurred (not when it was recorded).
+Indexed
+pieces_at_event / weight_at_event_kg
+INTEGER / DECIMAL(12,3)
+Supports partial-shipment / split-piece tracking.
+source
+ENUM
+Carrier FSU (EDI/XML), Ground handler scan, Partner API, Manual entry.
+raw_message_ref
+VARCHAR(64), nullable
+Pointer to the original ingested Cargo-IMP/XML message for traceability (§6.1).
+recorded_at
+TIMESTAMP
+System ingestion time — kept distinct from event_timestamp for late/out-of-order messages.
+Standard FSU milestone codes (subset)
+Code
+Meaning
+Typical Trigger
+RCS
+Received from Shipper
+Cargo accepted at origin warehouse.
+DEP
+Departed
+Flight wheels-up on the leg carrying this AWB.
+ARR
+Arrived
+Flight wheels-down at a leg’s destination.
+RCF
+Received from Flight
+Cargo offloaded and received at destination/transit warehouse.
+NFD
+Notification of Arrival to Consignee
+Consignee/broker notified cargo has arrived.
+AWD
+Awaiting Customs Documents
+Customs clearance pending on shipper/consignee documentation.
+CCD
+Customs Cleared
+Import customs clearance completed (maps to §3.7).
+DLV
+Delivered
+Proof of delivery captured; closes the shipment lifecycle.
+AWR / MAN
+Irregularity Reported / Manifest Discrepancy
+Weight/piece mismatch or damage; opens an exception (§4.4).
+3.7 Customs Clearance
+logi.customs_clearances — the import/export/transit clearance record per jurisdiction leg of the shipment.
+Customs Clearance
+  logi.customs_clearances
+Field
+Type
+Description
+Key / Relationship
+clearance_id
+UUID (PK)
+Primary key.
+PK
+shipment_id
+UUID
+Shipment being cleared.
+FK → logi.shipments.shipment_id
+awb_id
+UUID
+AWB the clearance is filed against.
+FK → logi.air_waybills.awb_id
+clearance_type
+ENUM
+Import, Export, Transit / In-Bond.
+jurisdiction
+VARCHAR(40)
+Customs regime, e.g. US-ACE, EU-ICS2, UAE-Customs, UK-CDS.
+declaration_number
+VARCHAR(40)
+Customs authority’s declaration/entry number.
+Unique per jurisdiction
+hs_codes
+ARRAY(VARCHAR)
+Harmonized System codes for the cargo’s commodity lines.
+broker_id
+UUID
+Customs broker of record.
+FK → ref.brokers.broker_id
+status
+ENUM
+Pending Filing, Filed, Under Inspection, Cleared, Held, Rejected.
+duty_amount / tax_amount
+DECIMAL(18,2)
+Assessed duty and tax.
+currency_code
+CHAR(3)
+Currency of duty/tax amounts.
+FK → currency.code
+filed_at / cleared_at
+TIMESTAMP, nullable
+Filing and clearance timestamps — cleared_at drives the CCD tracking event.
+hold_reason
+VARCHAR(200), nullable
+Populated when status = Held; feeds the exception queue (§4.4).
+3.8 Entity Relationship Overview
+The core chain runs Opportunity → Shipment → Booking Request → Air Waybill → Flight Manifest / ULD → Tracking Events, with Customs Clearance attached to the Shipment/AWB at each jurisdiction boundary. As in the base platform, the CRM→logistics hand-off (Opportunity → Shipment) is implemented as a domain event, not a direct write (§5.2).
+Relationship
+Cardinality
+Meaning
+Opportunity → Shipment
+1 : N
+A Won opportunity creates an initial Shipment; repeat/spot shipments accumulate against the same account without a new Opportunity.
+Shipment → Booking Request
+1 : N
+A shipment may be re-booked (waitlist, flight change) before space is confirmed.
+Shipment → Air Waybill
+1 : 1 (MAWB)
+Direct-carriage shipments are documented on exactly one Master AWB.
+Air Waybill (Master) → Air Waybill (House)
+1 : N
+A consolidator’s Master AWB covers one or more House AWBs for individual shippers.
+Air Waybill ↔ Flight Manifest
+N : N
+Via manifest_line_items — supports split shipments carried across multiple flights.
+Flight Manifest ↔ ULD
+N : N
+Via uld_allocations — one ULD can carry pieces from several AWBs; one AWB can be split across several ULDs.
+Air Waybill → Tracking Event
+1 : N
+Every FSU milestone and manual scan is appended, never overwritten.
+Shipment / Air Waybill → Customs Clearance
+1 : N
+One clearance record per jurisdiction leg (export at origin, import at destination, transit where applicable).
+3.9 Cross-Cutting Fields
+Every table in the logistics domain carries the same audit and multi-tenancy columns as the base CRM/ERP schema, so RBAC, lineage, and the AI query layer (§6.3) apply uniformly across both domains:
+Field
+Type
+Purpose
+created_at / updated_at
+TIMESTAMP
+Standard audit timestamps.
+created_by / updated_by
+UUID
+User or service that last modified the row.
+tenant_id
+UUID
+Client / business-unit scoping for multi-tenant deployments.
+row_version
+INTEGER
+Optimistic concurrency control.
+is_deleted
+BOOLEAN
+Soft delete flag; rows are never hard-deleted, preserving the tracking-event and customs audit trail.
+4. Technical UI/UX Specification
+The logistics workspace extends the base platform’s three-region layout (sidebar, workspace, docked AI panel, per the UI Architecture Guide §1) with an Operations section and three freight-specific interaction patterns: AI-assisted document extraction, dynamic tracking visualization, and exception management.
+4.1 Navigation & Workspace Extension
+Section
+Items
+Behavior
+CRM
+Leads, Contacts, Accounts, Sales Pipeline
+Unchanged from the base platform (§1.1 of the UI guide).
+Operations
+Bookings, Shipments, Air Waybills, ULD Build-Up, Tracking Board, Customs
+Each item opens its own workspace view; badge counts surface items needing attention (e.g. Customs Hold count).
+AI Assistant
+Ask a question, Saved reports, Document intake
+“Document intake” opens the AI-assisted extraction flow in §4.2 directly, without requiring a natural-language question first.
+4.2 AI-Assisted Data Entry: Automated Document Extraction
+Booking Requests and Air Waybills are frequently first specified by a shipper-provided commercial invoice, packing list, or DG declaration rather than typed in directly. The extraction flow reuses the same governed, human-in-the-loop pattern the base platform uses for natural-language queries (interpretation → confirmation → commit), applied here to document fields instead of SQL:
+State
+Trigger
+System behavior
+Uploaded
+User drags a PDF/image (invoice, packing list, DG declaration) onto the AWB or Booking Request form.
+Document is stored and queued for extraction; the form remains editable and unblocked.
+Extracted (Proposed)
+AI extraction model returns structured field values with a per-field confidence score.
+Every extracted field is pre-filled but visually flagged (e.g. amber underline) until reviewed — low-confidence fields (weight, HS codes, declared value) are flagged more prominently than high-confidence ones (airport codes, dates).
+Accepted
+User reviews and clicks “Accept fields” (bulk) or edits individual values before saving.
+Accepted values are written to the AWB/Booking Request row; the source document and every original extracted value are retained for audit, even where the user overrode them.
+Escalated
+Confidence on a required field (e.g. declared value for customs, DG UN number) falls below threshold.
+That field is left blank rather than guessed, and the form blocks save on it specifically — mirroring the base platform’s rule that the AI layer must ask rather than guess (§3.2 of the technical specification).
+Extraction never writes directly to the Air Waybill or Booking Request table — it only ever populates the pending form state a human then accepts, keeping the same separation between AI proposal and governed persistence used throughout the platform.
+4.3 Dynamic Tracking Visualizations
+Shipment map view — origin/destination airports plotted on a route map with the current position (last DEP/ARR event) highlighted; used on the Shipment detail panel and embeddable in the AI panel’s result card for “where is this shipment” questions.
+Milestone timeline — a horizontal strip of FSU codes (RCS → DEP → ARR → RCF → NFD → CCD → DLV) with completed steps solid and the current step animated; hovering a step shows event_timestamp, location, and source.
+Multi-leg / split-shipment rendering — where manifest_line_items shows an AWB spread across more than one flight leg or ULD allocations show a split across containers, the timeline branches to show each piece group’s progress independently rather than collapsing to a single misleading status.
+Live updates — the timeline and map subscribe to the same tracking-event stream the backend ingests from FSU messages (§6.2); a new event updates the UI via websocket/polling without a page reload, consistent with the base platform’s event-driven UI pattern.
+4.4 Exception Management UI Patterns
+Air freight exceptions — customs holds, manifest discrepancies, DG mishandling, missed connections — are surfaced as a first-class Exception Queue rather than buried inside individual shipment records:
+Exception Queue — a filterable list of every Shipment/AWB currently in status = Customs Hold or Exception, or with an AWR/MAN tracking event, sorted by SLA urgency (time since the triggering event) rather than creation date.
+SLA countdown — each exception row shows a live countdown against the relevant SLA (e.g. hours since a customs hold began), color-shifting from neutral to amber to red as it approaches breach, so operations staff can triage without opening every record.
+ULD build-up board — a drag-and-drop Kanban-style board (per ULD, per flight manifest) where warehouse staff assign AWB piece groups into ULDs; drops write directly to uld_allocations and update ULD.status, with weight/volume limits enforced client-side against tare/max_gross_weight before the drop is accepted.
+Irregularity report (CIR) workflow — raising a Cargo Irregularity Report from an exception pre-fills shipment, AWB, and event context, routes it to the responsible station, and links the resulting record back onto the Shipment’s timeline as a visible flag — never a silent status change.
+Customs hold detail — the Customs Clearance record’s hold_reason is shown directly on the Shipment detail panel with a “notify broker” action, rather than requiring navigation into a separate Customs module to understand why a shipment is stuck.
+5. System Architecture & Integration Logic
+The logistics service ingests industry-standard air cargo messaging — Cargo-IMP (Type B / EDIFACT-style) and Cargo-XML, including ONE Record REST resources where partners support it — normalizes it into the canonical event schema below, and bridges it to the CRM domain over the same shared event bus described in the base platform specification (§5.2 of the technical specification).
+5.1 Cargo-IMP / Cargo-XML Ingestion Layer
+Inbound messages, whichever wire format they arrive in, are normalized to the same internal event before touching the schema in §3:
+Message type
+Format(s)
+Maps to
+FWB (Freight Waybill)
+Cargo-IMP / Cargo-XML
+Creates or updates a logi.air_waybills row; sets fwb_status = Transmitted, then Acknowledged on the carrier’s FMA/FNA response.
+FHL (House Waybill / Manifest)
+Cargo-IMP / Cargo-XML
+Creates House AWB rows linked via parent_mawb_id to the Master.
+FFM (Freight Manifest)
+Cargo-IMP / Cargo-XML
+Creates/updates logi.flight_manifests and its manifest_line_items.
+FNM / FMS (Flight Movement / Schedule)
+Cargo-IMP / Cargo-XML
+Updates flight-level fields on the manifest (actual_departure_at, actual_arrival_at) independent of any single AWB.
+FSU (Freight Status Update)
+Cargo-IMP / Cargo-XML
+Appends a logi.tracking_events row per §3.6; never updates or deletes a prior event — the milestone log is append-only.
+ONE Record events (LogisticsObjectEvent)
+REST / JSON-LD
+Same target tables as the Cargo-XML equivalents above; the ingestion layer treats ONE Record as an alternate transport for the same canonical events, not a separate data model.
+Messages land in a staging schema first, are validated against IATA message-structure rules and referential integrity against existing Shipment/AWB rows, and are only then applied to the operational schema — mirroring the staged-ingestion pattern used for legacy source onboarding in the base platform (§5.1 of the technical specification). Every applied message retains a pointer from its resulting row(s) back to the raw payload (raw_message_ref on tracking events; equivalent references on AWB/manifest updates) for full message-to-record traceability.
+5.2 Event-Driven Integration Flows
+The logistics service and the CRM service remain independently deployable, staying in sync through domain events on the shared bus rather than direct database writes across the boundary — the same pattern used for DealWon → Project in the base platform:
+Event
+Published by
+Consumed by → effect
+DealWon
+CRM service, on Opportunity.stage = Won
+Logistics service → creates an initial Shipment, copying account, trade lane, cargo_type, and incoterm from the Opportunity’s freight extension fields (§2.2).
+BookingConfirmed
+Logistics service, on Booking Request status = Space Confirmed
+Notification service → alerts the shipment owner; UI → updates the Shipment’s status to Ready for Carriage.
+AWBIssued
+Logistics service, on Air Waybill creation
+CRM service → links the AWB reference onto the originating Opportunity for sales visibility; Notification service → alerts the account owner.
+FSUReceived
+Logistics service, per ingested FSU message
+UI → live-updates the tracking timeline (§4.3); AI layer → surfaces delivery/delay milestones in executive insights.
+CustomsHeld
+Logistics service, on Customs Clearance status = Held
+Notification service → alert to the broker and account owner; UI → adds the shipment to the Exception Queue (§4.4).
+ShipmentDelivered
+Logistics service, on FSU code = DLV
+CRM service → updates the account’s delivery-performance history; Finance module → releases the shipment for invoicing.
+As in the base platform, this event-driven boundary means the CRM and logistics teams can evolve their schemas independently, and the semantic layer (§5.3) can read across both domains without either service exposing its internal tables to the other.
+5.3 Semantic Data Handling & AI Query Layer Extension
+The governed metric catalog described in the base technical specification (§4.1) is extended with a logistics-specific set of metric definitions, so freight questions are answered through the same interpret → confirm → execute pipeline as CRM/ERP questions — the AI layer never computes a freight number itself.
+Example metric_id
+Definition basis
+sensitivity
+otd_rate_by_lane
+% of shipments with pod_signed_at ≤ contracted delivery window, grouped by trade_lane.
+Operational
+avg_customs_dwell_hours
+AVG(cleared_at − filed_at) from logi.customs_clearances, filterable by jurisdiction.
+Operational
+open_exceptions_count
+COUNT of shipments in Customs Hold / Exception status or with an unresolved AWR/MAN event.
+Operational
+chargeable_weight_by_carrier
+SUM(chargeable_weight_kg) from logi.air_waybills, grouped by carrier_id and period.
+Restricted (rate-sensitive)
+Semantic retrieval, slot filling, and the human-confirmation step (Proposed → Accepted → Rejected → Escalated) work identically to the base platform’s AI-layer architecture; only the metric catalog and underlying source_tables differ for logistics questions.
+5.4 API Layer & Technology Stack
+A single API gateway continues to front CRM and logistics as independent services, composing cross-domain views (e.g. “Opportunity with its resulting Shipment and current tracking status”) rather than the services calling each other synchronously.
+A dedicated EDI/message broker sits in front of the logistics service for Cargo-IMP (Type B network) and Cargo-XML/ONE Record traffic, decoupling carrier connectivity protocols from the internal event bus.
+The AI query service remains a separate consumer of the gateway and the semantic layer, with no direct database credentials — only access to the governed query execution endpoint, unchanged from the base platform.
+Layer
+Recommended options
+Rationale
+Transactional stores
+PostgreSQL (per-service schema/database)
+Strong relational integrity for CRM/logistics write paths; native row-level security.
+EDI / message broker
+Type B network gateway + Cargo-XML/REST adapter feeding the event bus
+Normalizes legacy Cargo-IMP and modern Cargo-XML/ONE Record into one canonical ingestion path (§5.1).
+Event bus
+Kafka or a managed equivalent (e.g. cloud pub/sub)
+Durable, replayable event log for cross-service integration and audit, including high-volume FSU traffic.
+Analytical store
+Columnar warehouse fed by CDC
+Fast aggregate queries for the semantic layer (§5.3) without touching OLTP.
+Semantic layer
+Metrics-layer tooling (headless BI/semantic framework)
+Central, versioned metric definitions consumable by both AI and BI, shared across CRM and logistics.
+AI orchestration
+LLM via function-calling / tool-use API, retrieval index for metric and document-extraction catalogs
+Matches the constrained-output design used for both query interpretation (§5.3) and document extraction (§4.2).
+API gateway
+Managed API gateway with OAuth2 / OIDC
+Centralized authN/authZ ahead of both services and the AI layer.
+5.5 Phased Rollout
+Phase
+Scope
+Exit criteria
+Phase 0 — Foundations
+Logistics schema (§3), extension of Opportunity with freight fields (§2.2), auth/RBAC reuse.
+Logistics service deployable in isolation with seed Shipment/AWB data.
+Phase 1 — Messaging integration
+Cargo-IMP/XML ingestion connectors (§5.1) for FWB, FHL, FFM, FSU into staging.
+Inbound carrier messages reliably produce/append the correct Shipment, AWB, and tracking-event rows.
+Phase 2 — Event integration
+Event bus live for DealWon → Shipment, BookingConfirmed, FSUReceived, CustomsHeld, ShipmentDelivered.
+A Won deal in CRM reliably produces a Shipment with no manual step; live FSU events update the UI within seconds.
+Phase 3 — AI-assisted UI
+Document extraction flow (§4.2), tracking visualizations (§4.3), exception queue (§4.4).
+Extraction confidence and confirmation-workflow accuracy meet target on a held-out document set.
+Phase 4 — Semantic layer & rollout
+Logistics metric catalog (§5.3) authored; role-based dashboard and mobile access to all user tiers.
+Alerts, RBAC views, and AI answers verified in production against carrier-confirmed source data.
+End of document.

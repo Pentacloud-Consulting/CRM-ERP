@@ -1,0 +1,36 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--ai-panel-width);
+  height: 100vh;
+  overflow: hidden;
+  transition: grid-template-columns var(--transition-slow);
+}
+
+.shell.sidebarCollapsed {
+  grid-template-columns: 56px 1fr var(--ai-panel-width);
+}
+
+.shell.aiClosed {
+  grid-template-columns: var(--sidebar-width) 1fr 0px;
+}
+
+.shell.sidebarCollapsed.aiClosed {
+  grid-template-columns: 56px 1fr 0px;
+}
+
+.workspace {
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+  padding: var(--space-6) var(--space-8);
+  animation: fadeIn var(--transition-base) ease;
+}
+
+.workspace::-webkit-scrollbar {
+  width: 6px;
+}
+
+.workspace::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
