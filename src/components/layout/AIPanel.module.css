@@ -301,3 +301,16 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 1024px) {
+  .panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 400px;
+    z-index: 50;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+  }
+}

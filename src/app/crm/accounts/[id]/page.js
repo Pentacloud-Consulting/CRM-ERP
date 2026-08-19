@@ -78,7 +78,7 @@ export default function AccountDetailPage() {
 
           <div style={{ height: '1px', width: '100%', background: 'linear-gradient(90deg, rgba(20, 184, 166, 0.15) 0%, rgba(20, 184, 166, 0.02) 100%)', marginBottom: '24px' }} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+          <div className="grid3" style={{ gap: '20px' }}>
             <div>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '6px' }}>
                 <Phone size={14} style={{ color: account.phone ? '#14B8A6' : 'inherit' }} /> Phone

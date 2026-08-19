@@ -454,7 +454,7 @@ export default function ShipmentDetailPage() {
             Comprehensive Air Waybill & Invoice
           </h2>
           {documents.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+            <div className="gridAuto" style={{ gap: '12px' }}>
               {documents.map(doc => {
                 const getDocColor = (s) => {
                   if (s === 'Signed' || s === 'Completed') return 'success';

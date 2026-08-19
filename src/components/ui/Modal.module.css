@@ -78,3 +78,21 @@
   gap: var(--space-3);
   background: var(--bg-sidebar);
 }
+
+@media (max-width: 768px) {
+  .default, .large, .xl {
+    width: 100%;
+  }
+  
+  .modal {
+    max-height: 95vh;
+  }
+  
+  .body {
+    padding: var(--space-4);
+  }
+  
+  .header, .footer {
+    padding: var(--space-4);
+  }
+}

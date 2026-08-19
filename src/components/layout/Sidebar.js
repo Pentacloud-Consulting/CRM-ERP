@@ -50,7 +50,7 @@ const NAV_ITEMS = [
   },
 ];
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const pathname = usePathname();
   const { state } = useApp();
   const [spinningItem, setSpinningItem] = useState(null);
@@ -58,6 +58,7 @@ export default function Sidebar({ collapsed, onToggle }) {
   const handleItemClick = (href) => {
     setSpinningItem(href);
     setTimeout(() => setSpinningItem(null), 600);
+    if (onMobileClose) onMobileClose();
   };
 
   const badges = {
@@ -68,9 +69,9 @@ export default function Sidebar({ collapsed, onToggle }) {
   };
 
   return (
-    <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
+    <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''} ${mobileOpen ? styles.mobileOpen : ''}`}>
       <div className={styles.header}>
-        {!collapsed && (
+        {(!collapsed || mobileOpen) && (
           <div className={styles.logo}>
             <div className={styles.logoIcon}>
               <Anchor size={20} />
@@ -89,7 +90,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <nav className={styles.nav}>
         {NAV_ITEMS.map(group => (
           <div key={group.section} className={styles.navGroup}>
-            {!collapsed && <div className={styles.navGroupLabel}>{group.section}</div>}
+            {(!collapsed || mobileOpen) && <div className={styles.navGroupLabel}>{group.section}</div>}
             {group.items.map(item => {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));

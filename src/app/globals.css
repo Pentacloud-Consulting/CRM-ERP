@@ -422,3 +422,21 @@ img, svg {
   border-radius: var(--radius-lg);
   z-index: 1;
 }
+
+/* ===== Responsive Utilities ===== */
+.grid2, .grid3, .grid4, .grid6, .gridAuto {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid2 { grid-template-columns: repeat(2, 1fr); }
+.grid3 { grid-template-columns: repeat(3, 1fr); }
+.grid4 { grid-template-columns: repeat(4, 1fr); }
+.grid6 { grid-template-columns: repeat(6, 1fr); }
+.gridAuto { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+@media (max-width: 768px) {
+  .grid2, .grid3, .grid4, .grid6 {
+    grid-template-columns: 1fr;
+  }
+}

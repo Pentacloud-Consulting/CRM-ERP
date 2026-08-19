@@ -46,7 +46,7 @@ export default function BookingDetailPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="grid2" style={{ gap: '24px' }}>
             <div className={styles.field}>
               <span className={styles.fieldLabel} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={14} /> Shipment Ref</span>
               <span className={styles.fieldValue} style={{ fontWeight: 600 }}>{shipment ? shipment.shipment_reference : '—'}</span>

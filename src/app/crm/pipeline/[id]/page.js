@@ -45,7 +45,7 @@ export default function PipelineDetailPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="grid2" style={{ gap: '24px' }}>
             <div className={styles.field}>
               <span className={styles.fieldLabel} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Briefcase size={14} /> Pipeline Value</span>
               <span className={styles.fieldValue} style={{ fontWeight: 800, fontSize: '18px', color: 'var(--text-primary)' }}>{formatCurrency(opp.pipeline_value, opp.currency_code)}</span>

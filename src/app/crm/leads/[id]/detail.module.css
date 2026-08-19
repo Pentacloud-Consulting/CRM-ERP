@@ -55,3 +55,12 @@
 .confirmSummary { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
 .confirmItem { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--primary-tint); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--primary-hover); }
 .confirmNote { display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-3); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-md); font-size: var(--text-xs); color: #9a6812; line-height: var(--leading-relaxed); }
+
+@media (max-width: 1024px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}

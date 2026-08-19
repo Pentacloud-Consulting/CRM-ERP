@@ -64,7 +64,7 @@ export default function ContactDetailPage() {
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="grid2" style={{ gap: '20px' }}>
             <div className={styles.field}>
               <span className={styles.fieldLabel} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Mail size={12} /> Email</span>
               <span className={styles.fieldValue} style={{ color: 'var(--primary)' }}>{contact.email || '—'}</span>
@@ -130,7 +130,7 @@ export default function ContactDetailPage() {
 
                     {isExpanded && related && (
                       <div className={lk.accordionBody}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', alignItems: 'start' }}>
+                        <div className="grid2" style={{ gap: '24px', alignItems: 'start' }}>
                           {/* 1. AWBs */}
                           <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
                             <div className={lk.relatedSectionTitle}><FileText size={14} /> Air Waybills ({related.awbs.length})</div>
@@ -144,7 +144,7 @@ export default function ContactDetailPage() {
                                     style={{ cursor: 'pointer', padding: '16px' }} 
                                     onClick={() => router.push(`/operations/awb/${a.awb_id}`)}
                                   >
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div className="grid2" style={{ gap: '16px' }}>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>AWB Number</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{formatAWBNumber(a.awb_number)}</span></div>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Carrier</span><span className={lk.relatedValue}>{carrier?.name || '—'}</span></div>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Charges</span><span className={lk.relatedValue}>{formatCurrency(a.total_charges, a.currency_code)}</span></div>
@@ -167,7 +167,7 @@ export default function ContactDetailPage() {
                                   style={{ cursor: 'pointer', padding: '16px' }}
                                   onClick={() => router.push(`/operations/bookings/${b.booking_request_id}`)}
                                 >
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                  <div className="grid2" style={{ gap: '16px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Flight</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{b.confirmed_flight_number || '—'}</span></div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Status</span><Badge variant={getStatusColor(b.status)} size="small">{b.status}</Badge></div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}><span className={lk.relatedLabel}>Date</span><span className={lk.relatedValue}>{b.confirmed_flight_date || b.requested_flight_date || '—'}</span></div>
@@ -187,7 +187,7 @@ export default function ContactDetailPage() {
                                   className={lk.relatedCard}
                                   style={{ padding: '16px' }}
                                 >
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                  <div className="grid2" style={{ gap: '16px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Declaration</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{c.declaration_number}</span></div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Type</span><span className={lk.relatedValue}>{c.clearance_type}</span></div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Status</span><Badge variant={getStatusColor(c.status)} size="small">{c.status}</Badge></div>
@@ -232,7 +232,7 @@ export default function ContactDetailPage() {
                                     style={{ cursor: 'pointer', padding: '16px' }}
                                     onClick={() => router.push(`/operations/uld/${u.uld_id}`)}
                                   >
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div className="grid2" style={{ gap: '16px' }}>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}><span className={lk.relatedLabel}>ULD</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{uld?.uld_number || u.uld_id}</span></div>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Pieces</span><span className={lk.relatedValue}>{u.allocated_pieces}</span></div>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Weight</span><span className={lk.relatedValue}>{formatWeight(u.allocated_weight_kg)}</span></div>
