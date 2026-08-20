@@ -7,6 +7,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import StatusTimeline from '@/components/ui/StatusTimeline';
+import MiniFlow from '@/components/ui/MiniFlow';
 import { formatDate, formatDateTime, formatWeight, formatVolume, formatCurrency, formatAWBNumber, getStatusColor } from '@/lib/utils/formatters';
 import { SHIPMENT_STATUSES, SERVICE_TYPES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, AIRPORTS, CARRIERS } from '@/lib/data/seedData';
 import styles from './detail.module.css';
@@ -47,8 +48,8 @@ export default function ShipmentDetailPage() {
     setQuickAWBData({ awb_number: `${prefix}-${Math.floor(Math.random() * 99999999).toString().padStart(8, '0')}`, carrier_id: carrierId, currency: 'USD' });
     setShowQuickAWB(true);
   };
-  const openQuickCustoms = () => {
-    setQuickCustomsData({ declaration_number: `DEC-${Math.floor(Math.random() * 99999)}`, jurisdiction: 'Default' });
+  const openQuickCustoms = (type = 'Export') => {
+    setQuickCustomsData({ declaration_number: `DEC-${Math.floor(Math.random() * 99999)}`, jurisdiction: type === 'Export' ? 'Origin' : 'Destination', clearance_type: type });
     setShowQuickCustoms(true);
   };
   const openQuickULD = () => {
@@ -56,7 +57,9 @@ export default function ShipmentDetailPage() {
     setShowQuickULD(true);
   };
   const openQuickManifest = () => {
-    setQuickManifestData({ manifest_id: '' });
+    const confirmedBooking = bookings.find(b => b.status === 'Space Confirmed') || bookings[0];
+    const matchingManifest = confirmedBooking ? state.flightManifests.find(m => m.flight_number === confirmedBooking.confirmed_flight_number && m.flight_date === confirmedBooking.confirmed_flight_date) : null;
+    setQuickManifestData({ manifest_id: matchingManifest ? matchingManifest.manifest_id : '' });
     setShowQuickManifest(true);
   };
 
@@ -102,6 +105,9 @@ export default function ShipmentDetailPage() {
   let nextStep = null;
   const isBookingConfirmed = bookings.some(b => b.status === 'Space Confirmed');
 
+  const exportClearances = clearances.filter(c => c.clearance_type === 'Export');
+  const importClearances = clearances.filter(c => c.clearance_type === 'Import');
+
   if (shipment.status === 'Delivered' || shipment.status === 'Closed') {
     nextStep = null;
   } else if (bookings.length === 0) {
@@ -114,26 +120,27 @@ export default function ShipmentDetailPage() {
     nextStep = { title: 'Waiting for Confirmation', desc: 'Booking is pending airline confirmation.', action: null };
   } else if (!mawb) {
     nextStep = { title: 'Action Required: Issue MAWB', desc: 'Contract of carriage needed for confirmed booking.', action: 'Issue Air Waybill', onClick: openQuickAWB };
-  } else if (documents.length === 0) {
-    nextStep = { title: 'Action Required: Generate Bill', desc: 'Create the Comprehensive Air Waybill for this shipment to share with the client.', action: 'Generate Bill', onClick: () => {
-      dispatch({
-        type: 'CREATE_DOCUMENT',
-        payload: {
-          shipment_id: shipment.shipment_id,
-          awb_id: mawb?.awb_id,
-          document_type: 'Comprehensive AWB',
-          status: 'Generated',
-        }
-      });
+  } else if (documents.length === 0 || !allDocsSigned) {
+    nextStep = { title: 'Action Required: Finalize Docs', desc: 'Ensure all comprehensive documents are generated and signed.', action: 'Generate Bill', onClick: () => {
+      if (documents.length === 0) {
+        dispatch({ type: 'CREATE_DOCUMENT', payload: { shipment_id: shipment.shipment_id, awb_id: mawb?.awb_id, document_type: 'Comprehensive AWB', status: 'Generated' } });
+      }
     }};
-  } else if (!allDocsSigned) {
-    nextStep = { title: 'Awaiting Client Signature', desc: 'Documents have been generated. Share the link with your client for digital signature.', action: null };
-  } else if (clearances.length === 0) {
-    nextStep = { title: 'Action Required: Customs', desc: 'File clearance declaration for this shipment.', action: 'Create Clearance', onClick: openQuickCustoms };
+  } else if (exportClearances.length === 0) {
+    nextStep = { title: 'Action Required: Export Customs', desc: 'File clearance declaration for origin departure.', action: 'Create Clearance', onClick: () => openQuickCustoms('Export') };
   } else if (uldAllocations.length === 0 && shipment.cargo_type !== 'Loose') {
     nextStep = { title: 'Action Required: ULD Build-Up', desc: 'Assign this shipment to a ULD for the flight.', action: 'Assign to ULD', onClick: openQuickULD };
   } else if (manifestLineItems.length === 0) {
     nextStep = { title: 'Action Required: Flight Manifest', desc: 'Assign to a flight manifest for departure.', action: 'Add to Manifest', onClick: openQuickManifest };
+  } else if (events.length === 0) {
+    nextStep = { title: 'Action Required: Auto-Track Flight', desc: 'Simulate tracking events based on flight date.', action: 'Auto-Track Flight', onClick: () => {
+      const confirmedBooking = bookings.find(b => b.status === 'Space Confirmed') || bookings[0];
+      dispatch({ type: 'SIMULATE_FLIGHT_TRACKING', payload: { shipment_id: shipment.shipment_id, flight_date: confirmedBooking.confirmed_flight_date || confirmedBooking.requested_flight_date, origin_airport: shipment.origin_airport, destination_airport: shipment.destination_airport } });
+    }};
+  } else if (!events.some(e => e.event_code === 'ARR')) {
+    nextStep = { title: 'In Transit', desc: 'Shipment is currently in transit to destination.', action: null };
+  } else if (importClearances.length === 0) {
+    nextStep = { title: 'Action Required: Import Customs', desc: 'File clearance declaration for destination arrival.', action: 'Create Clearance', onClick: () => openQuickCustoms('Import') };
   } else {
     nextStep = { title: 'In Progress', desc: 'Shipment is moving. Awaiting tracking updates.', action: null };
   }
@@ -236,7 +243,7 @@ export default function ShipmentDetailPage() {
       payload: {
         shipment_id: shipment.shipment_id,
         awb_id: mawb?.awb_id,
-        clearance_type: 'Export',
+        clearance_type: quickCustomsData.clearance_type || 'Export',
         jurisdiction: quickCustomsData.jurisdiction,
         declaration_number: quickCustomsData.declaration_number,
         status: 'Cleared'
@@ -303,12 +310,13 @@ export default function ShipmentDetailPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflowX: 'auto', paddingBottom: '24px', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>
         {[
           { label: 'Booking', active: bookings.length > 0 },
-          { label: 'MAWB', active: !!mawb },
-          { label: 'Comprehensive Bill', active: documents.length > 0 },
-          { label: 'Signature', active: allDocsSigned },
-          { label: 'Customs', active: clearances.length > 0 },
+          { label: 'AWB (Signed)', active: mawb && documents.length > 0 && allDocsSigned },
+          { label: 'Export Customs', active: exportClearances.length > 0 },
           { label: 'ULD Build-Up', active: uldAllocations.length > 0, skip: shipment.cargo_type === 'Loose' },
-          { label: 'Manifest', active: manifestLineItems.length > 0 }
+          { label: 'Manifest', active: manifestLineItems.length > 0 },
+          { label: 'In Transit', active: events.length > 0 },
+          { label: 'Import Customs', active: importClearances.length > 0 },
+          { label: 'Delivered', active: shipment.status === 'Delivered' }
         ].filter(s => !s.skip).map((step, idx, arr) => (
           <div key={step.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ 
@@ -606,6 +614,17 @@ export default function ShipmentDetailPage() {
                         <span className={styles.infoLabel}>Packed Weight</span>
                         <span className="tabular-nums">{formatWeight(alloc.weight_kg)}</span>
                       </div>
+                      <div style={{ marginTop: '12px' }}>
+                        <MiniFlow 
+                          steps={['Packaging', 'Loaded in Container', 'Moved to Airline', 'Delivered to Airline']} 
+                          currentStepIndex={
+                            uld?.status === 'Build-Up in Progress' ? 0 :
+                            uld?.status === 'Built-Up' ? 1 :
+                            uld?.status === 'Loaded' ? 2 :
+                            uld?.status === 'In Transit' ? 3 : -1
+                          } 
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -636,6 +655,18 @@ export default function ShipmentDetailPage() {
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Status</span>
                         <Badge variant={getStatusColor(manifest?.status)} dot>{manifest?.status}</Badge>
+                      </div>
+                      <div style={{ marginTop: '12px' }}>
+                        <MiniFlow 
+                          steps={['Loaded', 'Take Off', 'In Transit', 'Landed', 'Delivered']} 
+                          currentStepIndex={
+                            events.some(e => e.event_code === 'DLV') ? 4 :
+                            events.some(e => e.event_code === 'ARR') ? 3 :
+                            events.some(e => e.event_code === 'DEP') ? 2 :
+                            manifest?.status === 'Departed' ? 1 :
+                            manifest?.status === 'Closed' ? 0 : -1
+                          } 
+                        />
                       </div>
                     </div>
                   );
