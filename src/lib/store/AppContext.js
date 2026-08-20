@@ -266,7 +266,11 @@ function appReducer(state, action) {
     }
 
     case 'DELETE_SHIPMENT': {
-      return { ...state, shipments: state.shipments.filter(s => s.shipment_id !== action.payload) };
+      return { 
+        ...state, 
+        shipments: state.shipments.filter(s => s.shipment_id !== action.payload),
+        uldAllocations: state.uldAllocations.filter(a => a.shipment_id !== action.payload)
+      };
     }
 
     case 'CREATE_BOOKING': {
