@@ -11,7 +11,10 @@ export default function ClientSigningPage() {
   const { state, dispatch, getAccount } = useApp();
   const [signatureData, setSignatureData] = useState(null);
   const [signerName, setSignerName] = useState('');
+  const [selectedFont, setSelectedFont] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+
+  const signatureFonts = ['Dancing Script', 'Pacifico', 'Caveat', 'Great Vibes', 'Satisfy'];
 
   // Look up the document or legacy invoice by share_token
   const doc = state.documents.find(d => d.share_token === token);
@@ -106,6 +109,7 @@ export default function ClientSigningPage() {
 
   return (
     <div className={styles.signingPage}>
+      <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Caveat&family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Satisfy&display=swap');`}} />
       <div className={styles.signingContainer}>
         {/* Header */}
         <div className={styles.signingHeader}>
@@ -153,13 +157,53 @@ export default function ClientSigningPage() {
               onFocus={e => e.target.style.borderColor = '#0d9488'}
               onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
+            {signerName.trim() && (
+              <div style={{ marginTop: 24, padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 12 }}>
+                  Or select a signature style:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                  {signatureFonts.map(font => (
+                    <div
+                      key={font}
+                      onClick={() => {
+                        setSelectedFont(font);
+                        setSignatureData(`TYPED:${font}:${signerName}`);
+                      }}
+                      style={{
+                        fontFamily: `"${font}", cursive`,
+                        fontSize: '26px',
+                        padding: '12px 16px',
+                        border: selectedFont === font ? '2px solid #0d9488' : '1px solid #cbd5e1',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        background: selectedFont === font ? '#f0fdfa' : '#fff',
+                        color: selectedFont === font ? '#0f766e' : '#334155',
+                        boxShadow: selectedFont === font ? '0 4px 12px rgba(13,148,136,0.1)' : '0 2px 4px rgba(0,0,0,0.02)',
+                        transition: 'all 0.2s',
+                        userSelect: 'none',
+                        lineHeight: 1
+                      }}
+                    >
+                      {signerName}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
               Signature *
             </label>
-            <SignaturePad onSignatureChange={setSignatureData} />
+            <SignaturePad onSignatureChange={(data) => {
+              setSignatureData(data);
+              if (data && !data.startsWith('TYPED:')) {
+                setSelectedFont(null);
+              }
+            }} />
           </div>
 
           <div className={styles.signingActions}>

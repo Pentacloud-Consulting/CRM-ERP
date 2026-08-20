@@ -315,6 +315,37 @@ function appReducer(state, action) {
       return { ...state, airWaybills: state.airWaybills.filter(a => a.awb_id !== action.payload) };
     }
 
+    case 'SIMULATE_FLIGHT_TRACKING': {
+      const { shipment_id, flight_date, origin_airport, destination_airport } = action.payload;
+      const baseTime = new Date(flight_date).getTime();
+      
+      const newEvents = [
+        { event_code: 'RCS', offset: -12 * 3600000, desc: 'Received from Shipper', location: origin_airport },
+        { event_code: 'DEP', offset: 0, desc: 'Departed', location: origin_airport },
+        { event_code: 'ARR', offset: 14 * 3600000, desc: 'Arrived', location: destination_airport },
+        { event_code: 'RCF', offset: 16 * 3600000, desc: 'Received from Flight', location: destination_airport },
+        { event_code: 'NFD', offset: 18 * 3600000, desc: 'Notification to Consignee', location: destination_airport },
+        { event_code: 'AWD', offset: 20 * 3600000, desc: 'Awaiting Customs Docs', location: destination_airport },
+        { event_code: 'CCD', offset: 24 * 3600000, desc: 'Customs Cleared', location: destination_airport },
+        { event_code: 'DLV', offset: 36 * 3600000, desc: 'Delivered', location: destination_airport },
+      ].map(m => ({
+        event_id: generateId('evt'),
+        shipment_id,
+        event_code: m.event_code,
+        event_description: m.desc,
+        location_airport: m.location || '',
+        event_timestamp: new Date(baseTime + m.offset).toISOString(),
+        recorded_at: new Date().toISOString()
+      }));
+
+      let newShipments = state.shipments.map(s => {
+        if (s.shipment_id !== shipment_id) return s;
+        return { ...s, current_milestone_code: 'DLV', status: 'Delivered', updated_at: new Date().toISOString() };
+      });
+
+      return { ...state, trackingEvents: [...newEvents, ...state.trackingEvents], shipments: newShipments };
+    }
+
     case 'ADD_TRACKING_EVENT': {
       const evt = { ...action.payload, event_id: generateId('evt'), recorded_at: new Date().toISOString() };
       const newState3 = { ...state, trackingEvents: [evt, ...state.trackingEvents] };
@@ -354,6 +385,9 @@ function appReducer(state, action) {
         eventBus.publish(EVENT_TYPES.CUSTOMS_HELD, { clearance_id: action.payload.clearance_id, shipment_id: action.payload.shipment_id, reason: action.payload.hold_reason });
       }
       return updated2;
+    }
+    case 'DELETE_CUSTOMS': {
+      return { ...state, customsClearances: state.customsClearances.filter(c => c.clearance_id !== action.payload) };
     }
 
     case 'CREATE_ULD': {

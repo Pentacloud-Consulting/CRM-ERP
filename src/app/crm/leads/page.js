@@ -181,8 +181,8 @@ export default function LeadsPage() {
               <input className="form-input" value={newLead.company_name} onFocus={() => setShowCompanyAutocomplete(true)} onBlur={() => setTimeout(() => setShowCompanyAutocomplete(false), 200)} onChange={e => setNewLead(p => ({ ...p, company_name: e.target.value }))} placeholder="Company name" />
               {showCompanyAutocomplete && newLead.company_name && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '4px', zIndex: 10, maxHeight: '150px', overflowY: 'auto' }}>
-                  {state.accounts.filter(a => a.legal_name.toLowerCase().includes(newLead.company_name.toLowerCase())).map(a => (
-                    <div key={a.account_id} style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid #eee' }} onClick={() => { setNewLead(p => ({ ...p, company_name: a.legal_name })); setShowCompanyAutocomplete(false); }}>
+                  {state.accounts.filter(a => a.legal_name.toLowerCase().includes(newLead.company_name.toLowerCase())).map((a, aIdx) => (
+                    <div key={a.account_id || aIdx} style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid #eee' }} onClick={() => { setNewLead(p => ({ ...p, company_name: a.legal_name })); setShowCompanyAutocomplete(false); }}>
                       {a.legal_name}
                     </div>
                   ))}

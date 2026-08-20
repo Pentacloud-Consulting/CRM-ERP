@@ -1,5 +1,6 @@
 .page {
   max-width: 1400px;
+  width: 100%;
   animation: fadeInUp var(--transition-slow) ease both;
 }
 .header {
@@ -7,6 +8,8 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 .title {
   font-size: var(--text-2xl);
@@ -49,6 +52,14 @@
 .pageWrapper {
   padding: var(--space-6) var(--space-8);
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding: var(--space-4);
+  }
 }
 
 .tableContainer {

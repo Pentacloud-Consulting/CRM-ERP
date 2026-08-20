@@ -191,11 +191,15 @@ export default function ComprehensiveAWB({ awb, shipment, account, signature, do
       {/* Signatures */}
       <div className={`${styles.docFooter} avoid-page-break`}>
         <div className={styles.signatureBox}>
-          <div className={styles.sigLabel}>SHIPPER / CLIENT ACCEPTANCE</div>
+          <div className={styles.sigTitle}>Shipper / Exporter Signature</div>
           {signature ? (
             signature.startsWith('TEXT:') ? (
-              <div style={{ fontFamily: '"Brush Script MT", "Bradley Hand", cursive', fontSize: '24px', color: '#1e293b', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
+              <div style={{ padding: 20, fontFamily: 'cursive', fontSize: 24, color: '#0f172a' }}>
                 {signature.replace('TEXT:', '')}
+              </div>
+            ) : signature.startsWith('TYPED:') ? (
+              <div style={{ padding: 20, fontFamily: signature.split(':')[1], fontSize: 28, color: '#0f172a' }}>
+                {signature.split(':').slice(2).join(':')}
               </div>
             ) : (
               <img src={signature} alt="Signature" className={styles.sigImage} />

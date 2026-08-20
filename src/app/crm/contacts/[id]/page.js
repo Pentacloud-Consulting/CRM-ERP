@@ -104,12 +104,12 @@ export default function ContactDetailPage() {
             <div className={lk.emptyState}>No shipments assigned specifically to this contact yet.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {shipments.map(s => {
+              {shipments.map((s, sIdx) => {
                 const isExpanded = expandedShipment === s.shipment_id;
                 const related = isExpanded ? getRelatedDataForShipment(s.shipment_id) : null;
 
                 return (
-                  <div key={s.shipment_id} className={lk.accordion}>
+                  <div key={s.shipment_id || sIdx} className={lk.accordion}>
                     <button className={lk.accordionHeader} onClick={() => toggleShipment(s.shipment_id)}>
                       <span className={`${lk.accordionChevron} ${isExpanded ? lk.accordionChevronOpen : ''}`}>
                         <ChevronRight size={16} />
@@ -135,11 +135,11 @@ export default function ContactDetailPage() {
                           <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
                             <div className={lk.relatedSectionTitle}><FileText size={14} /> Air Waybills ({related.awbs.length})</div>
                             {related.awbs.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No AWBs linked</div> :
-                              related.awbs.map(a => {
+                              related.awbs.map((a, aIdx) => {
                                 const carrier = CARRIERS.find(c => c.id === a.carrier_id);
                                 return (
                                   <div 
-                                    key={a.awb_id} 
+                                    key={a.awb_id || aIdx} 
                                     className={lk.relatedCard} 
                                     style={{ cursor: 'pointer', padding: '16px' }} 
                                     onClick={() => router.push(`/operations/awb/${a.awb_id}`)}
@@ -160,9 +160,9 @@ export default function ContactDetailPage() {
                           <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
                             <div className={lk.relatedSectionTitle}><Ship size={14} /> Booking Requests ({related.bookings.length})</div>
                             {related.bookings.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No bookings</div> :
-                              related.bookings.map(b => (
+                              related.bookings.map((b, bIdx) => (
                                 <div 
-                                  key={b.booking_request_id} 
+                                  key={b.booking_request_id || bIdx} 
                                   className={lk.relatedCard} 
                                   style={{ cursor: 'pointer', padding: '16px' }}
                                   onClick={() => router.push(`/operations/bookings/${b.booking_request_id}`)}
@@ -181,9 +181,9 @@ export default function ContactDetailPage() {
                           <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
                             <div className={lk.relatedSectionTitle}><Shield size={14} /> Customs Clearance ({related.customs.length})</div>
                             {related.customs.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No clearances</div> :
-                              related.customs.map(c => (
+                              related.customs.map((c, cIdx) => (
                                 <div 
-                                  key={c.clearance_id} 
+                                  key={c.clearance_id || cIdx} 
                                   className={lk.relatedCard}
                                   style={{ padding: '16px' }}
                                 >
@@ -203,7 +203,7 @@ export default function ContactDetailPage() {
                             {related.tracking.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No tracking events</div> : (
                               <div className={lk.timeline}>
                                 {related.tracking.map((t, i) => (
-                                  <div key={t.event_id} className={lk.timelineItem}>
+                                  <div key={t.event_id || i} className={lk.timelineItem}>
                                     <div className={lk.timelineLine}>
                                       <div className={lk.timelineDot} />
                                       {i < related.tracking.length - 1 && <div className={lk.timelineConnector} />}
@@ -223,11 +223,11 @@ export default function ContactDetailPage() {
                           {related.uldAllocations.length > 0 && (
                             <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
                               <div className={lk.relatedSectionTitle}>ULD Allocations ({related.uldAllocations.length})</div>
-                              {related.uldAllocations.map(u => {
+                              {related.uldAllocations.map((u, uIdx) => {
                                 const uld = state.ulds.find(ud => ud.uld_id === u.uld_id);
                                 return (
                                   <div 
-                                    key={u.allocation_id} 
+                                    key={u.allocation_id || uIdx} 
                                     className={lk.relatedCard}
                                     style={{ cursor: 'pointer', padding: '16px' }}
                                     onClick={() => router.push(`/operations/uld/${u.uld_id}`)}

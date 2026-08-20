@@ -211,6 +211,7 @@ export default function LeadDetailPage() {
             </div>
           )}
         </div>
+      </div>
 
       {/* Convert Modal */}
       <Modal

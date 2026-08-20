@@ -369,10 +369,26 @@ export default function ShipmentDetailPage() {
 
       {/* Tracking Timeline */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <Truck size={16} />
-          Tracking Timeline
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
+            <Truck size={16} />
+            Tracking Timeline
+          </h2>
+          {events.length === 0 && bookings.length > 0 && (
+            <Button size="small" variant="secondary" onClick={() => {
+              const confirmedBooking = bookings.find(b => b.status === 'Space Confirmed') || bookings[0];
+              dispatch({
+                type: 'SIMULATE_FLIGHT_TRACKING',
+                payload: {
+                  shipment_id: shipment.shipment_id,
+                  flight_date: confirmedBooking.confirmed_flight_date || confirmedBooking.requested_flight_date,
+                  origin_airport: shipment.origin_airport,
+                  destination_airport: shipment.destination_airport,
+                }
+              });
+            }}>Auto-Track Flight</Button>
+          )}
+        </div>
         <div className={styles.timelineCard}>
           <StatusTimeline events={events} />
         </div>
