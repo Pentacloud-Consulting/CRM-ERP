@@ -111,15 +111,36 @@ export function generateSeedData() {
 
   // CRM
   const organizations = [
-    { org_id: 'ORG-0001', legal_name: 'Qatar Airways Cargo', code: 'QR', org_type: 'Carrier', status: 'Active', created_at: new Date().toISOString() },
-    { org_id: 'ORG-0002', legal_name: 'Emirates SkyCargo', code: 'EK', org_type: 'Carrier', status: 'Active', created_at: new Date().toISOString() },
-    { org_id: 'ORG-0003', legal_name: 'Lufthansa Cargo', code: 'LH', org_type: 'Carrier', status: 'Active', created_at: new Date().toISOString() },
-    { org_id: 'ORG-0004', legal_name: 'Cathay Pacific Cargo', code: 'CX', org_type: 'Carrier', status: 'Active', created_at: new Date().toISOString() },
-    { org_id: 'ORG-0005', legal_name: 'Singapore Airlines Cargo', code: 'SQ', org_type: 'Carrier', status: 'Active', created_at: new Date().toISOString() },
-    { org_id: 'ORG-0006', legal_name: 'FedEx Express', code: 'FX', org_type: 'Carrier', status: 'Active', created_at: new Date().toISOString() }
+    // Airlines
+    { org_id: 'ORG-0001', legal_name: 'Qatar Airways Cargo', code: 'QR', org_type: 'Carrier', carrier_type: 'Airline', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0002', legal_name: 'Emirates SkyCargo', code: 'EK', org_type: 'Carrier', carrier_type: 'Airline', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0003', legal_name: 'Lufthansa Cargo', code: 'LH', org_type: 'Carrier', carrier_type: 'Airline', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0004', legal_name: 'Cathay Pacific Cargo', code: 'CX', org_type: 'Carrier', carrier_type: 'Airline', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0005', legal_name: 'Singapore Airlines Cargo', code: 'SQ', org_type: 'Carrier', carrier_type: 'Airline', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0006', legal_name: 'FedEx Express', code: 'FX', org_type: 'Carrier', carrier_type: 'Airline', status: 'Active', created_at: new Date().toISOString() },
+    
+    // Shipping Lines
+    { org_id: 'ORG-0007', legal_name: 'Maersk Line', code: 'MSK', org_type: 'Carrier', carrier_type: 'Shipping Line', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0008', legal_name: 'MSC', code: 'MSC', org_type: 'Carrier', carrier_type: 'Shipping Line', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0009', legal_name: 'CMA CGM', code: 'CMA', org_type: 'Carrier', carrier_type: 'Shipping Line', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0010', legal_name: 'Hapag-Lloyd', code: 'HAP', org_type: 'Carrier', carrier_type: 'Shipping Line', status: 'Active', created_at: new Date().toISOString() },
+    
+    // Trucking Companies
+    { org_id: 'ORG-0011', legal_name: 'DHL Freight', code: 'DHL', org_type: 'Carrier', carrier_type: 'Trucking Company', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0012', legal_name: 'FedEx Freight', code: 'FDX', org_type: 'Carrier', carrier_type: 'Trucking Company', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0013', legal_name: 'Aramex', code: 'ARM', org_type: 'Carrier', carrier_type: 'Trucking Company', status: 'Active', created_at: new Date().toISOString() },
+    { org_id: 'ORG-0014', legal_name: 'Blue Dart', code: 'BLD', org_type: 'Carrier', carrier_type: 'Trucking Company', status: 'Active', created_at: new Date().toISOString() }
   ];
-  const contacts = [];
-  const opportunities = [];
+  const contacts = [
+    { contact_id: 'con-0001', first_name: 'Jane', last_name: 'Doe', email: 'jane.doe@pentacloud.com', phone: '+1-555-0100', org_id: 'ORG-0001', is_primary: true, created_at: new Date().toISOString() },
+  ];
+  
+  const opportunities = [
+    { opportunity_id: 'opp-0001', title: 'TechNova Q3 Electronics Shipping', org_id: 'ORG-0001', contact_id: 'con-0001', pipeline_value: 45000, currency_code: 'USD', stage: 'Proposal', source: 'Referral', status: 'Active', transport_mode: 'AIR', route_type: 'International', origin_location: 'SFO', destination_location: 'LHR', cargo_type: 'Electronics', incoterm: 'CIF', est_pieces: 150, est_gross_weight_kg: 2500, created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
+    { opportunity_id: 'opp-0002', title: 'GlobalTech Auto Parts', org_id: 'ORG-0002', contact_id: null, pipeline_value: 120000, currency_code: 'USD', stage: 'Negotiation', source: 'Website', status: 'Active', transport_mode: 'SEA', route_type: 'International', origin_location: 'SHA', destination_location: 'LAX', cargo_type: 'Automotive', incoterm: 'FOB', est_pieces: 5, est_gross_weight_kg: 18000, created_at: new Date(Date.now() - 86400000 * 12).toISOString() },
+    { opportunity_id: 'opp-0003', title: 'MedSupply Urgent Vaccines', org_id: 'ORG-0003', contact_id: null, pipeline_value: 8500, currency_code: 'USD', stage: 'Qualifying', source: 'Direct Call', status: 'Active', transport_mode: 'AIR', route_type: 'Domestic', origin_location: 'JFK', destination_location: 'ORD', cargo_type: 'Pharma / Cold Chain', incoterm: 'EXW', est_pieces: 20, est_gross_weight_kg: 400, created_at: new Date(Date.now() - 86400000 * 2).toISOString() }
+  ];
+  
   const leads = [];
 
   // Operations - Shipments

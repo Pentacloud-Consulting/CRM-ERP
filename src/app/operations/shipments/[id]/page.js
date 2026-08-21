@@ -2,13 +2,15 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Package, Plane, FileText, ShieldCheck, AlertTriangle, MapPin, Truck, Edit, ArrowRight, CheckCircle, Copy, Clock, Zap, RefreshCw, CalendarDays, ClipboardList, PartyPopper } from 'lucide-react';
+import { ArrowLeft, Package, Plane, FileText, ShieldCheck, AlertTriangle, MapPin, Truck, Edit, ArrowRight, CheckCircle, Copy, Clock, Zap, RefreshCw, CalendarDays, ClipboardList, PartyPopper, ChevronRight } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { formatDate, formatDateTime, formatWeight, formatCurrency, formatAWBNumber, getStatusColor } from '@/lib/utils/formatters';
-import { SHIPMENT_STATUSES, SERVICE_TYPES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, LOCATIONS, TRANSPORT_PROVIDERS } from '@/lib/data/seedData';
+import { SHIPMENT_STATUSES, SERVICE_TYPES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, LOCATIONS, TRANSPORT_PROVIDERS, TRANSPORT_MODES, CONTAINER_TYPES, TRUCK_TYPES } from '@/lib/data/seedData';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
+import { getLocationName } from '@/app/crm/leads/page';
 import styles from './detail.module.css';
 
 // ──────────── ULD status constants ────────────
@@ -77,7 +79,11 @@ export default function ShipmentDetailPage() {
     const items = [];
     const evts = state.trackingEvents.filter(e => e.shipment_id === shipment.shipment_id).sort((a, b) => new Date(a.event_timestamp) - new Date(b.event_timestamp));
     evts.forEach(evt => {
-      items.push({ time: evt.event_timestamp, message: `${evt.event_description || evt.event_code}`, source: evt.tracking_source || 'System', type: 'auto' });
+      let desc = evt.event_description || evt.event_code;
+      if (desc.includes('{"name"')) {
+        try { desc = desc.replace(/\{.*\}/g, match => getLocationName(match)); } catch(e) {}
+      }
+      items.push({ time: evt.event_timestamp, message: desc, source: evt.tracking_source || 'System', type: 'auto' });
     });
     state.domainEvents?.filter(de => de.message?.includes(shipment.shipment_reference) || de.message?.includes(shipment.shipment_id)).forEach(de => {
       items.push({ time: de.timestamp, message: de.message, source: 'System', type: 'system' });
@@ -128,7 +134,7 @@ export default function ShipmentDetailPage() {
   const confirmedBooking = bookings.find(b => b.status === 'Space Confirmed') || bookings[0];
   const confirmedCarrier = confirmedBooking ? state.organizations.find(c => c.org_id === confirmedBooking.carrier_id) : null;
   const carriers = state.organizations.filter(o => o.org_type === 'Carrier');
-  const isBookingReady = shipment.service_type && shipment.cargo_type && shipment.origin_airport && shipment.destination_airport;
+  const isBookingReady = shipment.service_type && shipment.cargo_type && (shipment.origin_airport || shipment.origin_location) && (shipment.destination_airport || shipment.destination_location);
 
   // ULD status resolution
   const primaryULDAlloc = uldAllocations[0];
@@ -148,7 +154,7 @@ export default function ShipmentDetailPage() {
     { key: 'booking', label: 'Booking', icon: CalendarDays, animClass: 'icon-pulse', completed: isBookingConfirmed },
     { key: 'awb', label: 'AWB & Docs', icon: FileText, animClass: 'icon-float', completed: mawb && allDocsSigned },
     { key: 'origin_customs', label: 'Origin Customs', icon: ShieldCheck, animClass: 'icon-glow', completed: exportClearances.length > 0 },
-    { key: 'uld', label: 'ULD', icon: Package, animClass: 'icon-rotate', completed: isULDDeliveredToAirline, skip: shipment.cargo_type === 'Loose' },
+    { key: 'uld', label: shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD', icon: Package, animClass: 'icon-rotate', completed: isULDDeliveredToAirline, skip: shipment.cargo_type === 'Loose' },
     { key: 'manifest', label: 'Manifest', icon: ClipboardList, animClass: 'icon-draw', completed: manifestLineItems.length > 0 },
     { key: 'tracking', label: 'Flight Tracking', icon: Plane, animClass: 'icon-fly', completed: hasARR },
     { key: 'dest_customs', label: 'Dest. Customs', icon: ShieldCheck, animClass: 'icon-scan', completed: importClearances.length > 0 },
@@ -175,13 +181,13 @@ export default function ShipmentDetailPage() {
     nextStep = { title: 'Action Required: Origin Customs', desc: 'File export clearance before ULD build-up.', action: 'File Customs', onClick: () => openQuickCustoms('Export') };
   } else if (shipment.cargo_type !== 'Loose' && !isULDDeliveredToAirline) {
     nextStep = uldAllocations.length === 0
-      ? { title: 'Action Required: ULD Build-Up', desc: 'Assign shipment to a ULD container.', action: 'Assign to ULD', onClick: openQuickULD }
-      : { title: 'ULD In Progress', desc: `Current: ${primaryULD?.status || 'Unknown'}. Update ULD status to proceed.`, action: 'Update ULD', onClick: () => handleAdvanceULD() };
+      ? { title: `Action Required: ${shipment.transport_mode === 'SEA' ? 'Container Stuffing' : shipment.transport_mode === 'ROAD' ? 'Vehicle Loading' : 'ULD Build-Up'}`, desc: `Assign shipment to ${shipment.transport_mode === 'SEA' ? 'a container' : shipment.transport_mode === 'ROAD' ? 'a vehicle' : 'a ULD'}.`, action: `Assign to ${shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'}`, onClick: openQuickULD }
+      : { title: `${shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'} In Progress`, desc: `Current: ${primaryULD?.status || 'Unknown'}. Update status to proceed.`, action: `Update ${shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'}`, onClick: () => handleAdvanceULD() };
   } else if (manifestLineItems.length === 0) {
-    nextStep = { title: 'Action Required: Flight Manifest', desc: 'Assign to flight manifest for loading.', action: 'Add to Manifest', onClick: openQuickManifest };
+    nextStep = { title: `Action Required: Transport Manifest`, desc: 'Assign to transport manifest for routing.', action: 'Add to Manifest', onClick: openQuickManifest };
   } else if (events.length === 0) {
-    nextStep = { title: 'Ready for Flight', desc: 'Initiate flight tracking.', action: 'Start Tracking', onClick: () => {
-      dispatch({ type: 'SIMULATE_FLIGHT_TRACKING', payload: { shipment_id: shipment.shipment_id, flight_date: confirmedBooking?.confirmed_flight_date || confirmedBooking?.requested_flight_date, origin_airport: shipment.origin_airport, destination_airport: shipment.destination_airport } });
+    nextStep = { title: `Ready for ${shipment.transport_mode === 'SEA' ? 'Voyage' : shipment.transport_mode === 'ROAD' ? 'Transit' : 'Flight'}`, desc: `Initiate ${shipment.transport_mode === 'SEA' ? 'vessel' : shipment.transport_mode === 'ROAD' ? 'vehicle' : 'flight'} tracking.`, action: 'Start Tracking', onClick: () => {
+      dispatch({ type: 'SIMULATE_FLIGHT_TRACKING', payload: { shipment_id: shipment.shipment_id, flight_date: confirmedBooking?.confirmed_flight_date || confirmedBooking?.requested_flight_date, origin_airport: getLocationName(shipment.origin_airport || shipment.origin_location), destination_airport: getLocationName(shipment.destination_airport || shipment.destination_location), mode: shipment.transport_mode } });
     }};
   } else if (!hasARR) {
     nextStep = { title: 'In Transit', desc: 'Flight is airborne. Waiting for arrival update.', action: null };
@@ -195,8 +201,14 @@ export default function ShipmentDetailPage() {
   const handleOpenEdit = () => {
     setEditData({
       shipment_reference: shipment.shipment_reference, org_id: shipment.org_id,
+      transport_mode: shipment.transport_mode || 'AIR',
       service_type: shipment.service_type || 'Airport-to-Airport', cargo_type: shipment.cargo_type || 'General',
       origin_airport: shipment.origin_airport || '', destination_airport: shipment.destination_airport || '',
+      origin_location: shipment.origin_location || '', destination_location: shipment.destination_location || '',
+      port_of_loading: shipment.port_of_loading || '', port_of_discharge: shipment.port_of_discharge || '',
+      flight_number: shipment.flight_number || '',
+      container_type: shipment.container_type || '', container_number: shipment.container_number || '', voyage_number: shipment.voyage_number || '',
+      truck_type: shipment.truck_type || '', vehicle_number: shipment.vehicle_number || '', driver_name: shipment.driver_name || '',
       incoterm: shipment.incoterm || 'CPT', status: shipment.status,
       pieces: shipment.pieces, gross_weight_kg: shipment.gross_weight_kg,
       chargeable_weight_kg: shipment.chargeable_weight_kg,
@@ -207,12 +219,19 @@ export default function ShipmentDetailPage() {
 
   const handleSaveEdit = () => {
     dispatch({ type: 'UPDATE_SHIPMENT', payload: {
-      shipment_id: shipment.shipment_id, service_type: editData.service_type, cargo_type: editData.cargo_type,
+      shipment_id: shipment.shipment_id, 
+      transport_mode: editData.transport_mode,
+      service_type: editData.service_type, cargo_type: editData.cargo_type,
       origin_airport: editData.origin_airport, destination_airport: editData.destination_airport,
+      origin_location: editData.origin_location, destination_location: editData.destination_location,
+      port_of_loading: editData.port_of_loading, port_of_discharge: editData.port_of_discharge,
+      flight_number: editData.flight_number,
+      container_type: editData.container_type, container_number: editData.container_number, voyage_number: editData.voyage_number,
+      truck_type: editData.truck_type, vehicle_number: editData.vehicle_number, driver_name: editData.driver_name,
       incoterm: editData.incoterm, status: editData.status,
       pieces: Number(editData.pieces) || 0, gross_weight_kg: Number(editData.gross_weight_kg) || 0,
       chargeable_weight_kg: Number(editData.chargeable_weight_kg) || 0,
-      special_handling_codes: editData.special_handling_codes.split(',').map(s => s.trim()).filter(Boolean)
+      special_handling_codes: (typeof editData.special_handling_codes === 'string' ? editData.special_handling_codes : '').split(',').map(s => s.trim()).filter(Boolean)
     }});
     setShowEdit(false);
   };
@@ -295,6 +314,14 @@ export default function ShipmentDetailPage() {
     }
   };
 
+  const handleRevertULD = () => {
+    if (!primaryULD) return;
+    const prevIndex = Math.max((uldCurrentIndex - 1), 0);
+    if (prevIndex < uldCurrentIndex) {
+      dispatch({ type: 'UPDATE_ULD_STATUS', payload: { uld_id: primaryULD.uld_id, status: ULD_STATUSES[prevIndex], updated_by: 'Operations Team (Reverted)' } });
+    }
+  };
+
   const handleAdvanceFlightTracking = () => {
     let newCode = '';
     let desc = '';
@@ -317,6 +344,24 @@ export default function ShipmentDetailPage() {
     }});
   };
 
+  const handleRevertFlightTracking = () => {
+    let removeCode = '';
+    if (hasARR) {
+      removeCode = 'ARR';
+    } else if (hasDEP) {
+      removeCode = 'DEP';
+    } else if (hasRCS) {
+      removeCode = 'RCS';
+    } else {
+      return;
+    }
+    
+    dispatch({ type: 'REMOVE_TRACKING_EVENT', payload: {
+      shipment_id: shipment.shipment_id,
+      event_code: removeCode
+    }});
+  };
+
 
   // ──────────── RENDER ────────────
   return (
@@ -331,7 +376,11 @@ export default function ShipmentDetailPage() {
             <Badge variant={getStatusColor(shipment.status)} dot>{shipment.status}</Badge>
           </div>
           <div className={styles.headerMeta}>
-            <span className={styles.route}><MapPin size={14} />{shipment.origin_airport} → {shipment.destination_airport}</span>
+            <div className={styles.headerRouteLocations}>
+              <div className={styles.headerAirport}>{getLocationName(shipment.origin_airport || shipment.origin_location)}</div>
+              <ChevronRight className={styles.headerRouteArrow} size={20} />
+              <div className={styles.headerAirport}>{getLocationName(shipment.destination_airport || shipment.destination_location)}</div>
+            </div>
             <span>·</span>
             <span>{account?.legal_name || '—'}</span>
             <span>·</span>
@@ -441,7 +490,7 @@ export default function ShipmentDetailPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.5 }}
           >
-            {shipment.shipment_reference} — {shipment.origin_airport || shipment.origin_location} → {shipment.destination_airport || shipment.destination_location}
+            {shipment.shipment_reference} — {getLocationName(shipment.origin_airport || shipment.origin_location)} → {getLocationName(shipment.destination_airport || shipment.destination_location)}
           </motion.p>
           <motion.div 
             className={styles.deliveredStats}
@@ -520,25 +569,30 @@ export default function ShipmentDetailPage() {
         <div className={styles.stat}><span className={styles.statLabel}>Incoterm</span><span className={styles.statValue}>{shipment.incoterm}</span></div>
       </div>
 
-      {/* ══════ SECTION 3: ULD TRACKING ══════ */}
+      {/* ══════ SECTION 3: EQUIPMENT TRACKING ══════ */}
       {(uldAllocations.length > 0 || (exportClearances.length > 0 && shipment.cargo_type !== 'Loose')) && (
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}><Package size={16} /> ULD Tracking</h2>
+            <h2 className={styles.sectionTitle}><Package size={16} /> {shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'} Tracking</h2>
             <span className={styles.manualBadge}><Edit size={10} /> Manual</span>
           </div>
           {uldAllocations.length > 0 ? (
-            <div className={styles.card}>
+            <div className={styles.card} style={{ cursor: 'pointer' }} onClick={() => router.push('/operations/uld')}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>ULD #{primaryULD?.uld_number}</div>
+                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>{shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'} #{primaryULD?.uld_number}</div>
                   <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{primaryULD?.type} · {formatWeight(primaryULDAlloc?.weight_kg || 0)} packed</div>
                 </div>
-                {uldCurrentIndex < ULD_STATUSES.length - 1 && (
-                  <Button size="small" onClick={handleAdvanceULD}>Update Status →</Button>
-                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {uldCurrentIndex > 0 && (
+                    <Button size="small" variant="secondary" onClick={(e) => { e.stopPropagation(); handleRevertULD(); }}>← Revert</Button>
+                  )}
+                  {uldCurrentIndex < ULD_STATUSES.length - 1 && (
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleAdvanceULD(); }}>Update Status →</Button>
+                  )}
+                </div>
               </div>
-              {/* ULD Stepper */}
+              {/* Equipment Stepper */}
               <div className={styles.uldStepper}>
                 {ULD_STATUSES.map((step, idx) => {
                   const isCompleted = idx <= uldCurrentIndex;
@@ -565,7 +619,7 @@ export default function ShipmentDetailPage() {
               </div>
             </div>
           ) : (
-            <div className={styles.emptyCard}>No ULD assigned. Complete Origin Customs first, then assign a ULD.</div>
+            <div className={styles.emptyCard}>No equipment assigned. Complete Origin Customs first, then assign to {shipment.transport_mode === 'SEA' ? 'a container' : shipment.transport_mode === 'ROAD' ? 'a vehicle' : 'a ULD'}.</div>
           )}
         </div>
       )}
@@ -582,9 +636,9 @@ export default function ShipmentDetailPage() {
               const manifest = getManifest(item.manifest_id);
               const car = manifest ? state.organizations.find(c => c.org_id === manifest.carrier_id) : null;
               return (
-                <div key={item.manifest_line_item_id} style={{ cursor: 'pointer' }} onClick={() => router.push('/operations/manifests')}>
+                <div key={item.manifest_line_item_id} style={{ cursor: 'pointer' }} onClick={() => router.push('/operations/transport-manifests')}>
                   <div className={styles.infoRow}><span className={styles.infoLabel}>Flight</span><span className={styles.flight}>{car?.code} {manifest?.flight_number}</span></div>
-                  <div className={styles.infoRow}><span className={styles.infoLabel}>Route</span><span>{manifest?.departure_airport} → {manifest?.arrival_airport}</span></div>
+                  <div className={styles.infoRow}><span className={styles.infoLabel}>Route</span><span>{getLocationName(manifest?.departure_airport)} → {getLocationName(manifest?.arrival_airport)}</span></div>
                   <div className={styles.infoRow}><span className={styles.infoLabel}>Date</span><span>{formatDate(manifest?.flight_date)}</span></div>
                   <div className={styles.infoRow}><span className={styles.infoLabel}>Status</span><Badge variant={getStatusColor(manifest?.status)} dot>{manifest?.status}</Badge></div>
                   <div className={styles.infoRow}><span className={styles.infoLabel}>Source</span><span className={styles.flightAutoLabel} style={{ marginTop: 0 }}><CheckCircle size={12} /> Booking Flight</span></div>
@@ -619,6 +673,9 @@ export default function ShipmentDetailPage() {
                     <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Last synced</div>
                     <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>{formatDateTime(events[events.length - 1]?.event_timestamp || events[0]?.event_timestamp)}</div>
                   </div>
+                  {flightTrackingIndex >= 0 && (
+                    <Button size="small" variant="secondary" onClick={handleRevertFlightTracking}>← Revert</Button>
+                  )}
                   {!hasARR && <Button size="small" onClick={handleAdvanceFlightTracking}>Update Status →</Button>}
                 </div>
               </div>
@@ -657,7 +714,7 @@ export default function ShipmentDetailPage() {
         <h2 className={styles.sectionTitle}><ShieldCheck size={16} /> Customs Clearance</h2>
         <div className={styles.customsGrid}>
           {/* Origin Customs */}
-          <div className={`${styles.customsCard} ${exportClearances.length > 0 ? styles.customsDone : ''}`}>
+          <div className={`${styles.customsCard} ${exportClearances.length > 0 ? styles.customsDone : ''}`} style={{ cursor: 'pointer' }} onClick={() => router.push('/operations/customs')}>
             <div className={styles.customsCardHeader}>
               <span className={styles.customsCardTitle}>Origin Customs</span>
               {exportClearances.length > 0 ? <Badge variant="success" dot>Done</Badge> : <Badge variant="neutral">Pending</Badge>}
@@ -680,7 +737,7 @@ export default function ShipmentDetailPage() {
           </div>
 
           {/* Destination Customs */}
-          <div className={`${styles.customsCard} ${importClearances.length > 0 ? styles.customsDone : ''}`}>
+          <div className={`${styles.customsCard} ${importClearances.length > 0 ? styles.customsDone : ''}`} style={{ cursor: 'pointer' }} onClick={() => router.push('/operations/customs')}>
             <div className={styles.customsCardHeader}>
               <span className={styles.customsCardTitle}>Destination Customs</span>
               {importClearances.length > 0 ? <Badge variant="success" dot>Done</Badge> : <Badge variant="neutral">Pending</Badge>}
@@ -709,7 +766,7 @@ export default function ShipmentDetailPage() {
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}><FileText size={16} /> Air Waybill</h2>
           {mawb ? (
-            <div className={styles.infoCard} onClick={() => router.push(`/operations/awb/${mawb.awb_id}`)}>
+            <div className={styles.infoCard} style={{ cursor: 'pointer' }} onClick={() => router.push(`/operations/transport-docs/${mawb.doc_id || mawb.awb_id}`)}>
               <div className={styles.infoRow}><span className={styles.infoLabel}>MAWB</span><span className={styles.awbNum}>{formatAWBNumber(mawb.awb_number)}</span></div>
               <div className={styles.infoRow}><span className={styles.infoLabel}>FWB Status</span><Badge variant={getStatusColor(mawb.fwb_status)}>{mawb.fwb_status}</Badge></div>
               <div className={styles.infoRow}><span className={styles.infoLabel}>Freight Terms</span><span>{mawb.freight_terms}</span></div>
@@ -723,7 +780,7 @@ export default function ShipmentDetailPage() {
           {bookings.length > 0 ? (
             <div className={styles.bookingsList}>
               {bookings.map(bkr => (
-                <div key={bkr.booking_request_id} className={styles.infoCard}>
+                <div key={bkr.booking_request_id} className={styles.infoCard} style={{ cursor: 'pointer' }} onClick={() => router.push('/operations/bookings')}>
                   <div className={styles.infoRow}><span className={styles.infoLabel}>Status</span><Badge variant={getStatusColor(bkr.status)} dot>{bkr.status}</Badge></div>
                   {bkr.confirmed_flight_number && <div className={styles.infoRow}><span className={styles.infoLabel}>Flight</span><span className={styles.flight}>{bkr.confirmed_flight_number}</span></div>}
                   <div className={styles.infoRow}><span className={styles.infoLabel}>Date</span><span>{formatDate(bkr.confirmed_flight_date || bkr.requested_flight_date)}</span></div>
@@ -808,13 +865,46 @@ export default function ShipmentDetailPage() {
             <div className="form-group"><label className="form-label">Account</label><select className="form-select" value={editData.org_id || ''} disabled><option value={editData.org_id}>{account?.legal_name || '—'}</option></select></div>
           </div>
           <div className="form-row">
+            <div className="form-group"><label className="form-label">Transport Mode</label><select className="form-select" value={editData.transport_mode || 'AIR'} onChange={e => setEditData({ ...editData, transport_mode: e.target.value })}>{TRANSPORT_MODES.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
             <div className="form-group"><label className="form-label">Service Type</label><select className="form-select" value={editData.service_type || ''} onChange={e => setEditData({ ...editData, service_type: e.target.value })}>{SERVICE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="form-group"><label className="form-label">Cargo Type</label><select className="form-select" value={editData.cargo_type || ''} onChange={e => setEditData({ ...editData, cargo_type: e.target.value })}>{CARGO_TYPES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
           </div>
-          <div className="form-row">
-            <div className="form-group"><label className="form-label">Origin Location</label><select className="form-select" value={editData.origin_airport || editData.origin_location || ''} onChange={e => setEditData({ ...editData, origin_airport: e.target.value, origin_location: e.target.value })}><option value="">Select Origin...</option>{Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}</select></div>
-            <div className="form-group"><label className="form-label">Destination Location</label><select className="form-select" value={editData.destination_airport || editData.destination_location || ''} onChange={e => setEditData({ ...editData, destination_airport: e.target.value, destination_location: e.target.value })}><option value="">Select Destination...</option>{Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}</select></div>
-          </div>
+          
+          {(editData.transport_mode === 'AIR' || !editData.transport_mode) && (
+            <div className="form-row">
+              <div className="form-group"><label className="form-label">Origin Airport</label><AsyncLocationSelect value={editData.origin_airport || editData.origin_location || ''} onChange={val => setEditData({ ...editData, origin_airport: val, origin_location: val })} placeholder="Select Origin..." /></div>
+              <div className="form-group"><label className="form-label">Destination Airport</label><AsyncLocationSelect value={editData.destination_airport || editData.destination_location || ''} onChange={val => setEditData({ ...editData, destination_airport: val, destination_location: val })} placeholder="Select Destination..." /></div>
+              <div className="form-group"><label className="form-label">Flight Number</label><input className="form-input" value={editData.flight_number || ''} onChange={e => setEditData({ ...editData, flight_number: e.target.value })} /></div>
+            </div>
+          )}
+
+          {editData.transport_mode === 'SEA' && (
+            <>
+              <div className="form-row">
+                <div className="form-group"><label className="form-label">Port of Loading (Origin)</label><AsyncLocationSelect value={editData.port_of_loading || editData.origin_location || ''} onChange={val => setEditData({ ...editData, port_of_loading: val, origin_location: val })} placeholder="Select Origin Port..." /></div>
+                <div className="form-group"><label className="form-label">Port of Discharge (Dest)</label><AsyncLocationSelect value={editData.port_of_discharge || editData.destination_location || ''} onChange={val => setEditData({ ...editData, port_of_discharge: val, destination_location: val })} placeholder="Select Dest Port..." /></div>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label className="form-label">Container Type</label><select className="form-select" value={editData.container_type || ''} onChange={e => setEditData({ ...editData, container_type: e.target.value })}><option value="">Select Container...</option>{CONTAINER_TYPES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Container Number</label><input className="form-input" value={editData.container_number || ''} onChange={e => setEditData({ ...editData, container_number: e.target.value })} /></div>
+                <div className="form-group"><label className="form-label">Voyage Number</label><input className="form-input" value={editData.voyage_number || ''} onChange={e => setEditData({ ...editData, voyage_number: e.target.value })} /></div>
+              </div>
+            </>
+          )}
+
+          {editData.transport_mode === 'ROAD' && (
+            <>
+              <div className="form-row">
+                <div className="form-group"><label className="form-label">Origin Location</label><AsyncLocationSelect value={editData.origin_location || ''} onChange={val => setEditData({ ...editData, origin_location: val })} placeholder="Search any city..." /></div>
+                <div className="form-group"><label className="form-label">Destination Location</label><AsyncLocationSelect value={editData.destination_location || ''} onChange={val => setEditData({ ...editData, destination_location: val })} placeholder="Search any city..." /></div>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label className="form-label">Truck Type</label><select className="form-select" value={editData.truck_type || ''} onChange={e => setEditData({ ...editData, truck_type: e.target.value })}><option value="">Select Truck...</option>{TRUCK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Vehicle Number</label><input className="form-input" value={editData.vehicle_number || ''} onChange={e => setEditData({ ...editData, vehicle_number: e.target.value })} /></div>
+                <div className="form-group"><label className="form-label">Driver Name</label><input className="form-input" value={editData.driver_name || ''} onChange={e => setEditData({ ...editData, driver_name: e.target.value })} /></div>
+              </div>
+            </>
+          )}
           <div className="form-row">
             <div className="form-group" style={{ flex: 2 }}><label className="form-label">Special Handling Codes (Comma separated)</label><input className="form-input" value={editData.special_handling_codes || ''} onChange={e => setEditData({ ...editData, special_handling_codes: e.target.value })} placeholder="e.g. PER, DGR, AVI" /></div>
             <div className="form-group"><label className="form-label">Pieces</label><input className="form-input" type="number" value={editData.pieces || ''} onChange={e => setEditData({ ...editData, pieces: e.target.value })} /></div>
@@ -847,13 +937,13 @@ export default function ShipmentDetailPage() {
             }}>
               <option value="">Select Flight with Available Capacity...</option>
               {state.transportManifests
-                .filter(m => m.departure_airport === shipment.origin_airport && m.arrival_airport === shipment.destination_airport)
+                .filter(m => (m.departure_airport === shipment.origin_airport || m.departure_airport === shipment.origin_location) && (m.arrival_airport === shipment.destination_airport || m.arrival_airport === shipment.destination_location))
                 .map(m => {
                   const allocated = getManifestTotalAllocatedWeight(m.manifest_id);
                   const available = Math.max(0, (m.max_weight_kg || 10000) - allocated);
                   const isDisabled = available < (shipment.chargeable_weight_kg || 0);
                   const car = state.organizations.find(c => c.org_id === m.carrier_id);
-                  return <option key={m.manifest_id} value={m.manifest_id} disabled={isDisabled}>{car?.code} {m.flight_number} ({m.departure_airport}➔{m.arrival_airport}) on {formatDate(m.flight_date)} — {formatWeight(available)} available</option>;
+                  return <option key={m.manifest_id} value={m.manifest_id} disabled={isDisabled}>{car?.code} {m.flight_number} ({getLocationName(m.departure_airport)}➔{getLocationName(m.arrival_airport)}) on {formatDate(m.flight_date)} — {formatWeight(available)} available</option>;
                 })}
             </select>
           </div>
@@ -885,19 +975,21 @@ export default function ShipmentDetailPage() {
         </div>
       </Modal>
 
-      {/* ULD Modal */}
-      <Modal open={showQuickULD} onClose={() => setShowQuickULD(false)} title="Quick Action: Assign to ULD" subtitle="Pack this shipment into an airline container"
-        footer={<><Button variant="secondary" onClick={() => setShowQuickULD(false)}>Cancel</Button><Button onClick={handleCreateQuickULD} disabled={!quickULDData.uld_id}>Assign to ULD</Button></>}>
+      {/* Equipment Modal */}
+      <Modal open={showQuickULD} onClose={() => setShowQuickULD(false)} title={`Quick Action: Assign to ${shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'}`} subtitle={`Pack this shipment into ${shipment.transport_mode === 'SEA' ? 'a shipping container' : shipment.transport_mode === 'ROAD' ? 'a truck/trailer' : 'an airline container'}`}
+        footer={<><Button variant="secondary" onClick={() => setShowQuickULD(false)}>Cancel</Button><Button onClick={handleCreateQuickULD} disabled={!quickULDData.uld_id}>Assign to {shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'}</Button></>}>
         <div className={styles.form}>
           <div className="form-group">
-            <label className="form-label">ULD *</label>
+            <label className="form-label">{shipment.transport_mode === 'SEA' ? 'Container' : shipment.transport_mode === 'ROAD' ? 'Vehicle' : 'ULD'} *</label>
             <select className="form-select" value={quickULDData.uld_id || ''} onChange={e => setQuickULDData({ ...quickULDData, uld_id: e.target.value })}>
-              <option value="">Select ULD...</option>
-              {state.ulds.map(u => {
+              <option value="">Select Equipment...</option>
+              {state.ulds.filter(u => (u.transport_mode || 'AIR') === (shipment.transport_mode || 'AIR')).map(u => {
                 const allocated = getULDTotalAllocatedWeight(u.uld_id);
-                const available = Math.max(0, (u.max_gross_weight_kg || u.max_weight_kg || 0) - (u.tare_weight_kg || 0) - allocated);
+                // Graceful fallback to 10,000 if weight isn't defined
+                const maxW = u.max_gross_weight_kg || u.max_weight_kg || 10000;
+                const available = Math.max(0, maxW - (u.tare_weight_kg || 0) - allocated);
                 const isDisabled = available < (shipment.chargeable_weight_kg || 0);
-                return <option key={u.uld_id} value={u.uld_id} disabled={isDisabled}>{u.uld_number} ({u.type}) - {formatWeight(available)} available</option>;
+                return <option key={u.uld_id} value={u.uld_id} disabled={isDisabled}>{u.uld_number} ({u.type || u.uld_type}) - {formatWeight(available)} available</option>;
               })}
             </select>
           </div>
@@ -922,7 +1014,7 @@ export default function ShipmentDetailPage() {
                   <div className={styles.card}>
                     <div className={styles.infoRow}><span className={styles.infoLabel}>Airline</span><span style={{ fontWeight: 700 }}>{car?.name || '—'}</span></div>
                     <div className={styles.infoRow}><span className={styles.infoLabel}>Flight</span><span className={styles.flight}>{m.flight_number}</span></div>
-                    <div className={styles.infoRow}><span className={styles.infoLabel}>Route</span><span>{m.departure_airport} → {m.arrival_airport}</span></div>
+                    <div className={styles.infoRow}><span className={styles.infoLabel}>Route</span><span>{getLocationName(m.departure_airport)} → {getLocationName(m.arrival_airport)}</span></div>
                     <div className={styles.infoRow}><span className={styles.infoLabel}>Date</span><span>{formatDate(m.flight_date)}</span></div>
                   </div>
                 ) : null;
@@ -935,10 +1027,10 @@ export default function ShipmentDetailPage() {
                 <label className="form-label">Flight Manifest *</label>
                 <select className="form-select" value={quickManifestData.manifest_id || ''} onChange={e => setQuickManifestData({ ...quickManifestData, manifest_id: e.target.value })}>
                   <option value="">Select Flight Manifest...</option>
-                  {state.transportManifests.filter(m => m.departure_airport === shipment.origin_airport && m.arrival_airport === shipment.destination_airport).map(m => {
+                  {state.transportManifests.filter(m => (m.departure_airport === shipment.origin_airport || m.departure_airport === shipment.origin_location) && (m.arrival_airport === shipment.destination_airport || m.arrival_airport === shipment.destination_location)).map(m => {
                     const allocated = getManifestTotalAllocatedWeight(m.manifest_id);
                     const available = Math.max(0, (m.max_weight_kg || 10000) - allocated);
-                    return <option key={m.manifest_id} value={m.manifest_id}>{m.flight_number} ({m.departure_airport}-{m.arrival_airport}) on {formatDate(m.flight_date)} - {formatWeight(available)} available</option>;
+                    return <option key={m.manifest_id} value={m.manifest_id}>{m.flight_number} ({getLocationName(m.departure_airport)}-{getLocationName(m.arrival_airport)}) on {formatDate(m.flight_date)} - {formatWeight(available)} available</option>;
                   })}
                 </select>
               </div>

@@ -32,9 +32,9 @@ const NAV_ITEMS = [
     items: [
       { href: '/operations/shipments', label: 'Shipments', icon: Ship },
       { href: '/operations/bookings', label: 'Bookings', icon: Plane },
-      { href: '/operations/transport-docs', label: 'Air Waybills', icon: FileText },
-      { href: '/operations/transport-manifests', label: 'Flight Manifests', icon: Plane },
-      { href: '/operations/uld', label: 'ULD Build-Up', icon: Package },
+      { href: '/operations/transport-docs', label: 'Transport Docs', icon: FileText },
+      { href: '/operations/transport-manifests', label: 'Transport Manifests', icon: FileSpreadsheet },
+      { href: '/operations/uld', label: 'Equipment & Containers', icon: Package },
       { href: '/operations/tracking', label: 'Tracking Board', icon: MapPin },
       { href: '/operations/customs', label: 'Customs', icon: ShieldCheck, badgeKey: 'customsHolds' },
     ],

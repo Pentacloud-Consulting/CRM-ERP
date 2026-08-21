@@ -8,11 +8,16 @@ import Modal from '@/components/ui/Modal';
 import { Plus, Eye, Edit2, Trash2, Building2, Users, Briefcase, Package, DollarSign, Activity, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils/formatters';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
+import { TRANSPORT_MODES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, LEAD_SOURCES, LEAD_STATUSES } from '@/lib/data/seedData';
 import styles from './accounts.module.css';
 
 const EMPTY_ACCOUNT = {
   legal_name: '', account_tier: 'Standard', tax_id: '',
-  country: '', default_currency: 'USD', phone: '', website: '', industry: '', org_type: 'Customer'
+  country: '', default_currency: 'USD', phone: '', website: '', industry: '', org_type: 'Customer',
+  source: '', status: 'New', transport_mode: 'ROAD', route_type: 'Domestic',
+  origin_location: '', destination_location: '', cargo_type: 'General', incoterm: 'CPT',
+  est_pieces: '', est_gross_weight_kg: ''
 };
 
 export default function AccountsPage() {
@@ -24,6 +29,11 @@ export default function AccountsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
 
+  // ──────── Filter Accounts ────────
+  const customerAccounts = useMemo(() => {
+    return state.organizations.filter(org => org.org_type === 'Customer');
+  }, [state.organizations]);
+
   // ──────── KPI Data ────────
   const kpis = useMemo(() => {
     let totalRevenue = 0;
@@ -32,7 +42,7 @@ export default function AccountsPage() {
     let totalOpps = 0;
     let totalShipments = 0;
 
-    state.organizations.forEach(acc => {
+    customerAccounts.forEach(acc => {
       const contacts = getContactsForOrg(acc.org_id);
       const opps = getOpportunitiesForOrg(acc.org_id);
       const shipments = getShipmentsForOrg(acc.org_id);
@@ -53,14 +63,14 @@ export default function AccountsPage() {
     });
 
     return {
-      total: state.organizations.length,
+      total: customerAccounts.length,
       active: activeAccounts,
       contacts: totalContacts,
       opps: totalOpps,
       shipments: totalShipments,
       revenue: totalRevenue
     };
-  }, [state.organizations, getContactsForOrg, getOpportunitiesForOrg, getShipmentsForOrg]);
+  }, [customerAccounts, getContactsForOrg, getOpportunitiesForOrg, getShipmentsForOrg]);
 
   // ──────── Table Columns ────────
   const columns = [
@@ -121,7 +131,7 @@ export default function AccountsPage() {
           <button className={styles.actionBtn} title="Edit" onClick={(e) => { 
             e.stopPropagation(); 
             setEditingAccountId(row.org_id);
-            setNewAccount({ ...row });
+            setNewAccount({ ...EMPTY_ACCOUNT, ...row });
             setShowNew(true);
           }}>
             <Edit2 size={16} />
@@ -224,12 +234,12 @@ export default function AccountsPage() {
         </div>
 
         {/* ══════ TABLE ══════ */}
-        {state.organizations.length > 0 ? (
+        {customerAccounts.length > 0 ? (
           <>
             <div className={styles.tableContainer}>
               <DataTable 
                 columns={columns} 
-                data={state.organizations} 
+                data={customerAccounts} 
                 searchPlaceholder="Search accounts by name, industry, country..." 
                 onRowClick={(row) => router.push(`/crm/accounts/${row.org_id}`)}
               />
@@ -237,7 +247,7 @@ export default function AccountsPage() {
 
             {/* ══════ MOBILE CARDS ══════ */}
             <div className={styles.mobileCards}>
-              {state.organizations.map(acc => {
+              {customerAccounts.map(acc => {
                 const contacts = getContactsForOrg(acc.org_id).length;
                 const opps = getOpportunitiesForOrg(acc.org_id).length;
                 const shipments = getShipmentsForOrg(acc.org_id).length;
@@ -357,6 +367,75 @@ export default function AccountsPage() {
                 <option value="Premium">Premium</option>
                 <option value="Enterprise">Enterprise</option>
               </select>
+            </div>
+          </div>
+
+          {/* Lead/Logistics Information */}
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Logistics Information</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Source</label>
+              <select className="form-select" value={newAccount.source} onChange={e => setNewAccount(p => ({ ...p, source: e.target.value }))}>
+                <option value="">Select Source...</option>
+                {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <select className="form-select" value={newAccount.status} onChange={e => setNewAccount(p => ({ ...p, status: e.target.value }))}>
+                {LEAD_STATUSES.filter(s => s !== 'Converted').map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Transport Mode</label>
+              <select className="form-select" value={newAccount.transport_mode} onChange={e => setNewAccount(p => ({ ...p, transport_mode: e.target.value }))}>
+                {TRANSPORT_MODES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Route Type</label>
+              <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                <Badge variant={newAccount.route_type === 'Domestic' ? 'neutral' : 'primary'} dot>{newAccount.route_type}</Badge>
+              </div>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Origin Location</label>
+              <AsyncLocationSelect value={newAccount.origin_location} onChange={val => setNewAccount(p => ({ ...p, origin_location: val, route_type: (val && newAccount.destination_location && JSON.parse(val).country !== JSON.parse(newAccount.destination_location).country) ? 'International' : 'Domestic' }))} placeholder="Search origin..." />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Destination Location</label>
+              <AsyncLocationSelect value={newAccount.destination_location} onChange={val => setNewAccount(p => ({ ...p, destination_location: val, route_type: (val && newAccount.origin_location && JSON.parse(val).country !== JSON.parse(newAccount.origin_location).country) ? 'International' : 'Domestic' }))} placeholder="Search destination..." />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Cargo Type</label>
+              <select className="form-select" value={newAccount.cargo_type} onChange={e => setNewAccount(p => ({ ...p, cargo_type: e.target.value }))}>
+                {CARGO_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Incoterm</label>
+              <select className="form-select" value={newAccount.incoterm} onChange={e => setNewAccount(p => ({ ...p, incoterm: e.target.value }))}>
+                {INCOTERMS.map(i => <option key={i} value={i}>{INCOTERM_LABELS[i]}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Shipment Details */}
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Shipment Details</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Pieces</label>
+              <input className="form-input" type="number" value={newAccount.est_pieces} onChange={e => setNewAccount(p => ({ ...p, est_pieces: e.target.value }))} placeholder="0" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Gross Weight (kg)</label>
+              <input className="form-input" type="number" value={newAccount.est_gross_weight_kg} onChange={e => setNewAccount(p => ({ ...p, est_gross_weight_kg: e.target.value }))} placeholder="0" />
             </div>
           </div>
         </div>

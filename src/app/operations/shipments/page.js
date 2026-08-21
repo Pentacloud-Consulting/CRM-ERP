@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { formatDate, formatWeight, getStatusColor } from '@/lib/utils/formatters';
 import { SHIPMENT_STATUSES, SERVICE_TYPES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, LOCATIONS, TRANSPORT_MODES } from '@/lib/data/seedData';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
+import { getLocationName } from '@/app/crm/leads/page';
 import styles from './shipments.module.css';
  
 export default function ShipmentsPage() {
@@ -33,6 +35,7 @@ export default function ShipmentsPage() {
   });
 
   const getOrg = (id) => state.organizations.find(a => a.org_id === id);
+  const getContact = (id) => state.contacts.find(c => c.contact_id === id);
 
   // --- KPI & Pipeline Calculations ---
   const kpis = useMemo(() => {
@@ -77,13 +80,23 @@ export default function ShipmentsPage() {
     { key: 'status', label: 'Status', accessor: 'status', width: '130px',
       render: (row) => <Badge variant={getStatusColor(row.status)} dot>{row.status}</Badge> },
     { key: 'org', label: 'Customer', accessor: row => getOrganization(row.org_id)?.legal_name,
-      render: (row) => <span>{getOrganization(row.org_id)?.legal_name || '—'}</span> },
+      render: (row) => {
+        const org = getOrganization(row.org_id);
+        const contact = getContact(row.shipper_contact_id || row.consignee_contact_id || row.contact_id) || state.contacts.find(c => c.org_id === row.org_id);
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '13px' }}>{org?.legal_name || '—'}</span>
+            <span style={{ fontSize: '11px', color: '#64748B' }}>{contact?.full_name || '—'}</span>
+          </div>
+        );
+      } 
+    },
     { key: 'route', label: 'Route', accessor: row => `${row.origin_location}–${row.destination_location}`,
       render: (row) => (
         <span className={styles.route}>
-          <span className={styles.airport}>{row.origin_location}</span>
+          <span className={styles.airport}>{getLocationName(row.origin_location)}</span>
           <span className={styles.routeArrow}>→</span>
-          <span className={styles.airport}>{row.destination_location}</span>
+          <span className={styles.airport}>{getLocationName(row.destination_location)}</span>
         </span>
       ) },
     { key: 'cargo', label: 'Cargo', accessor: 'cargo_type', render: (row) => <span className={styles.cargoType}>{row.cargo_type}</span> },
@@ -365,17 +378,11 @@ export default function ShipmentsPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Origin Location</label>
-                  <select className="form-select" value={newShipment.origin_location} onChange={e => setNewShipment(p => ({ ...p, origin_location: e.target.value }))}>
-                    <option value="">Select Origin...</option>
-                    {activeLocations.map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-                  </select>
+                  <AsyncLocationSelect value={newShipment.origin_location} onChange={val => setNewShipment(p => ({ ...p, origin_location: val }))} placeholder="Search any city..." />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Destination Location</label>
-                  <select className="form-select" value={newShipment.destination_location} onChange={e => setNewShipment(p => ({ ...p, destination_location: e.target.value }))}>
-                    <option value="">Select Destination...</option>
-                    {activeLocations.map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-                  </select>
+                  <AsyncLocationSelect value={newShipment.destination_location} onChange={val => setNewShipment(p => ({ ...p, destination_location: val }))} placeholder="Search any city..." />
                 </div>
               </div>
             </div>
@@ -406,8 +413,8 @@ export default function ShipmentsPage() {
                       <label className="form-label">Container Type</label>
                       <select className="form-select" value={newShipment.container_type} onChange={e => setNewShipment(p => ({ ...p, container_type: e.target.value }))}>
                         <option value="">Select...</option>
-                        <option value="20GP">20' GP</option>
-                        <option value="40HC">40' HC</option>
+                        <option value="20GP">20&apos; GP</option>
+                        <option value="40HC">40&apos; HC</option>
                         <option value="Reefer">Reefer</option>
                       </select>
                     </div>

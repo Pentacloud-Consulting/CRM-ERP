@@ -7,8 +7,10 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { formatDate, formatWeight } from '@/lib/utils/formatters';
-import { Plane, Plus, Eye, Edit2, Download, Share2, Trash2, PlaneTakeoff, ShieldCheck, Activity, BarChart3, Globe, Compass, Target, Radar } from 'lucide-react';
-import { LOCATIONS } from '@/lib/data/seedData';
+import { Plane, Plus, Eye, Edit2, Download, Share2, Trash2, PlaneTakeoff, ShieldCheck, Activity, BarChart3, Globe, Compass, Target, Radar, Anchor, Truck } from 'lucide-react';
+import { LOCATIONS, TRANSPORT_MODES } from '@/lib/data/seedData';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
+import { getLocationName } from '@/app/crm/leads/page';
 import styles from './manifests.module.css';
 
 export default function ManifestsPage() {
@@ -16,7 +18,7 @@ export default function ManifestsPage() {
   const { state, dispatch, getManifestTotalAllocatedWeight } = useApp();
   const [showNew, setShowNew] = useState(false);
   const [newManifest, setNewManifest] = useState({
-    flight_number: '', flight_date: '', carrier_id: '',
+    flight_number: '', flight_date: '', carrier_id: '', transport_mode: 'AIR',
     departure_airport: '', arrival_airport: '', max_weight_kg: '', status: 'Draft'
   });
   const [showEdit, setShowEdit] = useState(false);
@@ -25,6 +27,9 @@ export default function ManifestsPage() {
 
   const getCarrier = (id) => state.organizations.find(c => c.org_id === id);
   const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
+  const airports = useMemo(() => Object.values(LOCATIONS).filter(l => l.type === 'Airport'), []);
+  const seaports = useMemo(() => Object.values(LOCATIONS).filter(l => l.type === 'Seaport'), []);
+  const allLocations = useMemo(() => Object.values(LOCATIONS), []);
 
   // Status mapping for premium flight badges
   const getFlightStatusVariant = (status) => {
@@ -69,7 +74,7 @@ export default function ManifestsPage() {
   const columns = [
     { 
       key: 'flight', 
-      label: 'FLIGHT', 
+      label: 'REFERENCE', 
       accessor: 'flight_number', 
       render: (row) => (
         <div className={styles.flightNumberCell}>
@@ -90,13 +95,15 @@ export default function ManifestsPage() {
     },
     { 
       key: 'route', 
-      label: 'ROUTE', 
+      label: 'ROUTING', 
       accessor: row => `${row.departure_airport}–${row.arrival_airport}`, 
       render: (row) => (
         <div className={styles.routeCell}>
-          <span className={styles.routeCode}>{row.departure_airport}</span>
-          <div className={styles.routeLine}><Plane size={14} /></div>
-          <span className={styles.routeCode}>{row.arrival_airport}</span>
+          <span className={styles.routeCode} title={getLocationName(row.departure_airport)}>{getLocationName(row.departure_airport)}</span>
+          <div className={styles.routeLine}>
+            {row.transport_mode === 'SEA' ? <Anchor size={14} /> : row.transport_mode === 'ROAD' ? <Truck size={14} /> : <Plane size={14} />}
+          </div>
+          <span className={styles.routeCode} title={getLocationName(row.arrival_airport)}>{getLocationName(row.arrival_airport)}</span>
         </div>
       )
     },
@@ -148,6 +155,7 @@ export default function ManifestsPage() {
               flight_number: row.flight_number || '',
               flight_date: row.flight_date || '',
               carrier_id: row.carrier_id || '',
+              transport_mode: row.transport_mode || 'AIR',
               departure_airport: row.departure_airport || '',
               arrival_airport: row.arrival_airport || '',
               max_weight_kg: row.max_weight_kg || '',
@@ -175,7 +183,7 @@ export default function ManifestsPage() {
       payload: { ...newManifest, max_weight_kg: Number(newManifest.max_weight_kg) || 10000 }
     });
     setShowNew(false);
-    setNewManifest({ flight_number: '', flight_date: '', carrier_id: '', departure_airport: '', arrival_airport: '', max_weight_kg: '', status: 'Draft' });
+    setNewManifest({ flight_number: '', flight_date: '', carrier_id: '', transport_mode: 'AIR', departure_airport: '', arrival_airport: '', max_weight_kg: '', status: 'Draft' });
   };
 
   const handleUpdate = () => {
@@ -204,17 +212,17 @@ export default function ManifestsPage() {
                 <PlaneTakeoff size={32} />
               </div>
               <div>
-                <h1 className={styles.title}>Flight Operations Center</h1>
+                <h1 className={styles.title}>Transport Operations Center</h1>
                 <p className={styles.subtitle}>
                   <ShieldCheck size={16} color="#10B981" />
-                  Live aviation manifest tracking, capacity modeling, and FFM routing.
+                  Live multi-modal manifest tracking, capacity modeling, and routing.
                 </p>
               </div>
             </div>
           </div>
           <div className={styles.heroActions}>
             <button className={styles.newManifestBtn} onClick={() => setShowNew(true)}>
-              <Plus size={18} /> New Flight Manifest
+              <Plus size={18} /> New Manifest
             </button>
           </div>
         </div>
@@ -226,7 +234,7 @@ export default function ManifestsPage() {
               <div className={`${styles.kpiIconWrapper} indigo`}><Plane size={20} /></div>
             </div>
             <div className={styles.kpiMetric}>{analytics.total}</div>
-            <div className={styles.kpiLabel}>Total Flights</div>
+            <div className={styles.kpiLabel}>Total Manifests</div>
           </div>
           <div className={styles.kpiCard}>
             <div className={styles.kpiHeader}>
@@ -319,22 +327,29 @@ export default function ManifestsPage() {
       <Modal
         open={showNew}
         onClose={() => setShowNew(false)}
-        title="New Flight Manifest"
-        subtitle="Create a new FFM (Freight Manifest) routing record"
+        title="New Transport Manifest"
+        subtitle="Create a new FFM, Voyage, or Trip routing record"
         size="large"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newManifest.flight_number || !newManifest.carrier_id} style={{ background: '#6366F1', borderColor: '#6366F1' }}>Create Flight</Button>
+            <Button onClick={handleCreate} disabled={!newManifest.flight_number || !newManifest.carrier_id} style={{ background: '#6366F1', borderColor: '#6366F1' }}>Create Manifest</Button>
           </>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
           
+          <div className="form-group">
+            <label className="form-label">Transport Mode <span style={{ color: '#f43f5e' }}>*</span></label>
+            <select className="form-select" value={newManifest.transport_mode} onChange={e => setNewManifest(p => ({ ...p, transport_mode: e.target.value }))}>
+              {TRANSPORT_MODES.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div className="form-group">
-              <label className="form-label">Flight Number <span style={{ color: '#f43f5e' }}>*</span></label>
-              <input className="form-input" style={{ fontSize: '16px', fontWeight: 'bold' }} value={newManifest.flight_number} onChange={e => setNewManifest(p => ({ ...p, flight_number: e.target.value }))} placeholder="e.g. QR8410" />
+              <label className="form-label">{newManifest.transport_mode === 'AIR' ? 'Flight Number' : newManifest.transport_mode === 'SEA' ? 'Voyage Number' : 'Trip / Route Number'} <span style={{ color: '#f43f5e' }}>*</span></label>
+              <input className="form-input" style={{ fontSize: '16px', fontWeight: 'bold' }} value={newManifest.flight_number} onChange={e => setNewManifest(p => ({ ...p, flight_number: e.target.value }))} placeholder={newManifest.transport_mode === 'AIR' ? "e.g. QR8410" : "e.g. VOY-1234"} />
             </div>
             <div className="form-group">
               <label className="form-label">Departure Date <span style={{ color: '#f43f5e' }}>*</span></label>
@@ -343,33 +358,35 @@ export default function ManifestsPage() {
           </div>
           
           <div className="form-group">
-            <label className="form-label">Carrier <span style={{ color: '#f43f5e' }}>*</span></label>
+            <label className="form-label">{newManifest.transport_mode === 'AIR' ? 'Airline Carrier' : newManifest.transport_mode === 'SEA' ? 'Shipping Line' : 'Trucking Company'} <span style={{ color: '#f43f5e' }}>*</span></label>
             <select className="form-select" value={newManifest.carrier_id} onChange={e => setNewManifest(p => ({ ...p, carrier_id: e.target.value }))}>
-              <option value="">Select Airline Carrier...</option>
-              {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
+              <option value="">Select Carrier...</option>
+              {carriers.filter(c => (c.carrier_type || 'Airline') === (newManifest.transport_mode === 'SEA' ? 'Shipping Line' : newManifest.transport_mode === 'ROAD' ? 'Trucking Company' : 'Airline')).map(c => <option key={c.org_id} value={c.org_id}>{c.code ? c.code + ' - ' : ''}{c.legal_name}</option>)}
             </select>
           </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
             <div className="form-group">
-              <label className="form-label">Origin Airport <span style={{ color: '#f43f5e' }}>*</span></label>
-              <select className="form-select" value={newManifest.departure_airport} onChange={e => setNewManifest(p => ({ ...p, departure_airport: e.target.value }))}>
-                <option value="">Select Departure...</option>
-                {Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-              </select>
+              <label className="form-label">{newManifest.transport_mode === 'AIR' ? 'Origin Airport' : newManifest.transport_mode === 'SEA' ? 'Port of Loading' : 'Origin Location'} <span style={{ color: '#f43f5e' }}>*</span></label>
+                <AsyncLocationSelect
+                  value={newManifest.departure_airport}
+                  onChange={val => setNewManifest(p => ({ ...p, departure_airport: val }))}
+                  placeholder="Type origin to search..."
+                />
             </div>
             <div className="form-group">
-              <label className="form-label">Destination Airport <span style={{ color: '#f43f5e' }}>*</span></label>
-              <select className="form-select" value={newManifest.arrival_airport} onChange={e => setNewManifest(p => ({ ...p, arrival_airport: e.target.value }))}>
-                <option value="">Select Arrival...</option>
-                {Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-              </select>
+              <label className="form-label">{newManifest.transport_mode === 'AIR' ? 'Destination Airport' : newManifest.transport_mode === 'SEA' ? 'Port of Discharge' : 'Destination Location'} <span style={{ color: '#f43f5e' }}>*</span></label>
+                <AsyncLocationSelect
+                  value={newManifest.arrival_airport}
+                  onChange={val => setNewManifest(p => ({ ...p, arrival_airport: val }))}
+                  placeholder="Type destination to search..."
+                />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div className="form-group">
-              <label className="form-label">Aircraft Max Capacity (kg)</label>
+              <label className="form-label">Max Transport Capacity (kg)</label>
               <input className="form-input" type="number" step="100" value={newManifest.max_weight_kg} onChange={e => setNewManifest(p => ({ ...p, max_weight_kg: e.target.value }))} placeholder="10000" />
             </div>
             <div className="form-group">
@@ -386,8 +403,8 @@ export default function ManifestsPage() {
       <Modal
         open={showEdit}
         onClose={() => setShowEdit(false)}
-        title="Edit Flight Manifest"
-        subtitle={`Update details for flight ${editManifest?.flight_number}`}
+        title="Edit Transport Manifest"
+        subtitle={`Update details for ${editManifest?.flight_number}`}
         size="large"
         footer={
           <>
@@ -398,9 +415,17 @@ export default function ManifestsPage() {
       >
         {editManifest && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
+            
+            <div className="form-group">
+              <label className="form-label">Transport Mode <span style={{ color: '#f43f5e' }}>*</span></label>
+              <select className="form-select" value={editManifest.transport_mode || 'AIR'} onChange={e => setEditManifest(p => ({ ...p, transport_mode: e.target.value }))}>
+                {TRANSPORT_MODES.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div className="form-group">
-                <label className="form-label">Flight Number <span style={{ color: '#f43f5e' }}>*</span></label>
+                <label className="form-label">{editManifest.transport_mode === 'AIR' ? 'Flight Number' : editManifest.transport_mode === 'SEA' ? 'Voyage Number' : 'Trip / Route Number'} <span style={{ color: '#f43f5e' }}>*</span></label>
                 <input className="form-input" value={editManifest.flight_number} disabled style={{ background: '#F1F5F9' }} />
               </div>
               <div className="form-group">
@@ -410,33 +435,35 @@ export default function ManifestsPage() {
             </div>
             
             <div className="form-group">
-              <label className="form-label">Carrier <span style={{ color: '#f43f5e' }}>*</span></label>
+              <label className="form-label">{editManifest.transport_mode === 'AIR' ? 'Airline Carrier' : editManifest.transport_mode === 'SEA' ? 'Shipping Line' : 'Trucking Company'} <span style={{ color: '#f43f5e' }}>*</span></label>
               <select className="form-select" value={editManifest.carrier_id} onChange={e => setEditManifest(p => ({ ...p, carrier_id: e.target.value }))}>
-                <option value="">Select Airline Carrier...</option>
-                {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
+                <option value="">Select Carrier...</option>
+                {carriers.filter(c => (c.carrier_type || 'Airline') === (editManifest.transport_mode === 'SEA' ? 'Shipping Line' : editManifest.transport_mode === 'ROAD' ? 'Trucking Company' : 'Airline')).map(c => <option key={c.org_id} value={c.org_id}>{c.code ? c.code + ' - ' : ''}{c.legal_name}</option>)}
               </select>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
               <div className="form-group">
-                <label className="form-label">Origin Airport <span style={{ color: '#f43f5e' }}>*</span></label>
-                <select className="form-select" value={editManifest.departure_airport || ''} onChange={e => setEditManifest(p => ({ ...p, departure_airport: e.target.value }))}>
-                  <option value="">Select Departure...</option>
-                  {Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-                </select>
+                <label className="form-label">{editManifest.transport_mode === 'AIR' ? 'Origin Airport' : editManifest.transport_mode === 'SEA' ? 'Port of Loading' : 'Origin Location'} <span style={{ color: '#f43f5e' }}>*</span></label>
+                  <AsyncLocationSelect
+                    value={editManifest.departure_airport || ''}
+                    onChange={val => setEditManifest(p => ({ ...p, departure_airport: val }))}
+                    placeholder="Type origin to search..."
+                  />
               </div>
               <div className="form-group">
-                <label className="form-label">Destination Airport <span style={{ color: '#f43f5e' }}>*</span></label>
-                <select className="form-select" value={editManifest.arrival_airport || ''} onChange={e => setEditManifest(p => ({ ...p, arrival_airport: e.target.value }))}>
-                  <option value="">Select Arrival...</option>
-                  {Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-                </select>
+                <label className="form-label">{editManifest.transport_mode === 'AIR' ? 'Destination Airport' : editManifest.transport_mode === 'SEA' ? 'Port of Discharge' : 'Destination Location'} <span style={{ color: '#f43f5e' }}>*</span></label>
+                  <AsyncLocationSelect
+                    value={editManifest.arrival_airport || ''}
+                    onChange={val => setEditManifest(p => ({ ...p, arrival_airport: val }))}
+                    placeholder="Type destination to search..."
+                  />
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div className="form-group">
-                <label className="form-label">Aircraft Max Capacity (kg)</label>
+                <label className="form-label">Max Transport Capacity (kg)</label>
                 <input className="form-input" type="number" step="100" value={editManifest.max_weight_kg || ''} onChange={e => setEditManifest(p => ({ ...p, max_weight_kg: e.target.value }))} placeholder="10000" />
               </div>
               <div className="form-group">
@@ -454,7 +481,7 @@ export default function ManifestsPage() {
       <Modal
         open={!!showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(null)}
-        title="Delete Flight Manifest"
+        title="Delete Transport Manifest"
         subtitle="This action cannot be undone."
         size="small"
         footer={
@@ -465,7 +492,7 @@ export default function ManifestsPage() {
         }
       >
         <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: 0 }}>
-          Are you sure you want to permanently delete this flight manifest? All associated line items and allocations will be removed.
+          Are you sure you want to permanently delete this transport manifest? All associated line items and allocations will be removed.
         </p>
       </Modal>
 

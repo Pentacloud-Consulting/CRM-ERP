@@ -8,12 +8,26 @@ import DataTable from '@/components/ui/DataTable';
 import { Plus, Eye, Edit2, Trash2, ChevronRight, Building2, User, LayoutGrid, List } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
-import { OPPORTUNITY_STAGES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS } from '@/lib/data/seedData';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
+import { OPPORTUNITY_STAGES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, TRANSPORT_MODES, LEAD_SOURCES, LEAD_STATUSES } from '@/lib/data/seedData';
 import styles from './pipeline.module.css';
 
 const EMPTY_OPP = {
   name: '', org_id: '', primary_contact_id: '', pipeline_value: '', currency_code: 'USD',
-  trade_lane: '', cargo_type: 'General Cargo', incoterm: 'CPT', est_chargeable_weight_kg: '', stage: 'Qualifying'
+  stage: 'Qualifying', source: '', status: 'New', transport_mode: 'ROAD', route_type: 'Domestic',
+  origin_location: '', destination_location: '', cargo_type: 'General', incoterm: 'CPT',
+  est_pieces: '', est_gross_weight_kg: ''
+};
+
+const getLocationName = (loc) => {
+  if (!loc) return '';
+  if (typeof loc === 'object') return loc.name || loc.code || '';
+  try {
+    const parsed = JSON.parse(loc);
+    return parsed.name || parsed.code || loc;
+  } catch {
+    return loc;
+  }
 };
 
 export default function PipelinePage() {
@@ -139,8 +153,11 @@ export default function PipelinePage() {
     },
     { key: 'lane', label: 'Trade Lane', accessor: 'trade_lane',
       render: (row) => {
-        let routeDisplay = row.trade_lane || row.origin_location + '-' + row.destination_location;
-        if (routeDisplay && routeDisplay.includes('-')) {
+        let routeDisplay = row.trade_lane || (row.origin_location && row.destination_location ? getLocationName(row.origin_location) + ' - ' + getLocationName(row.destination_location) : '');
+        if (routeDisplay && routeDisplay.includes(' - ')) {
+          const parts = routeDisplay.split(' - ');
+          return <><span style={{fontFamily:'var(--font-mono)'}}>{parts[0]}</span> <ChevronRight size={10} style={{color:'#94A3B8'}} /> <span style={{fontFamily:'var(--font-mono)'}}>{parts[1]}</span></>;
+        } else if (routeDisplay && routeDisplay.includes('-')) {
           const parts = routeDisplay.split('-');
           return <><span style={{fontFamily:'var(--font-mono)'}}>{parts[0]}</span> <ChevronRight size={10} style={{color:'#94A3B8'}} /> <span style={{fontFamily:'var(--font-mono)'}}>{parts[1]}</span></>;
         }
@@ -151,7 +168,7 @@ export default function PipelinePage() {
       render: (row) => (
         <div style={{ fontSize: '13px', color: '#475569' }}>
           {row.cargo_type || 'General Cargo'}
-          {(row.est_chargeable_weight_kg || row.estimated_weight_kg) ? ` • ${row.est_chargeable_weight_kg || row.estimated_weight_kg} kg` : ''}
+          {(row.est_gross_weight_kg || row.est_chargeable_weight_kg || row.estimated_weight_kg) ? ` • ${row.est_gross_weight_kg || row.est_chargeable_weight_kg || row.estimated_weight_kg} kg` : ''}
           {row.incoterm ? ` • ${row.incoterm}` : ''}
         </div>
       )
@@ -180,7 +197,7 @@ export default function PipelinePage() {
           <button className={styles.actionBtn} title="Edit" onClick={(e) => { 
             e.stopPropagation(); 
             setEditingOppId(row.opportunity_id);
-            setNewOpp({ ...row, name: row.name || row.title || '' });
+            setNewOpp({ ...EMPTY_OPP, ...row, name: row.name || row.title || '' });
             setShowNew(true);
           }}>
             <Edit2 size={15} />
@@ -234,12 +251,12 @@ export default function PipelinePage() {
     const account = getOrganization(opp.org_id);
     const contact = opp.primary_contact_id ? getContact(opp.primary_contact_id) : null;
     
-    let routeDisplay = opp.trade_lane;
-    if (opp.trade_lane && opp.trade_lane.includes('-')) {
-      const parts = opp.trade_lane.split('-');
+    let routeDisplay = opp.trade_lane || (opp.origin_location && opp.destination_location ? getLocationName(opp.origin_location) + ' - ' + getLocationName(opp.destination_location) : '');
+    if (routeDisplay && routeDisplay.includes('-')) {
+      const parts = routeDisplay.split('-');
       routeDisplay = <>{parts[0]} <ChevronRight size={10} className={styles.laneArrow} /> {parts[1]}</>;
-    } else if (opp.trade_lane && opp.trade_lane.includes('–')) {
-       const parts = opp.trade_lane.split('–');
+    } else if (routeDisplay && routeDisplay.includes('–')) {
+       const parts = routeDisplay.split('–');
        routeDisplay = <>{parts[0]} <ChevronRight size={10} className={styles.laneArrow} /> {parts[1]}</>;
     }
 
@@ -264,7 +281,7 @@ export default function PipelinePage() {
           </div>
         )}
 
-        {opp.trade_lane && (
+        {(opp.trade_lane || (opp.origin_location && opp.destination_location)) && (
           <div className={styles.cardLane}>
             {routeDisplay}
           </div>
@@ -272,7 +289,7 @@ export default function PipelinePage() {
 
         <div className={styles.cardFreight}>
           {opp.cargo_type && <span>{opp.cargo_type}</span>}
-          {opp.est_chargeable_weight_kg ? <span>• {opp.est_chargeable_weight_kg} kg</span> : null}
+          {(opp.est_gross_weight_kg || opp.est_chargeable_weight_kg) ? <span>• {opp.est_gross_weight_kg || opp.est_chargeable_weight_kg} kg</span> : null}
           {opp.incoterm && <span>• {opp.incoterm}</span>}
         </div>
 
@@ -516,30 +533,72 @@ export default function PipelinePage() {
             </div>
           </div>
 
-          {/* Freight Requirements */}
-          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Freight Information</div>
+          {/* Lead/Logistics Information */}
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Logistics Information</div>
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Trade Lane</label>
-              <input className="form-input" value={newOpp.trade_lane} onChange={e => setNewOpp(p => ({ ...p, trade_lane: e.target.value }))} placeholder="e.g. DOH–FRA" />
+              <label className="form-label">Source</label>
+              <select className="form-select" value={newOpp.source} onChange={e => setNewOpp(p => ({ ...p, source: e.target.value }))}>
+                <option value="">Select Source...</option>
+                {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <select className="form-select" value={newOpp.status} onChange={e => setNewOpp(p => ({ ...p, status: e.target.value }))}>
+                {LEAD_STATUSES.filter(s => s !== 'Converted').map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Transport Mode</label>
+              <select className="form-select" value={newOpp.transport_mode} onChange={e => setNewOpp(p => ({ ...p, transport_mode: e.target.value }))}>
+                {TRANSPORT_MODES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Route Type</label>
+              <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                <Badge variant={newOpp.route_type === 'Domestic' ? 'neutral' : 'primary'} dot>{newOpp.route_type}</Badge>
+              </div>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Origin Location</label>
+              <AsyncLocationSelect value={newOpp.origin_location} onChange={val => setNewOpp(p => ({ ...p, origin_location: val, route_type: (val && newOpp.destination_location && JSON.parse(val).country !== JSON.parse(newOpp.destination_location).country) ? 'International' : 'Domestic' }))} placeholder="Search origin..." />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Destination Location</label>
+              <AsyncLocationSelect value={newOpp.destination_location} onChange={val => setNewOpp(p => ({ ...p, destination_location: val, route_type: (val && newOpp.origin_location && JSON.parse(val).country !== JSON.parse(newOpp.origin_location).country) ? 'International' : 'Domestic' }))} placeholder="Search destination..." />
+            </div>
+          </div>
+          <div className="form-row">
             <div className="form-group">
               <label className="form-label">Cargo Type</label>
               <select className="form-select" value={newOpp.cargo_type} onChange={e => setNewOpp(p => ({ ...p, cargo_type: e.target.value }))}>
                 {CARGO_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-          </div>
-          <div className="form-row">
-             <div className="form-group">
+            <div className="form-group">
               <label className="form-label">Incoterm</label>
               <select className="form-select" value={newOpp.incoterm} onChange={e => setNewOpp(p => ({ ...p, incoterm: e.target.value }))}>
                 {INCOTERMS.map(i => <option key={i} value={i}>{INCOTERM_LABELS[i]}</option>)}
               </select>
             </div>
+          </div>
+
+          {/* Shipment Details */}
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Shipment Details</div>
+          <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Est. Weight (kg)</label>
-              <input className="form-input" type="number" value={newOpp.est_chargeable_weight_kg} onChange={e => setNewOpp(p => ({ ...p, est_chargeable_weight_kg: e.target.value }))} placeholder="0" />
+              <label className="form-label">Pieces</label>
+              <input className="form-input" type="number" value={newOpp.est_pieces} onChange={e => setNewOpp(p => ({ ...p, est_pieces: e.target.value }))} placeholder="0" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Gross Weight (kg)</label>
+              <input className="form-input" type="number" value={newOpp.est_gross_weight_kg} onChange={e => setNewOpp(p => ({ ...p, est_gross_weight_kg: e.target.value }))} placeholder="0" />
             </div>
           </div>
         </div>

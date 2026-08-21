@@ -1,17 +1,23 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useApp } from '@/lib/store/AppContext';
-import TrackingMap from '@/components/ui/TrackingMap';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { formatDateTime, getStatusColor } from '@/lib/utils/formatters';
 import { LOCATIONS } from '@/lib/data/seedData';
+import { getLocationName } from '@/app/crm/leads/page';
 import styles from './tracking.module.css';
 import { 
   MapPin, AlertTriangle, Globe2, Plane, Ship, Truck, Activity, Clock, Target, 
   Search, Filter, ChevronRight, CheckCircle2, Package
 } from 'lucide-react';
+
+const TrackingMap = dynamic(() => import('@/components/ui/TrackingMap'), { 
+  ssr: false, 
+  loading: () => <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', color: '#94A3B8' }}>Loading map...</div> 
+});
 
 export default function TrackingBoard() {
   const router = useRouter();
@@ -37,20 +43,24 @@ export default function TrackingBoard() {
     );
   }, [activeShipments, searchTerm]);
 
-  // Derive mock feed from latest events across all active shipments
   const activityFeed = useMemo(() => {
     const allEvents = [];
     activeShipments.forEach(s => {
       const events = getEventsForShipment(s.shipment_id);
       if (events.length > 0) {
+        let desc = events[events.length - 1].event_description || events[events.length - 1].event_code;
+        if (desc.includes('{"name"')) {
+          try { desc = desc.replace(/\{.*\}/g, match => getLocationName(match)); } catch(e) {}
+        }
         allEvents.push({
-          ...events[events.length - 1], // get the latest event
+          ...events[events.length - 1],
           shipmentRef: s.shipment_reference,
-          transport_mode: s.transport_mode
+          transport_mode: s.transport_mode,
+          description: desc
         });
       }
     });
-    return allEvents.sort((a, b) => new Date(b.event_time) - new Date(a.event_time)).slice(0, 8);
+    return allEvents.sort((a, b) => new Date(b.event_timestamp || b.event_time) - new Date(a.event_timestamp || a.event_time)).slice(0, 8);
   }, [activeShipments, getEventsForShipment]);
 
   const getFeedIcon = (code, mode) => {
@@ -190,7 +200,7 @@ export default function TrackingBoard() {
                     </div>
 
                     <div className={styles.routeVisual}>
-                      <div className={styles.routePort}>{shp.origin_location}</div>
+                      <div className={styles.routePort}>{getLocationName(shp.origin_location)}</div>
                       <div className={styles.routeLine}>
                         {shp.status === 'In Transit' && (
                           <div className={styles.routePlane}>
@@ -198,7 +208,7 @@ export default function TrackingBoard() {
                           </div>
                         )}
                       </div>
-                      <div className={styles.routePort}>{shp.destination_location}</div>
+                      <div className={styles.routePort}>{getLocationName(shp.destination_location)}</div>
                     </div>
 
                     <div className={styles.progressBlock}>

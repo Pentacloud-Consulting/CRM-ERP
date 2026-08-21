@@ -1,13 +1,16 @@
 'use client';
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import DataTable from '@/components/ui/DataTable';
-import { Plus, Edit2, Box, Package, Activity, Compass, Target, Navigation, ShieldCheck, LayoutGrid, List, Plane } from 'lucide-react';
+import { Plus, Edit2, Eye, Trash2, Box, Package, Activity, Compass, Target, Navigation, ShieldCheck, LayoutGrid, List, Plane } from 'lucide-react';
 import { formatDate, formatWeight } from '@/lib/utils/formatters';
-import { LOCATIONS } from '@/lib/data/seedData';
+import { LOCATIONS, TRANSPORT_MODES, CONTAINER_TYPES, TRUCK_TYPES } from '@/lib/data/seedData';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
+import { getLocationName } from '@/app/crm/leads/page';
 import styles from './uld.module.css';
 
 const ULD_STATUS_ORDER = ['Available', 'Build-Up in Progress', 'Built-Up', 'Loaded', 'In Transit', 'Delivered'];
@@ -22,19 +25,23 @@ const ULD_TYPES = [
 ];
 
 export default function ULDPage() {
+  const router = useRouter();
   const { state, dispatch, getULDTotalAllocatedWeight } = useApp();
   const [viewMode, setViewMode] = useState('kanban');
   
   const [showNew, setShowNew] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [newULD, setNewULD] = useState({
     uld_number: '', uld_type: 'AKE', owner_id: '', tare_weight_kg: '', max_gross_weight_kg: '',
-    current_location: '', status: 'Available'
+    current_location: '', status: 'Available', transport_mode: 'AIR'
   });
   const [showEdit, setShowEdit] = useState(false);
   const [editULD, setEditULD] = useState(null);
 
   const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
   const airports = useMemo(() => Object.values(LOCATIONS).filter(l => l.type === 'Airport'), []);
+  const seaports = useMemo(() => Object.values(LOCATIONS).filter(l => l.type === 'Seaport'), []);
+  const allLocations = useMemo(() => Object.values(LOCATIONS), []);
 
   const columns = useMemo(() => {
     return ULD_STATUS_ORDER.map(status => ({
@@ -85,7 +92,7 @@ export default function ULDPage() {
       } 
     });
     setShowNew(false);
-    setNewULD({ uld_number: '', uld_type: 'AKE', owner_id: '', tare_weight_kg: '', max_gross_weight_kg: '', current_location: '', status: 'Available' });
+    setNewULD({ uld_number: '', uld_type: 'AKE', owner_id: '', tare_weight_kg: '', max_gross_weight_kg: '', current_location: '', status: 'Available', transport_mode: 'AIR' });
   };
 
   const handleUpdate = () => {
@@ -95,6 +102,11 @@ export default function ULDPage() {
       payload: { ...editULD, tare_weight_kg: Number(editULD.tare_weight_kg) || 0, max_gross_weight_kg: Number(editULD.max_gross_weight_kg) || 0 }
     });
     setShowEdit(false);
+  };
+
+  const handleDelete = (uldId) => {
+    dispatch({ type: 'DELETE_ULD', payload: uldId });
+    setShowDeleteConfirm(null);
   };
 
   const getStatusBadgeVariant = (status) => {
@@ -131,13 +143,13 @@ export default function ULDPage() {
   };
 
   const listColumns = [
-    { key: 'number', label: 'ULD NUMBER', accessor: 'uld_number', render: (row) => <span className={styles.uldNumberCell}>{row.uld_number}</span> },
+    { key: 'number', label: 'EQUIPMENT NUMBER', accessor: 'uld_number', render: (row) => <span className={styles.uldNumberCell}>{row.uld_number}</span> },
     { key: 'type', label: 'TYPE', accessor: 'uld_type', render: (row) => <Badge variant="neutral">{row.uld_type}</Badge> },
     { key: 'owner', label: 'OWNER', accessor: 'owner_id', render: (row) => {
       const org = carriers.find(c => c.org_id === row.owner_id);
       return <span style={{ fontWeight: 800, color: '#6366F1' }}>{org?.legal_name || row.owner_id}</span>
     }},
-    { key: 'location', label: 'LOCATION', accessor: 'current_location', render: (row) => <span style={{ fontWeight: 600 }}>{row.current_location}</span> },
+    { key: 'location', label: 'LOCATION', accessor: 'current_location', render: (row) => <span style={{ fontWeight: 600 }} title={getLocationName(row.current_location)}>{getLocationName(row.current_location)}</span> },
     { key: 'capacity', label: 'UTILIZATION', accessor: 'utilization', render: (row) => {
         const allocated = getULDTotalAllocatedWeight(row.uld_id);
         const maxPayload = Math.max(0, (row.max_gross_weight_kg || 0) - (row.tare_weight_kg || 0));
@@ -161,8 +173,14 @@ export default function ULDPage() {
     { key: 'updated', label: 'UPDATED', accessor: 'updated_at', render: (row) => <span style={{ fontSize: '12px', color: '#64748B' }}>{row.updated_at ? formatDate(row.updated_at) : 'Just now'}</span> },
     { key: 'actions', label: '', accessor: 'actions', align: 'right', render: (row) => (
       <div className={styles.listActionButtons}>
+        <button className={styles.listActionBtn} title="View Details" onClick={(e) => { e.stopPropagation(); router.push(`/operations/uld/${row.uld_id}`); }}>
+          <Eye size={16} />
+        </button>
         <button className={styles.listActionBtn} title="Edit" onClick={(e) => { e.stopPropagation(); setEditULD(row); setShowEdit(true); }}>
           <Edit2 size={16} />
+        </button>
+        <button className={`${styles.listActionBtn} ${styles.deleteBtn}`} title="Delete" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(row.uld_id); }}>
+          <Trash2 size={16} />
         </button>
       </div>
     )}
@@ -181,26 +199,26 @@ export default function ULDPage() {
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h1 className={styles.title}>ULD Control Center</h1>
-                  <Badge variant="blue"><Plane size={12} style={{marginRight: 4}}/> Air Freight Only</Badge>
+                  <h1 className={styles.title}>Equipment Control Center</h1>
+                  <Badge variant="blue"><Plane size={12} style={{marginRight: 4}}/> Multi-Modal Network</Badge>
                 </div>
                 <p className={styles.subtitle}>
                   <ShieldCheck size={16} color="#10B981" />
-                  Live unit load device capacity tracking, build-up management, and routing.
+                  Live equipment tracking, capacity planning, and consolidation.
                 </p>
               </div>
             </div>
           </div>
           <div className={styles.heroActions}>
             <Button variant="secondary" icon={Activity}>Export Report</Button>
-            <Button icon={Plus} onClick={() => setShowNew(true)} style={{ background: '#0F172A', color: 'white', border: 'none' }}>New ULD</Button>
+            <Button icon={Plus} onClick={() => setShowNew(true)} style={{ background: '#0F172A', color: 'white', border: 'none' }}>New Equipment</Button>
           </div>
         </div>
 
         {/* ══════ 3D OPERATIONS DASHBOARD ══════ */}
         <div className={styles.opsDashboard}>
           <div className={styles.opsMetric}>
-            <div className={styles.metricLabel}><Package size={14} /> Total ULDs</div>
+            <div className={styles.metricLabel}><Package size={14} /> Total Equipment</div>
             <div className={styles.metricValue}>{metrics.total}</div>
           </div>
           <div className={styles.opsMetric}>
@@ -257,7 +275,7 @@ export default function ULDPage() {
                       <div className={styles.columnStats}>
                         <div className={styles.statBlock}>
                           <span className={styles.statValue}>{ulds.length}</span>
-                          <span className={styles.statLabel}>ULDS</span>
+                          <span className={styles.statLabel}>UNITS</span>
                         </div>
                         <div className={`${styles.statBlock} ${styles.right}`}>
                           <span className={styles.statValue}>{formatWeight(totalAllocatedInStatus)}</span>
@@ -300,7 +318,7 @@ export default function ULDPage() {
                               </div>
                               <div className={styles.metaRow}>
                                 <span className={styles.metaLabel}>Location</span>
-                                <span className={styles.metaValue}>{uld.current_location}</span>
+                                <span className={styles.metaValue} title={getLocationName(uld.current_location)}>{getLocationName(uld.current_location)}</span>
                               </div>
                             </div>
 
@@ -318,8 +336,8 @@ export default function ULDPage() {
                       })}
                       {ulds.length === 0 && (
                         <div className={styles.emptyCol}>
-                          <div className={styles.emptyTitle}>No ULDs in {status}</div>
-                          <div className={styles.emptySubtitle}>Drag ULDs here to change their operational status.</div>
+                          <div className={styles.emptyTitle}>No Equipment in {status}</div>
+                          <div className={styles.emptySubtitle}>Drag items here to change their operational status.</div>
                         </div>
                       )}
                     </div>
@@ -347,13 +365,13 @@ export default function ULDPage() {
       <Modal
         open={showNew}
         onClose={() => setShowNew(false)}
-        title="Register Unit Load Device"
-        subtitle="Add a new ULD to network inventory (Air Freight)"
+        title="Register Equipment"
+        subtitle="Add a new container, trailer, or ULD to the network"
         size="large"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newULD.uld_number.trim() || !newULD.owner_id} style={{ background: '#0F172A', borderColor: '#0F172A' }}>Register ULD</Button>
+            <Button onClick={handleCreate} disabled={!newULD.uld_number.trim() || !newULD.owner_id} style={{ background: '#0F172A', borderColor: '#0F172A' }}>Register Equipment</Button>
           </>
         }
       >
@@ -361,23 +379,31 @@ export default function ULDPage() {
           
           <div className={styles.formSection}>
             <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Identification</div>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">Transport Mode <span style={{ color: '#f43f5e' }}>*</span></label>
+              <select className="form-select" value={newULD.transport_mode} onChange={e => setNewULD(p => ({ ...p, transport_mode: e.target.value, uld_type: e.target.value === 'SEA' ? '20GP' : e.target.value === 'ROAD' ? 'FTL' : 'AKE' }))}>
+                {TRANSPORT_MODES.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
             <div className={styles.formGrid}>
               <div className="form-group">
-                <label className="form-label">ULD Number <span style={{ color: '#f43f5e' }}>*</span></label>
-                <input className="form-input" style={{ fontSize: '16px', fontWeight: 'bold' }} value={newULD.uld_number} onChange={e => setNewULD(p => ({ ...p, uld_number: e.target.value }))} placeholder="e.g. AKE12345QR" />
+                <label className="form-label">{newULD.transport_mode === 'AIR' ? 'ULD Number' : newULD.transport_mode === 'SEA' ? 'Container Number' : 'Trailer/Vehicle Number'} <span style={{ color: '#f43f5e' }}>*</span></label>
+                <input className="form-input" style={{ fontSize: '16px', fontWeight: 'bold' }} value={newULD.uld_number} onChange={e => setNewULD(p => ({ ...p, uld_number: e.target.value }))} placeholder={newULD.transport_mode === 'AIR' ? "e.g. AKE12345QR" : "e.g. TCNU1234567"} />
               </div>
               <div className="form-group">
-                <label className="form-label">ULD Type</label>
+                <label className="form-label">{newULD.transport_mode === 'AIR' ? 'ULD Type' : newULD.transport_mode === 'SEA' ? 'Container Type' : 'Vehicle Type'}</label>
                 <select className="form-select" value={newULD.uld_type} onChange={e => setNewULD(p => ({ ...p, uld_type: e.target.value }))}>
-                  {ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+                  {newULD.transport_mode === 'AIR' && ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+                  {newULD.transport_mode === 'SEA' && CONTAINER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  {newULD.transport_mode === 'ROAD' && TRUCK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
             </div>
             <div className="form-group" style={{ marginTop: '20px' }}>
-              <label className="form-label">Owner Airline <span style={{ color: '#f43f5e' }}>*</span></label>
+              <label className="form-label">{newULD.transport_mode === 'AIR' ? 'Owner Airline' : newULD.transport_mode === 'SEA' ? 'Shipping Line' : 'Trucking Company'} <span style={{ color: '#f43f5e' }}>*</span></label>
               <select className="form-select" value={newULD.owner_id} onChange={e => setNewULD(p => ({ ...p, owner_id: e.target.value }))}>
                 <option value="">Select Carrier...</option>
-                {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
+                {carriers.filter(c => (c.carrier_type || 'Airline') === (newULD.transport_mode === 'SEA' ? 'Shipping Line' : newULD.transport_mode === 'ROAD' ? 'Trucking Company' : 'Airline')).map(c => <option key={c.org_id} value={c.org_id}>{c.code ? c.code + ' - ' : ''}{c.legal_name}</option>)}
               </select>
             </div>
           </div>
@@ -386,11 +412,12 @@ export default function ULDPage() {
             <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Operational Specs</div>
             <div className={styles.formGrid}>
               <div className="form-group">
-                <label className="form-label">Current Airport</label>
-                <select className="form-select" value={newULD.current_location} onChange={e => setNewULD(p => ({ ...p, current_location: e.target.value }))}>
-                  <option value="">Select Airport...</option>
-                  {airports.map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-                </select>
+                <label className="form-label">{newULD.transport_mode === 'AIR' ? 'Current Airport' : newULD.transport_mode === 'SEA' ? 'Current Seaport' : 'Current Location'}</label>
+                <AsyncLocationSelect
+                  value={newULD.current_location}
+                  onChange={val => setNewULD(p => ({ ...p, current_location: val }))}
+                  placeholder="Type location to search..."
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Initial Status</label>
@@ -414,10 +441,30 @@ export default function ULDPage() {
         </div>
       </Modal>
 
+      {/* ══════ DELETE CONFIRMATION MODAL ══════ */}
+      <Modal
+        open={!!showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(null)}
+        title="Delete Equipment?"
+        subtitle="This action cannot be undone."
+        size="small"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="danger" onClick={() => handleDelete(showDeleteConfirm)}>Delete</Button>
+          </>
+        }
+      >
+        <p style={{ fontSize: '14px', color: '#475569', margin: 0, lineHeight: 1.5 }}>
+          Are you sure you want to delete this equipment? This action cannot be undone and will remove it from the system.
+        </p>
+      </Modal>
+
+      {/* ══════ EDIT MODAL ══════ */}
       <Modal
         open={showEdit}
         onClose={() => setShowEdit(false)}
-        title="Edit Unit Load Device"
+        title="Edit Equipment"
         subtitle={`Update operational details for ${editULD?.uld_number}`}
         size="large"
         footer={
@@ -431,22 +478,31 @@ export default function ULDPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
             <div className={styles.formSection}>
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Identification</div>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">Transport Mode <span style={{ color: '#f43f5e' }}>*</span></label>
+                <select className="form-select" value={editULD.transport_mode || 'AIR'} onChange={e => setEditULD(p => ({ ...p, transport_mode: e.target.value, uld_type: e.target.value === 'SEA' ? '20GP' : e.target.value === 'ROAD' ? 'FTL' : 'AKE' }))}>
+                  {TRANSPORT_MODES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
               <div className={styles.formGrid}>
                 <div className="form-group">
-                  <label className="form-label">ULD Number <span style={{ color: '#f43f5e' }}>*</span></label>
+                  <label className="form-label">{editULD.transport_mode === 'AIR' ? 'ULD Number' : editULD.transport_mode === 'SEA' ? 'Container Number' : 'Trailer/Vehicle Number'} <span style={{ color: '#f43f5e' }}>*</span></label>
                   <input className="form-input" style={{ background: '#F1F5F9' }} value={editULD.uld_number} disabled />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">ULD Type</label>
+                  <label className="form-label">{editULD.transport_mode === 'AIR' ? 'ULD Type' : editULD.transport_mode === 'SEA' ? 'Container Type' : 'Vehicle Type'}</label>
                   <select className="form-select" value={editULD.uld_type} onChange={e => setEditULD(p => ({ ...p, uld_type: e.target.value }))}>
-                    {ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+                    {(!editULD.transport_mode || editULD.transport_mode === 'AIR') && ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+                    {editULD.transport_mode === 'SEA' && CONTAINER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    {editULD.transport_mode === 'ROAD' && TRUCK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
               </div>
               <div className="form-group" style={{ marginTop: '20px' }}>
-                <label className="form-label">Owner Airline <span style={{ color: '#f43f5e' }}>*</span></label>
-                <select className="form-select" value={editULD.owner_id} onChange={e => setEditULD(p => ({ ...p, owner_id: e.target.value }))}>
-                  {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
+                <label className="form-label">{editULD.transport_mode === 'AIR' ? 'Owner Airline' : editULD.transport_mode === 'SEA' ? 'Shipping Line' : 'Trucking Company'} <span style={{ color: '#f43f5e' }}>*</span></label>
+                <select className="form-select" value={editULD.owner_id || ''} onChange={e => setEditULD(p => ({ ...p, owner_id: e.target.value }))}>
+                  <option value="">Select Carrier...</option>
+                  {carriers.filter(c => (c.carrier_type || 'Airline') === (editULD.transport_mode === 'SEA' ? 'Shipping Line' : editULD.transport_mode === 'ROAD' ? 'Trucking Company' : 'Airline')).map(c => <option key={c.org_id} value={c.org_id}>{c.code ? c.code + ' - ' : ''}{c.legal_name}</option>)}
                 </select>
               </div>
             </div>
@@ -455,11 +511,12 @@ export default function ULDPage() {
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Operational Specs</div>
               <div className={styles.formGrid}>
                 <div className="form-group">
-                  <label className="form-label">Current Airport</label>
-                  <select className="form-select" value={editULD.current_location} onChange={e => setEditULD(p => ({ ...p, current_location: e.target.value }))}>
-                    <option value="">Select Airport...</option>
-                    {airports.map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
-                  </select>
+                  <label className="form-label">{editULD.transport_mode === 'AIR' ? 'Current Airport' : editULD.transport_mode === 'SEA' ? 'Current Seaport' : 'Current Location'}</label>
+                  <AsyncLocationSelect
+                    value={editULD.current_location || ''}
+                    onChange={val => setEditULD(p => ({ ...p, current_location: val }))}
+                    placeholder="Type location to search..."
+                  />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Initial Status</label>

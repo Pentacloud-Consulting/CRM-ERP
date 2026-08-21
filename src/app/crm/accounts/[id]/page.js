@@ -75,8 +75,8 @@ export default function AccountDetailPage() {
                 </div>
                 <div className={styles.heroInfoItem}>
                   <div className={styles.heroInfoLabel}><Phone size={14} /> Phone</div>
-                  {account.phone ? (
-                    <a href={`tel:${account.phone}`} className={styles.heroInfoLink}>{account.phone}</a>
+                  {(account.phone || primaryContact?.phone) ? (
+                    <a href={`tel:${account.phone || primaryContact?.phone}`} className={styles.heroInfoLink}>{account.phone || primaryContact?.phone}</a>
                   ) : <span className={styles.heroInfoValue} style={{ color: 'var(--text-tertiary)' }}>—</span>}
                 </div>
                 <div className={styles.heroInfoItem}>
@@ -154,7 +154,7 @@ export default function AccountDetailPage() {
                       <td>
                         {primaryContact ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#14B8A6', fontWeight: 600 }} onClick={() => router.push(`/crm/contacts/${primaryContact.contact_id}`)}>
-                            {primaryContact.full_name} <ChevronRight size={14} />
+                            {primaryContact.full_name || `${primaryContact.first_name || ''} ${primaryContact.last_name || ''}`.trim() || 'Primary Contact'} <ChevronRight size={14} />
                           </div>
                         ) : '—'}
                       </td>
@@ -184,10 +184,10 @@ export default function AccountDetailPage() {
                         <div className={styles.cardHeader}>
                           <div className={styles.cardIdentity}>
                             <div className={`${styles.cardAvatar} ${c.is_primary ? styles.avatarPrimary : styles.avatarSecondary}`}>
-                              {(c.full_name || '?').substring(0, 2).toUpperCase()}
+                              {(c.full_name || c.first_name || '?').substring(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <div className={styles.cardTitle}>{c.full_name}</div>
+                              <div className={styles.cardTitle}>{c.full_name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Contact'}</div>
                               <div className={styles.cardSubtitle}>{c.is_primary ? 'Primary Contact' : 'Contact'}</div>
                             </div>
                           </div>

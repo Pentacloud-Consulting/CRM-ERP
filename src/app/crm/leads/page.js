@@ -8,15 +8,35 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { formatDate, formatWeight, formatCurrency, getStatusColor } from '@/lib/utils/formatters';
-import { LEAD_SOURCES, LEAD_STATUSES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS } from '@/lib/data/seedData';
+import { LEAD_SOURCES, LEAD_STATUSES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, LOCATIONS, TRANSPORT_MODES } from '@/lib/data/seedData';
 import AccountLookup from '@/components/ui/AccountLookup';
+import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
 import styles from './leads.module.css';
+import { PlaneTakeoff, Ship, Truck } from 'lucide-react';
 
 const EMPTY_LEAD = {
   company_name: '', first_name: '', last_name: '', phone: '', email: '',
-  source: 'Inbound RFQ Portal', status: 'New', trade_lane: '', cargo_type: 'General',
+  source: 'Inbound RFQ Portal', status: 'New', transport_mode: 'AIR', origin_location: '', destination_location: '', cargo_type: 'General',
   est_pieces: '', est_gross_weight_kg: '', incoterm: 'CPT',
   estimated_value: '', currency_code: 'USD', owner_id: 'user-1',
+};
+
+export const getLocationName = (loc) => {
+  if (!loc) return '?';
+  try {
+    return JSON.parse(loc).name;
+  } catch {
+    return loc; // It's a standard code like 'DXB'
+  }
+};
+
+export const getLocationCountry = (loc) => {
+  if (!loc) return null;
+  try {
+    return JSON.parse(loc).country;
+  } catch {
+    return LOCATIONS[loc]?.country || null;
+  }
 };
 
 export default function LeadsPage() {
@@ -73,20 +93,25 @@ export default function LeadsPage() {
           {row.phone && <div className={styles.contactPhone}>{row.phone}</div>}
         </div>
       )},
-    { key: 'lane', label: 'Trade Lane', accessor: 'trade_lane',
+    { key: 'lane', label: 'Route', accessor: 'origin_location', width: '220px',
       render: (row) => {
-        if (!row.trade_lane) return <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>—</span>;
-        const parts = row.trade_lane.split(/[–\-→]/);
-        if (parts.length >= 2) {
-          return (
-            <div className={styles.tradeLaneCell}>
-              <span className={styles.tradeLaneCode}>{parts[0].trim()}</span>
+        const originCtry = getLocationCountry(row.origin_location);
+        const destCtry = getLocationCountry(row.destination_location);
+        const isDomestic = originCtry && destCtry && originCtry === destCtry;
+        
+        return (
+          <div>
+            <div className={styles.tradeLaneCell} style={{ marginBottom: '4px' }}>
+              <span style={{ color: '#94A3B8', marginRight: '6px', display: 'inline-flex' }}>
+                {row.transport_mode === 'SEA' ? <Ship size={14} /> : row.transport_mode === 'ROAD' ? <Truck size={14} /> : <PlaneTakeoff size={14} />}
+              </span>
+              <span className={styles.tradeLaneCode}>{getLocationName(row.origin_location)}</span>
               <span className={styles.tradeLaneArrow}>→</span>
-              <span className={styles.tradeLaneCode}>{parts[1].trim()}</span>
+              <span className={styles.tradeLaneCode}>{getLocationName(row.destination_location)}</span>
             </div>
-          );
-        }
-        return <span className={styles.tradeLane}>{row.trade_lane}</span>;
+            <Badge variant={isDomestic ? 'neutral' : 'primary'} dot>{isDomestic ? 'Domestic' : 'International'}</Badge>
+          </div>
+        );
       }},
     { key: 'cargo', label: 'Cargo', accessor: 'cargo_type',
       render: (row) => (
@@ -196,6 +221,20 @@ export default function LeadsPage() {
     setApproxRate('');
   };
 
+  const activeLocations = useMemo(() => {
+    return Object.values(LOCATIONS).filter(loc => {
+      if (newLead.transport_mode === 'AIR') return loc.type === 'Airport';
+      if (newLead.transport_mode === 'SEA') return loc.type === 'Seaport';
+      if (newLead.transport_mode === 'ROAD') return loc.type === 'City' || loc.type === 'Warehouse';
+      return true;
+    });
+  }, [newLead.transport_mode]);
+
+  const originCtry = getLocationCountry(newLead.origin_location);
+  const destCtry = getLocationCountry(newLead.destination_location);
+  const isDomestic = originCtry && destCtry && originCtry === destCtry;
+  const showRouteType = originCtry && destCtry;
+
   // ──────── RENDER ────────
   return (
     <div className={styles.pageWrapper} style={{ '--primary': '#14B8A6', '--primary-tint': 'rgba(20, 184, 166, 0.1)' }}>
@@ -262,17 +301,11 @@ export default function LeadsPage() {
                     </div>
                     <Badge variant={getStatusColor(lead.status)} dot>{lead.status}</Badge>
                   </div>
-                  {lead.trade_lane && (
+                  {newLead.origin_location || newLead.destination_location ? (
                     <div className={styles.tradeLaneCell} style={{ marginBottom: '4px' }}>
-                      {(() => {
-                        const parts = lead.trade_lane.split(/[–\-→]/);
-                        if (parts.length >= 2) {
-                          return (<><span className={styles.tradeLaneCode}>{parts[0].trim()}</span><span className={styles.tradeLaneArrow}>→</span><span className={styles.tradeLaneCode}>{parts[1].trim()}</span></>);
-                        }
-                        return <span>{lead.trade_lane}</span>;
-                      })()}
+                      <span className={styles.tradeLaneCode}>{getLocationName(lead.origin_location)}</span><span className={styles.tradeLaneArrow}>→</span><span className={styles.tradeLaneCode}>{getLocationName(lead.destination_location)}</span>
                     </div>
-                  )}
+                  ) : null}
                   <div className={styles.mobileCardMeta}>
                     {lead.cargo_type && <span>{lead.cargo_type}</span>}
                     {lead.est_pieces > 0 && <span>{lead.est_pieces} pcs</span>}
@@ -369,9 +402,29 @@ export default function LeadsPage() {
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Trade Lane (Origin–Destination)</label>
-                <input className="form-input" value={newLead.trade_lane} onChange={e => setNewLead(p => ({ ...p, trade_lane: e.target.value }))} placeholder="e.g. DOH–FRA" />
+                <label className="form-label">Transport Mode</label>
+                <select className="form-select" value={newLead.transport_mode} onChange={e => setNewLead(p => ({ ...p, transport_mode: e.target.value, origin_location: '', destination_location: '' }))}>
+                  {TRANSPORT_MODES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
+              <div className="form-group">
+                <label className="form-label">Route Type</label>
+                <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                  {showRouteType ? <Badge variant={isDomestic ? 'neutral' : 'primary'} dot>{isDomestic ? 'Domestic' : 'International'}</Badge> : <span style={{ color: '#94A3B8', fontSize: '14px' }}>Select origin & destination</span>}
+                </div>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Origin Location</label>
+                <AsyncLocationSelect value={newLead.origin_location} onChange={val => setNewLead(p => ({ ...p, origin_location: val }))} placeholder="Search any city..." />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Destination Location</label>
+                <AsyncLocationSelect value={newLead.destination_location} onChange={val => setNewLead(p => ({ ...p, destination_location: val }))} placeholder="Search any city..." />
+              </div>
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Cargo Type</label>
                 <select className="form-select" value={newLead.cargo_type} onChange={e => setNewLead(p => ({ ...p, cargo_type: e.target.value }))}>
@@ -400,28 +453,7 @@ export default function LeadsPage() {
                 <input className="form-input" type="number" value={newLead.est_gross_weight_kg} onChange={handleWeightChange} placeholder="0" />
               </div>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Approx Value/kg</label>
-                <select className="form-select" value={approxRate} onChange={handleRateChange}>
-                  <option value="">Custom Value...</option>
-                  <option value="500">Low ({sym}500/kg)</option>
-                  <option value="1000">Medium ({sym}1000/kg)</option>
-                  <option value="1500">High ({sym}1500/kg)</option>
-                  <option value="2000">Very High ({sym}2000/kg)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Total Est. Value</label>
-                <input className="form-input" type="number" value={newLead.estimated_value} onChange={e => { setApproxRate(''); setNewLead(p => ({ ...p, estimated_value: e.target.value })); }} placeholder="0" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Currency</label>
-                <select className="form-select" value={newLead.currency_code} onChange={e => setNewLead(p => ({ ...p, currency_code: e.target.value }))}>
-                  {['USD','EUR','GBP','QAR','AED','SGD','JPY','INR','AUD','HKD'].map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
+
           </div>
         </Modal>
 

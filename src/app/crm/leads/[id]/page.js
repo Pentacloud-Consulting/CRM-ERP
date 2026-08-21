@@ -8,7 +8,9 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { formatDate, formatDateTime, formatWeight, formatCurrency, getStatusColor } from '@/lib/utils/formatters';
-import { LEAD_STATUSES } from '@/lib/data/seedData';
+import { LEAD_STATUSES, LOCATIONS } from '@/lib/data/seedData';
+import { PlaneTakeoff, Ship, Truck } from 'lucide-react';
+import { getLocationName, getLocationCountry } from '../page';
 import styles from './detail.module.css';
 
 export default function LeadDetailPage() {
@@ -48,6 +50,8 @@ export default function LeadDetailPage() {
 
   const handleStartConvert = () => {
     setOpportunityName(`${lead.company_name} — Freight Opportunity`);
+    setAccountData({ tax_id: '', country: lead.country || '', phone: lead.phone || '', website: lead.website || '', industry: lead.industry || '' });
+    setContactData({ email: lead.email || '', phone: lead.contact_phone || lead.phone || '', title: lead.job_title || '' });
     setConvertStep(duplicateAccounts.length > 0 ? 0 : 1);
     setReuseAccountId(null);
     setShowConvert(true);
@@ -61,7 +65,13 @@ export default function LeadDetailPage() {
         payload: {
           lead_id: lead.lead_id,
           organization: { ...accountData, legal_name: lead.company_name },
-          contact: { ...contactData, first_name: lead.contact_name || lead.first_name, last_name: lead.last_name },
+          contact: { 
+            ...contactData, 
+            full_name: lead.contact_name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Primary Contact',
+            first_name: lead.first_name, 
+            last_name: lead.last_name,
+            is_primary: true
+          },
           opportunity: { name: opportunityName },
           reuseOrgId: reuseAccountId,
         },
@@ -148,16 +158,26 @@ export default function LeadDetailPage() {
             </div>
             <div className={styles.reqGrid}>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><Anchor size={12} className={styles.reqLabelIcon} /> Trade Lane</div>
-                {lead.trade_lane ? (
-                  <div className={styles.reqTradeLane}>
-                    {(() => {
-                      const parts = lead.trade_lane.split(/[–\-→]/);
-                      if (parts.length >= 2) return <>{parts[0].trim()} <span className={styles.tradeLaneArrow}>→</span> {parts[1].trim()}</>;
-                      return lead.trade_lane;
-                    })()}
+                <div className={styles.reqLabel}><Anchor size={12} className={styles.reqLabelIcon} /> Route & Mode</div>
+                <div className={styles.reqTradeLane}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    {lead.transport_mode === 'SEA' ? <Ship size={14} /> : lead.transport_mode === 'ROAD' ? <Truck size={14} /> : <PlaneTakeoff size={14} />}
+                    <span style={{ fontWeight: 600 }}>{lead.transport_mode || 'AIR'}</span>
                   </div>
-                ) : <span className={styles.reqValue}>—</span>}
+                  {(lead.origin_location || lead.destination_location) ? (
+                    <>
+                      {getLocationName(lead.origin_location)} <span className={styles.tradeLaneArrow}>→</span> {getLocationName(lead.destination_location)}
+                      {(() => {
+                        const o = getLocationCountry(lead.origin_location);
+                        const d = getLocationCountry(lead.destination_location);
+                        if (o && d) {
+                          return <div style={{ marginTop: '8px' }}><Badge variant={o === d ? 'neutral' : 'primary'} dot>{o === d ? 'Domestic' : 'International'}</Badge></div>;
+                        }
+                        return null;
+                      })()}
+                    </>
+                  ) : <span className={styles.reqValue}>—</span>}
+                </div>
               </div>
               <div className={styles.reqItem}>
                 <div className={styles.reqLabel}><Package size={12} className={styles.reqLabelIcon} /> Cargo Type</div>

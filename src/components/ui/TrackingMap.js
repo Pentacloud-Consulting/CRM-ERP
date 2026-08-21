@@ -1,14 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import styles from './TrackingMap.module.css';
-
-// Dynamic import for Leaflet since it requires the window object
-const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
-const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
 
 import 'leaflet/dist/leaflet.css';
 
@@ -26,14 +19,20 @@ const setupLeaflet = async () => {
 
 const findLocation = (airports, shipmentLoc, shipmentAirport) => {
   if (!shipmentLoc && !shipmentAirport) return null;
+  
+  let searchLoc = shipmentLoc;
+  if (typeof searchLoc === 'string' && searchLoc.includes('{"name"')) {
+    try { searchLoc = JSON.parse(searchLoc).name; } catch(e) {}
+  }
+
   if (airports[shipmentAirport]) return airports[shipmentAirport];
-  if (airports[shipmentLoc]) return airports[shipmentLoc];
+  if (airports[searchLoc]) return airports[searchLoc];
   
   const values = Object.values(airports);
   return values.find(a => a.code === shipmentAirport) ||
-         values.find(a => a.code === shipmentLoc) ||
-         values.find(a => a.name === shipmentLoc || a.city === shipmentLoc) ||
-         values.find(a => shipmentLoc && (a.name.includes(shipmentLoc) || a.city.includes(shipmentLoc)));
+         values.find(a => a.code === searchLoc) ||
+         values.find(a => a.name === searchLoc || a.city === searchLoc) ||
+         values.find(a => searchLoc && (a.name.includes(searchLoc) || a.city.includes(searchLoc)));
 };
 
 // We will use a ref to get the map instance directly

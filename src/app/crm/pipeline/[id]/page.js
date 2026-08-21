@@ -6,6 +6,9 @@ import { useApp } from '@/lib/store/AppContext';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { formatDate, formatDateTime, formatCurrency } from '@/lib/utils/formatters';
+import { LOCATIONS } from '@/lib/data/seedData';
+import { PlaneTakeoff, Ship, Truck, Anchor } from 'lucide-react';
+import { getLocationName, getLocationCountry } from '@/app/crm/leads/page';
 import styles from './detail.module.css';
 
 export default function PipelineDetailPage() {
@@ -60,14 +63,33 @@ export default function PipelineDetailPage() {
   }, [state.domainEvents, opp]);
 
 
-  // Format Trade Lane
-  let routeDisplay = opp.trade_lane;
-  if (opp.trade_lane && opp.trade_lane.includes('-')) {
-    const parts = opp.trade_lane.split('-');
-    routeDisplay = <>{parts[0]} <ChevronRight size={14} className={styles.laneArrow} /> {parts[1]}</>;
-  } else if (opp.trade_lane && opp.trade_lane.includes('–')) {
-     const parts = opp.trade_lane.split('–');
-     routeDisplay = <>{parts[0]} <ChevronRight size={14} className={styles.laneArrow} /> {parts[1]}</>;
+  // Format Route & Mode
+  let routeDisplay = <span style={{ color: 'var(--text-tertiary)' }}>—</span>;
+  if (opp.origin_location || opp.destination_location) {
+    const o = getLocationCountry(opp.origin_location);
+    const d = getLocationCountry(opp.destination_location);
+    const isDomestic = o && d && o === d;
+    
+    routeDisplay = (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#94A3B8', display: 'flex' }}>
+            {opp.transport_mode === 'SEA' ? <Ship size={14} /> : opp.transport_mode === 'ROAD' ? <Truck size={14} /> : <PlaneTakeoff size={14} />}
+          </span>
+          <span style={{ fontWeight: 600 }}>{opp.transport_mode || 'AIR'}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>{getLocationName(opp.origin_location)}</span>
+          <ChevronRight size={14} style={{ color: '#94A3B8' }} />
+          <span>{getLocationName(opp.destination_location)}</span>
+          {o && d && (
+            <Badge variant={isDomestic ? 'neutral' : 'primary'} dot style={{ marginLeft: '4px' }}>
+              {isDomestic ? 'Domestic' : 'International'}
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
   }
 
   // Determine Stage Colors for Badges
@@ -133,9 +155,9 @@ export default function PipelineDetailPage() {
                 <h2 className={styles.sectionTitle}><Globe size={18} color="#14B8A6" /> Freight Requirements</h2>
               </div>
               <div className={styles.dataGrid}>
-                <div className={styles.dataItem}>
-                  <span className={styles.dataLabel}>Trade Lane</span>
-                  <span className={styles.dataLane}>{routeDisplay || '—'}</span>
+                <div className={styles.dataItem} style={{ gridColumn: 'span 2' }}>
+                  <span className={styles.dataLabel}><Anchor size={12} style={{marginRight: 4}} /> Route & Mode</span>
+                  <div className={styles.dataLane} style={{ marginTop: 8 }}>{routeDisplay}</div>
                 </div>
                 <div className={styles.dataItem}>
                   <span className={styles.dataLabel}>Cargo Type</span>

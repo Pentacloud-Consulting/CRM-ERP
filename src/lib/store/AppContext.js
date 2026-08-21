@@ -24,8 +24,14 @@ function appReducer(state, action) {
     // ---- System ----
     case 'HYDRATE': {
       const hydrated = { ...state, ...action.payload };
-      // Ensure seed organizations (carriers, etc.) are always present
+      // Ensure seed organizations (carriers, etc.) are always present and updated
       const seedOrgs = getInitialState().organizations;
+      if (hydrated.organizations) {
+        hydrated.organizations = hydrated.organizations.map(org => {
+          const seedOrg = seedOrgs.find(so => so.org_id === org.org_id);
+          return seedOrg ? { ...seedOrg, ...org, carrier_type: seedOrg.carrier_type || org.carrier_type } : org;
+        });
+      }
       const existingIds = new Set((hydrated.organizations || []).map(o => o.org_id));
       const missingOrgs = seedOrgs.filter(o => !existingIds.has(o.org_id));
       if (missingOrgs.length > 0) {
@@ -84,18 +90,21 @@ function appReducer(state, action) {
         created_at: now,
       };
 
-      // Parse trade_lane (e.g. "DOH–FRA" or "DOH-FRA") into origin/destination
-      const tradeParts = (lead.trade_lane || '').split(/[–\-→]/);
-      const originLoc = tradeParts[0]?.trim() || '';
-      const destLoc = tradeParts[1]?.trim() || '';
+      const originLoc = lead.origin_location || '';
+      const destLoc = lead.destination_location || '';
 
-      const oppName = `${lead.company_name} — ${originLoc || '?'}-${destLoc || '?'}`;
+      const safeGetLocationName = (loc) => {
+        if (!loc) return '?';
+        try { return JSON.parse(loc).name || '?'; } catch { return loc; }
+      };
+
+      const oppName = `${lead.company_name} — ${safeGetLocationName(originLoc)}-${safeGetLocationName(destLoc)}`;
       const newOpportunity = {
         opportunity_id: generateId('opp'),
         title: opportunity.title || opportunity.name || oppName,
         org_id: orgId,
         contact_id: newContact.contact_id,
-        transport_mode: opportunity.transport_mode || 'AIR',
+        transport_mode: lead.transport_mode || opportunity.transport_mode || 'AIR',
         stage: 'Qualifying',
         origin_location: originLoc,
         destination_location: destLoc,
@@ -245,6 +254,9 @@ function appReducer(state, action) {
     case 'UPDATE_TRANSPORT_MANIFEST': {
       return { ...state, transportManifests: state.transportManifests.map(m => m.manifest_id === action.payload.manifest_id ? { ...m, ...action.payload } : m) };
     }
+    case 'DELETE_TRANSPORT_MANIFEST': {
+      return { ...state, transportManifests: state.transportManifests.filter(m => m.manifest_id !== action.payload) };
+    }
     
     case 'CREATE_BOOKING': {
       const bkr = { ...action.payload, booking_request_id: generateId('bkr'), status: 'Requested', created_at: new Date().toISOString() };
@@ -252,6 +264,9 @@ function appReducer(state, action) {
     }
     case 'UPDATE_BOOKING': {
       return { ...state, bookingRequests: state.bookingRequests.map(b => b.booking_request_id === action.payload.booking_request_id ? { ...b, ...action.payload } : b) };
+    }
+    case 'DELETE_BOOKING': {
+      return { ...state, bookingRequests: state.bookingRequests.filter(b => b.booking_request_id !== action.payload) };
     }
 
     case 'ADD_TRACKING_EVENT': {
@@ -271,12 +286,23 @@ function appReducer(state, action) {
       return newState;
     }
 
+    case 'REMOVE_TRACKING_EVENT': {
+      const { shipment_id, event_code } = action.payload;
+      return { 
+        ...state, 
+        trackingEvents: state.trackingEvents.filter(e => !(e.shipment_id === shipment_id && e.event_code === event_code))
+      };
+    }
+
     case 'CREATE_CUSTOMS': {
       const clr = { ...action.payload, clearance_id: generateId('clr'), created_at: new Date().toISOString() };
       return { ...state, customsClearances: [clr, ...state.customsClearances] };
     }
     case 'UPDATE_CUSTOMS': {
       return { ...state, customsClearances: state.customsClearances.map(c => c.clearance_id === action.payload.clearance_id ? { ...c, ...action.payload } : c) };
+    }
+    case 'DELETE_CUSTOMS': {
+      return { ...state, customsClearances: state.customsClearances.filter(c => c.clearance_id !== action.payload) };
     }
 
     // ULD Management
@@ -286,6 +312,9 @@ function appReducer(state, action) {
     }
     case 'UPDATE_ULD': {
       return { ...state, ulds: state.ulds.map(u => u.uld_id === action.payload.uld_id ? { ...u, ...action.payload } : u) };
+    }
+    case 'DELETE_ULD': {
+      return { ...state, ulds: state.ulds.filter(u => u.uld_id !== action.payload) };
     }
 
     // Finance (Quotes, Invoices)
@@ -301,6 +330,9 @@ function appReducer(state, action) {
     }
     case 'UPDATE_INVOICE': {
       return { ...state, invoices: state.invoices.map(i => i.invoice_id === action.payload.invoice_id ? { ...i, ...action.payload } : i) };
+    }
+    case 'DELETE_INVOICE': {
+      return { ...state, invoices: state.invoices.filter(i => i.invoice_id !== action.payload) };
     }
     case 'SIGN_INVOICE': {
       const { invoice_id, signature_data, signer_name } = action.payload;
@@ -326,6 +358,9 @@ function appReducer(state, action) {
     }
     case 'UPDATE_DOCUMENT': {
       return { ...state, documents: (state.documents || []).map(d => d.document_id === action.payload.document_id ? { ...d, ...action.payload } : d) };
+    }
+    case 'DELETE_DOCUMENT': {
+      return { ...state, documents: (state.documents || []).filter(d => d.document_id !== action.payload) };
     }
     case 'SIGN_DOCUMENT': {
       const { document_id, signature_data, signer_name } = action.payload;
@@ -447,7 +482,7 @@ export function AppProvider({ children }) {
       let totalWeight = 0;
       state.uldAllocations.forEach(a => {
         if (a.uld_id === uldId) {
-          totalWeight += (a.loaded_weight_kg || 0);
+          totalWeight += (a.weight_kg || a.loaded_weight_kg || 0);
         }
       });
       return totalWeight;

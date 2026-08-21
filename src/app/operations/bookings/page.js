@@ -23,9 +23,11 @@ export default function BookingsPage() {
     allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: ''
   });
 
-  const getCarrier = (id) => state.organizations.find(c => c.org_id === id);
-  const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
   const getShipment = (id) => state.shipments.find(s => s.shipment_id === id);
+  const getCarrier = (id) => state.organizations.find(o => o.org_id === id);
+  const getOrg = (id) => state.organizations.find(o => o.org_id === id);
+  const getContact = (id) => state.contacts.find(c => c.contact_id === id);
+  const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
 
   // Status mapping for premium badges
   const getPremiumStatusVariant = (status) => {
@@ -84,6 +86,25 @@ export default function BookingsPage() {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{getShipment(row.shipment_id)?.shipment_reference || '—'}</span>
         </div>
       ) 
+    },
+    { 
+      key: 'customer', 
+      label: 'Customer', 
+      accessor: row => {
+        const shp = getShipment(row.shipment_id);
+        return getOrg(shp?.customer_org_id || shp?.org_id)?.legal_name;
+      }, 
+      render: (row) => {
+        const shp = getShipment(row.shipment_id);
+        const org = getOrg(shp?.customer_org_id || shp?.org_id);
+        const contact = getContact(shp?.shipper_contact_id || shp?.consignee_contact_id || shp?.contact_id) || state.contacts.find(c => c.org_id === (shp?.customer_org_id || shp?.org_id));
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '13px' }}>{org?.legal_name || '—'}</span>
+            <span style={{ fontSize: '11px', color: '#64748B' }}>{contact?.full_name || '—'}</span>
+          </div>
+        );
+      }
     },
     { 
       key: 'carrier', 

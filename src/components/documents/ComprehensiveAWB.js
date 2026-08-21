@@ -7,6 +7,17 @@ import styles from './documents.module.css';
 const findLocation = (locations, ...keys) => {
   for (const key of keys) {
     if (!key) continue;
+    
+    // Check if it's a JSON string from AsyncLocationSelect
+    if (key.startsWith('{') && key.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(key);
+        return { code: parsed.code, city: parsed.name, country: parsed.country };
+      } catch (e) {
+        // Fallthrough
+      }
+    }
+
     if (locations[key]) return locations[key];
     const match = Object.values(locations).find(l => l.code === key || l.name === key || l.city === key);
     if (match) return match;

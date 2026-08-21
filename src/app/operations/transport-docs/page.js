@@ -9,6 +9,7 @@ import Modal from '@/components/ui/Modal';
 import { Plus, Eye, Edit2, Trash2, ArrowUpRight, Plane, Activity, FileText, ChevronRight, Scale, DollarSign, Files } from 'lucide-react';
 import { formatDate, formatWeight, formatCurrency, formatAWBNumber } from '@/lib/utils/formatters';
 import { LOCATIONS } from '@/lib/data/seedData';
+import { getLocationName } from '@/app/crm/leads/page';
 import styles from './awb.module.css';
 
 export default function AWBPage() {
@@ -25,6 +26,8 @@ export default function AWBPage() {
   });
 
   const getCarrier = (id) => state.organizations.find(c => c.org_id === id);
+  const getOrg = (id) => state.organizations.find(o => o.org_id === id);
+  const getContact = (id) => state.contacts.find(c => c.contact_id === id);
   const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
 
   // Status mapping for premium FWB badges
@@ -85,25 +88,52 @@ export default function AWBPage() {
       key: 'fwb', 
       label: 'STATUS', 
       accessor: 'status', 
-      render: (row) => <Badge variant={getFwbStatusVariant(row.status)}>{row.status}</Badge> 
+      render: (row) => <Badge variant={getFwbStatusVariant(row.status || row.fwb_status)}>{row.status || row.fwb_status}</Badge> 
+    },
+    { 
+      key: 'customer', 
+      label: 'CUSTOMER', 
+      accessor: row => {
+        const shp = row.shipment_id ? state.shipments.find(s => s.shipment_id === row.shipment_id) : null;
+        return getOrg(shp?.customer_org_id || shp?.org_id)?.legal_name;
+      }, 
+      render: (row) => {
+        const shp = row.shipment_id ? state.shipments.find(s => s.shipment_id === row.shipment_id) : null;
+        const org = getOrg(shp?.customer_org_id || shp?.org_id);
+        const contact = getContact(shp?.shipper_contact_id || shp?.consignee_contact_id || shp?.contact_id) || state.contacts.find(c => c.org_id === (shp?.customer_org_id || shp?.org_id));
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '13px' }}>{org?.legal_name || '—'}</span>
+            <span style={{ fontSize: '11px', color: '#64748B' }}>{contact?.full_name || '—'}</span>
+          </div>
+        );
+      }
     },
     { 
       key: 'carrier', 
       label: 'CARRIER', 
-      accessor: row => getCarrier(row.provider_id)?.code, 
-      render: (row) => <span style={{ fontWeight: 800, color: '#0F172A' }}>{getCarrier(row.provider_id)?.code || '—'}</span> 
+      accessor: row => getCarrier(row.provider_id || row.carrier_id)?.code, 
+      render: (row) => <span style={{ fontWeight: 800, color: '#0F172A' }}>{getCarrier(row.provider_id || row.carrier_id)?.code || '—'}</span> 
     },
     { 
       key: 'route', 
       label: 'ROUTE', 
-      accessor: row => `${row.origin_location}–${row.destination_location}`, 
-      render: (row) => (
-        <div className={styles.routeCell}>
-          <span className={styles.routeCode}>{row.origin_location}</span>
-          <ChevronRight size={14} className={styles.routeArrow} />
-          <span className={styles.routeCode}>{row.destination_location}</span>
-        </div>
-      )
+      accessor: row => {
+        const shp = row.shipment_id ? state.shipments.find(s => s.shipment_id === row.shipment_id) : null;
+        return `${getLocationName(row.origin_location || shp?.origin_location || '')}–${getLocationName(row.destination_location || shp?.destination_location || '')}`;
+      }, 
+      render: (row) => {
+        const shp = row.shipment_id ? state.shipments.find(s => s.shipment_id === row.shipment_id) : null;
+        const origin = getLocationName(row.origin_location || shp?.origin_location || '—');
+        const dest = getLocationName(row.destination_location || shp?.destination_location || '—');
+        return (
+          <div className={styles.routeCell}>
+            <span className={styles.routeCode}>{origin}</span>
+            <ChevronRight size={14} className={styles.routeArrow} />
+            <span className={styles.routeCode}>{dest}</span>
+          </div>
+        );
+      }
     },
     { key: 'pieces', label: 'PCS', accessor: 'pieces', align: 'right', render: (row) => <span style={{ fontWeight: 600, color: '#334155' }}>{row.pieces}</span> },
     { key: 'weight', label: 'CHG. WT', accessor: 'chargeable_weight_kg', align: 'right', render: (row) => <span style={{ fontWeight: 700, color: '#0F172A' }}>{formatWeight(row.chargeable_weight_kg)}</span> },
