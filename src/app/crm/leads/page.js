@@ -23,20 +23,30 @@ const EMPTY_LEAD = {
 
 export const getLocationName = (loc) => {
   if (!loc) return '?';
+  if (typeof loc === 'object') return loc.name || loc.code || '?';
   try {
-    return JSON.parse(loc).name;
+    const parsed = JSON.parse(loc);
+    if (typeof parsed === 'object' && parsed !== null) {
+      return parsed.name || parsed.code || loc;
+    }
   } catch {
-    return loc; // It's a standard code like 'DXB'
+    return loc; // Standard code like 'DXB'
   }
+  return loc;
 };
 
 export const getLocationCountry = (loc) => {
   if (!loc) return null;
+  if (typeof loc === 'object') return loc.country || null;
   try {
-    return JSON.parse(loc).country;
+    const parsed = JSON.parse(loc);
+    if (typeof parsed === 'object' && parsed !== null) {
+      return parsed.country || null;
+    }
   } catch {
     return LOCATIONS[loc]?.country || null;
   }
+  return LOCATIONS[loc]?.country || null;
 };
 
 export default function LeadsPage() {

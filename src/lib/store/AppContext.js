@@ -456,6 +456,7 @@ export function AppProvider({ children }) {
   const value = {
     state,
     dispatch,
+    isHydrated,
     // Convenience getters
     getOrganization: (id) => state.organizations.find(o => o.org_id === id),
     getContact: (id) => state.contacts.find(c => c.contact_id === id),

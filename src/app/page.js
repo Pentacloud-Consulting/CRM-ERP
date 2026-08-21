@@ -1,237 +1,267 @@
 'use client';
-import { useMemo, useState } from 'react';
+
 import Link from 'next/link';
-import {
-  Ship, Plane, Truck, PackageCheck, AlertTriangle, ShieldCheck, TrendingUp, Package,
-  ArrowUpRight, Clock, CheckCircle2, XCircle, BarChart3,
-  Search, Bell, MessageSquare, Settings, UserCircle2, Zap, LayoutDashboard,
-  Bot, Route, ArrowDownRight, Users, FileSpreadsheet, Building2
-} from 'lucide-react';
-import { useApp } from '@/lib/store/AppContext';
-import { eventBus } from '@/lib/store/eventBus';
-import { formatCurrency } from '@/lib/utils/formatters';
-import RevenueChart from '@/components/dashboard/RevenueChart';
-import LogisticsFlow from '@/components/dashboard/LogisticsFlow';
-import styles from './page.module.css';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Anchor, Plane, Truck, ShieldCheck, FileText, Globe, ArrowRight, Zap, LineChart, Target, Server } from 'lucide-react';
+import styles from './Home.module.css';
 
-export default function Dashboard() {
-  const { state } = useApp();
-  const [spinningId, setSpinningId] = useState(null);
+// Animation variants
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
 
-  const handleSpin = (id) => {
-    setSpinningId(id);
-    setTimeout(() => setSpinningId(null), 600);
-  };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 }
+  }
+};
 
-  const metrics = useMemo(() => {
-    const activeShipments = state.shipments.filter(s => !['Delivered', 'Cancelled'].includes(s.status)).length;
-    const openExceptions = state.shipments.filter(s => s.status === 'Exception' || s.status === 'Customs Hold').length;
-    const customsHolds = state.customsClearances.filter(c => c.status === 'Held').length;
-    const pendingBookings = state.bookingRequests ? state.bookingRequests.filter(b => b.status === 'Requested' || b.status === 'Pending').length : 0;
-    const wonDeals = state.opportunities.filter(o => o.status === 'Closed Won').length;
-    const newLeads = state.leads.filter(l => l.status === 'New').length;
-    
-    const totalShipments = state.shipments.length;
-    const totalBookings = state.bookingRequests ? state.bookingRequests.length : 0;
-    
-    const revenue = state.invoices
-      .filter(i => i.status !== 'Cancelled')
-      .reduce((sum, i) => sum + (i.total_amount || 0), 0);
-      
-    return {
-      activeShipments,
-      openExceptions,
-      customsHolds,
-      pendingBookings,
-      wonDeals,
-      newLeads,
-      totalShipments,
-      totalBookings,
-      revenue,
-      onTimeDelivery: 94.2,
-      avgCustomsDwell: 18.5
-    };
-  }, [state]);
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } }
+};
+
+export default function MarketingHomepage() {
+  const { scrollYProgress } = useScroll();
+  const navBackground = useTransform(
+    scrollYProgress,
+    [0, 0.05],
+    ["rgba(6, 11, 20, 0)", "rgba(6, 11, 20, 0.8)"]
+  );
 
   return (
-    <div className={`ambient-mesh-bg`}>
-      <div className={styles.dashboard}>
+    <div className={styles.pageContainer}>
+      <div className={styles.ambientBg} />
+
+      {/* NAVBAR */}
+      <motion.nav 
+        className={styles.navbar}
+        style={{ background: navBackground }}
+      >
+        <div className={styles.logo}>
+          <div className={styles.logoIcon}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          FreightFlow AI
+        </div>
         
-        {/* Premium Top Navigation / Header */}
-        <div className={styles.topNav}>
-          <div className={styles.topLeft}>
-            <h1 className={styles.title}>Dashboard</h1>
-            <p className={styles.subtitle}>Operations Overview | {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          </div>
+        <div className={styles.navActions}>
+          <Link href="/login" className={styles.loginBtn}>
+            Login to Platform
+          </Link>
+        </div>
+      </motion.nav>
 
-          <div className={styles.topCenter}>
-            <div className={styles.searchBar}>
-              <Search size={18} className={styles.searchIcon} />
-              <input 
-                type="text" 
-                placeholder="Search shipments, bookings, AWB numbers, flights, customers..." 
-                className={styles.searchInput}
+      <div className={styles.contentWrapper}>
+        {/* HERO SECTION */}
+        <section className={styles.hero}>
+          <motion.div 
+            className={styles.heroContent}
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
+            <motion.div className={styles.heroBadge} variants={fadeUp}>
+              <Zap size={14} style={{ display: 'inline', marginRight: '6px' }} />
+              FreightForwarding v2.0
+            </motion.div>
+            <motion.h1 className={styles.heroTitle} variants={fadeUp}>
+              The intelligence engine<br/>for modern logistics.
+            </motion.h1>
+            <motion.p className={styles.heroSubtitle} variants={fadeUp}>
+              Manage leads, instantly book freight, clear customs, and track every shipment globally with our unified, AI-native command center.
+            </motion.p>
+            <motion.div variants={fadeUp}>
+              <Link href="/login" className={styles.loginBtn} style={{ padding: '16px 32px', fontSize: '16px' }}>
+                Enter the Command Center
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          <motion.div 
+            className={styles.heroVisual}
+            initial="hidden"
+            animate="visible"
+            variants={scaleIn}
+          >
+            <div className={styles.mockupCard}>
+              <div className={styles.mockupHeader}>
+                <div className={styles.mockupTitle}>
+                  <Globe size={18} color="#00F0FF" />
+                  Live Tracking: AWB-847291
+                </div>
+                <div className={styles.pulseDot} />
+              </div>
+              <div className={styles.mockupMap}>
+                <div className={styles.mapLine} />
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* TRUST BAR */}
+        <motion.section 
+          className={styles.trustBar}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeUp}
+        >
+          <p className={styles.trustText}>POWERING NEXT-GENERATION FORWARDERS & CARRIERS</p>
+          <div className={styles.trustLogos}>
+            <span className={styles.trustLogo}>MAERSK</span>
+            <span className={styles.trustLogo}>DHL</span>
+            <span className={styles.trustLogo}>FEDEX</span>
+            <span className={styles.trustLogo}>EXPEDITORS</span>
+            <span className={styles.trustLogo}>KUEHNE+NAGEL</span>
+          </div>
+        </motion.section>
+
+        {/* BENTO GRID FEATURES */}
+        <section className={styles.features}>
+          <motion.div 
+            className={styles.sectionHeader}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+          >
+            <h2 className={styles.sectionTitle}>Everything you need. Nothing you don&apos;t.</h2>
+            <p className={styles.heroSubtitle} style={{ margin: '0 auto' }}>
+              We stripped away the clutter of legacy ERPs to build a beautifully fast, highly capable platform.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className={styles.bentoGrid}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.div className={`${styles.bentoCard} ${styles.bentoCardLarge}`} variants={fadeUp}>
+              <div className={styles.bentoIcon}><Target size={28} /></div>
+              <h3 className={styles.bentoTitle}>AI-Driven CRM & Quoting</h3>
+              <p className={styles.bentoDesc}>Automatically parse emails to generate quotes, capture leads instantly, and calculate complex volumetric routing margins in milliseconds.</p>
+            </motion.div>
+            
+            <motion.div className={styles.bentoCard} variants={fadeUp}>
+              <div className={styles.bentoIcon}><Globe size={28} /></div>
+              <h3 className={styles.bentoTitle}>Global Visibility</h3>
+              <p className={styles.bentoDesc}>Connect directly to ocean and air carriers for real-time tracking data and ETAs.</p>
+            </motion.div>
+
+            <motion.div className={styles.bentoCard} variants={fadeUp}>
+              <div className={styles.bentoIcon}><FileText size={28} /></div>
+              <h3 className={styles.bentoTitle}>Automated Docs</h3>
+              <p className={styles.bentoDesc}>Generate MAWBs, HAWBs, commercial invoices and packing lists automatically.</p>
+            </motion.div>
+
+            <motion.div className={`${styles.bentoCard} ${styles.bentoCardLarge}`} variants={fadeUp}>
+              <div className={styles.bentoIcon}><ShieldCheck size={28} /></div>
+              <h3 className={styles.bentoTitle}>Seamless Customs Clearance</h3>
+              <p className={styles.bentoDesc}>Native integrations with global customs agencies allow you to submit declarations and clear cargo without ever leaving the platform.</p>
+            </motion.div>
+          </motion.div>
+        </section>
+
+        {/* WORKFLOW DIAGRAM */}
+        <section className={styles.workflow}>
+          <motion.div 
+            className={styles.sectionHeader}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+          >
+            <h2 className={styles.sectionTitle}>The Unified Freight Pipeline</h2>
+          </motion.div>
+
+          <motion.div 
+            className={styles.flowContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-150px" }}
+            variants={staggerContainer}
+          >
+            {/* Animated SVG Path connecting nodes */}
+            <svg style={{ position: 'absolute', top: '75px', left: '100px', width: 'calc(100% - 200px)', height: '2px', zIndex: 1 }}>
+              <motion.line 
+                x1="0" y1="0" x2="100%" y2="0" 
+                stroke="rgba(0, 240, 255, 0.3)" 
+                strokeWidth="2" 
+                strokeDasharray="8 8"
+                initial={{ pathLength: 0 }}
+                whileInView={{ pathLength: 1 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
               />
-              <div className={styles.aiBadge}><Bot size={14}/> AI</div>
-            </div>
+            </svg>
+
+            {[
+              { icon: <Target size={32} />, label: "Lead & Quote", desc: "Instantly reply to RFQs." },
+              { icon: <Plane size={32} />, label: "Book Carrier", desc: "Secure air or ocean space." },
+              { icon: <FileText size={32} />, label: "Docs & AWB", desc: "Auto-generate paperwork." },
+              { icon: <ShieldCheck size={32} />, label: "Clear Customs", desc: "Frictionless borders." },
+              { icon: <Truck size={32} />, label: "Final Mile", desc: "Deliver and invoice." }
+            ].map((node, i) => (
+              <motion.div className={styles.flowNode} key={i} variants={scaleIn}>
+                <div className={styles.flowIconWrapper}>
+                  {node.icon}
+                </div>
+                <div className={styles.flowLabel}>{node.label}</div>
+                <div className={styles.flowDesc}>{node.desc}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+
+        {/* STATISTICS SECTION */}
+        <motion.section 
+          className={styles.stats}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
+          <div className={styles.statsGrid}>
+            <motion.div variants={fadeUp}>
+              <div className={styles.statNumber}>10x</div>
+              <div className={styles.statLabel}>Faster Quoting Process</div>
+            </motion.div>
+            <motion.div variants={fadeUp}>
+              <div className={styles.statNumber}>$2.4B+</div>
+              <div className={styles.statLabel}>Freight Value Managed</div>
+            </motion.div>
+            <motion.div variants={fadeUp}>
+              <div className={styles.statNumber}>99.9%</div>
+              <div className={styles.statLabel}>Platform Uptime</div>
+            </motion.div>
           </div>
-        </div>
+        </motion.section>
 
-        {/* Top KPI Cards Grid (8 Cards) */}
-        <div className={styles.kpiGrid}>
-          <Link href="/operations/shipments" onClick={() => handleSpin('kpi1')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi1' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: '#E0F2FE', color: '#0369A1' }}>
-                <Ship size={20} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+12% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.activeShipments}</div>
-              <div className={styles.kpiLabel}>Active Shipments</div>
-            </div>
-          </Link>
-
-          <Link href="/operations/tracking" onClick={() => handleSpin('kpi2')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi2' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: '#FEE2E2', color: '#DC2626' }}>
-                <AlertTriangle size={20} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendDown}`}>-3% <ArrowDownRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.openExceptions}</div>
-              <div className={styles.kpiLabel}>Open Exceptions</div>
-            </div>
-          </Link>
-
-          <Link href="/operations/customs" onClick={() => handleSpin('kpi3')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi3' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: '#F3E8FF', color: '#7E22CE' }}>
-                <ShieldCheck size={20} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+2% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.customsHolds}</div>
-              <div className={styles.kpiLabel}>Customs Holds</div>
-            </div>
-          </Link>
-
-          <Link href="/operations/bookings" onClick={() => handleSpin('kpi4')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi4' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: '#CCFBF1', color: '#0F766E' }}>
-                <Plane size={20} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+18% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.pendingBookings}</div>
-              <div className={styles.kpiLabel}>Pending Bookings</div>
-            </div>
-          </Link>
-
-          <Link href="/crm/pipeline" onClick={() => handleSpin('kpi5')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi5' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: '#E0F2FE', color: '#0369A1' }}>
-                <TrendingUp size={20} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+8% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.wonDeals}</div>
-              <div className={styles.kpiLabel}>Won Deals</div>
-            </div>
-          </Link>
-
-          <Link href="/crm/leads" onClick={() => handleSpin('kpi6')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi6' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: '#DCFCE7', color: '#15803D' }}>
-                <BarChart3 size={20} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+24% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.newLeads}</div>
-              <div className={styles.kpiLabel}>New Leads</div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Two-column layout: Visual Diagrams */}
-        <div className={styles.contentGrid}>
-          {/* Graph Diagram */}
-          <div className={`${styles.glassPanel} ${styles.panel}`}>
-            <div className={styles.panelHeader}>
-              <h2 className={styles.panelTitle}>
-                <BarChart3 size={18} className={styles.panelIcon} />
-                Revenue & Volume Analytics
-              </h2>
-            </div>
-            <div style={{ padding: '24px' }}>
-              <RevenueChart />
-            </div>
-          </div>
-
-          {/* Flow Diagram */}
-          <div className={`${styles.glassPanel} ${styles.panel}`}>
-            <div className={styles.panelHeader}>
-              <h2 className={styles.panelTitle}>
-                <Route size={18} className={styles.panelIcon} />
-                Live Shipment Pipeline
-              </h2>
-            </div>
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-              <LogisticsFlow />
-            </div>
-          </div>
-        </div>
-
-        {/* Executive KPIs */}
-        <h2 className={styles.sectionTitle}>Key Performance Analytics</h2>
-        <div className={styles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-          
-          <div onClick={() => handleSpin('b1')} className={`${styles.glassCard} hover-scale click-spin ${spinningId === 'b1' ? 'is-spinning' : ''}`} style={{cursor: 'pointer'}}>
-            <div className={`${styles.analyticsTitle} click-spin-inner`}>Total Shipments</div>
-            <div className={styles.analyticsValue}>{metrics.totalShipments}</div>
-            <div className={styles.analyticsFooter}>
-              <span className={`${styles.kpiTrend} ${styles.trendUp}`}>+4.2%</span> vs last month
-            </div>
-          </div>
-
-          <div onClick={() => handleSpin('b2')} className={`${styles.glassCard} hover-scale click-spin ${spinningId === 'b2' ? 'is-spinning' : ''}`} style={{cursor: 'pointer'}}>
-            <div className={`${styles.analyticsTitle} click-spin-inner`}>Total Bookings</div>
-            <div className={styles.analyticsValue}>{metrics.totalBookings}</div>
-            <div className={styles.analyticsFooter}>
-              <span className={`${styles.kpiTrend} ${styles.trendUp}`}>+12.5%</span> vs last month
-            </div>
-          </div>
-
-          <div onClick={() => handleSpin('b3')} className={`${styles.glassCard} hover-scale click-spin ${spinningId === 'b3' ? 'is-spinning' : ''}`} style={{cursor: 'pointer'}}>
-            <div className={`${styles.analyticsTitle} click-spin-inner`}>Total Revenue</div>
-            <div className={styles.analyticsValue}>{formatCurrency(metrics.revenue, 'USD')}</div>
-            <div className={styles.analyticsFooter}>
-              <span className={`${styles.kpiTrend} ${styles.trendUp}`}>+8.1%</span> vs last month
-            </div>
-          </div>
-
-          <div onClick={() => handleSpin('b4')} className={`${styles.glassCard} hover-scale click-spin ${spinningId === 'b4' ? 'is-spinning' : ''}`} style={{cursor: 'pointer'}}>
-            <div className={`${styles.analyticsTitle} click-spin-inner`}>On-Time Delivery</div>
-            <div className={styles.analyticsValue}>{metrics.onTimeDelivery}%</div>
-            <div className={styles.analyticsFooter}>
-              <span className={`${styles.kpiTrend} ${styles.trendUp}`}>+2.4%</span> vs last month
-            </div>
-          </div>
-
-          <div onClick={() => handleSpin('b5')} className={`${styles.glassCard} hover-scale click-spin ${spinningId === 'b5' ? 'is-spinning' : ''}`} style={{cursor: 'pointer'}}>
-            <div className={`${styles.analyticsTitle} click-spin-inner`}>Avg Customs Dwell</div>
-            <div className={styles.analyticsValue}>{metrics.avgCustomsDwell} hrs</div>
-            <div className={styles.analyticsFooter}>
-              <span className={`${styles.kpiTrend} ${styles.trendDown}`}>-1.2%</span> vs last month
-            </div>
-          </div>
-
-        </div>
+        {/* CTA BANNER */}
+        <section className={styles.cta}>
+          <motion.div 
+            className={styles.ctaInner}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={scaleIn}
+          >
+            <h2 className={styles.sectionTitle} style={{ marginBottom: '16px' }}>Stop tracking spreadsheets.</h2>
+            <p className={styles.heroSubtitle} style={{ margin: '0 auto 40px' }}>
+              Upgrade to the intelligence engine that scales with your logistics business.
+            </p>
+            <Link href="/login" className={styles.loginBtn} style={{ padding: '16px 40px', fontSize: '18px', background: 'rgba(0, 102, 255, 0.2)' }}>
+              Login to Platform
+            </Link>
+          </motion.div>
+        </section>
       </div>
     </div>
   );

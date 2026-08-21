@@ -38,7 +38,7 @@ export default function PipelinePage() {
   const [editingOppId, setEditingOppId] = useState(null);
   const [newOpp, setNewOpp] = useState({ ...EMPTY_OPP });
   
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('kanban');
   
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);

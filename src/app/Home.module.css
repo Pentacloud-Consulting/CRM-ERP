@@ -1,0 +1,502 @@
+/* Premium Dark Mode SaaS Marketing Homepage Styles */
+
+.pageContainer {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  color: #F8FAFC;
+  background-color: #060B14;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Background Ambient Glows */
+.ambientBg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(circle at 15% 10%, rgba(0, 102, 255, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(0, 102, 255, 0.05) 0%, transparent 50%);
+}
+
+.contentWrapper {
+  position: relative;
+  z-index: 10;
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 24px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: rgba(6, 11, 20, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  color: #FFFFFF;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #00F0FF, #0066FF);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 0 20px rgba(0, 102, 255, 0.4);
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+}
+
+.loginBtn {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  color: #FFFFFF;
+  text-decoration: none;
+  padding: 10px 24px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.loginBtn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 102, 255, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.loginBtn:hover {
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 102, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.loginBtn:hover::before {
+  opacity: 1;
+}
+
+/* Hero Section */
+.hero {
+  padding: 180px 48px 120px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1360px;
+  margin: 0 auto;
+  gap: 60px;
+}
+
+.heroContent {
+  flex: 1;
+}
+
+.heroBadge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: #00F0FF;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+}
+
+.heroTitle {
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 32px;
+  letter-spacing: -2px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroSubtitle {
+  font-size: 22px;
+  color: #94A3B8;
+  line-height: 1.6;
+  margin-bottom: 48px;
+  max-width: 540px;
+  font-weight: 400;
+}
+
+.heroVisual {
+  flex: 1;
+  position: relative;
+}
+
+/* Mockup Card */
+.mockupCard {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.mockupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.mockupTitle {
+  font-weight: 600;
+  font-size: 15px;
+  color: #E2E8F0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pulseDot {
+  width: 8px;
+  height: 8px;
+  background: #00F0FF;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #00F0FF;
+  animation: radarPulse 2s infinite;
+}
+
+@keyframes radarPulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.6); }
+  70% { box-shadow: 0 0 0 15px rgba(0, 240, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+}
+
+.mockupMap {
+  height: 280px;
+  background: rgba(2, 6, 23, 0.5);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+  overflow: hidden;
+}
+
+.mapLine {
+  position: absolute;
+  top: 50%;
+  left: 15%;
+  width: 70%;
+  height: 2px;
+  background: linear-gradient(90deg, #94A3B8, #00F0FF);
+  transform: translateY(-50%);
+}
+
+.mapLine::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.8), transparent);
+  animation: scanline 2s linear infinite;
+}
+
+@keyframes scanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Trust Bar */
+.trustBar {
+  padding: 60px 48px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(2, 6, 23, 0.3);
+}
+
+.trustText {
+  text-align: center;
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 600;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+
+.trustLogos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 80px;
+  flex-wrap: wrap;
+}
+
+.trustLogo {
+  color: #64748B;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -1px;
+  transition: color 0.3s ease;
+}
+
+.trustLogo:hover {
+  color: #E2E8F0;
+}
+
+/* Bento Grid Features */
+.features {
+  padding: 160px 48px;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.sectionTitle {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 24px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bentoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 300px);
+  gap: 24px;
+}
+
+.bentoCard {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.bentoCard:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(0, 240, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.bentoCardLarge {
+  grid-column: span 2;
+}
+
+.bentoIcon {
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 102, 255, 0.1);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  color: #00F0FF;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: auto;
+}
+
+.bentoTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.bentoDesc {
+  color: #94A3B8;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Flow Diagram */
+.workflow {
+  padding: 160px 48px;
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.5) 0%, transparent 70%);
+}
+
+.flowContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-top: 40px;
+}
+
+.flowNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 140px;
+  position: relative;
+  z-index: 2;
+}
+
+.flowIconWrapper {
+  width: 72px;
+  height: 72px;
+  background: #0F172A;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.flowNode:hover .flowIconWrapper {
+  border-color: #00F0FF;
+  color: #00F0FF;
+  background: rgba(0, 102, 255, 0.2);
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 240, 255, 0.2);
+}
+
+.flowLabel {
+  font-weight: 600;
+  color: #E2E8F0;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.flowDesc {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+/* Stats */
+.stats {
+  padding: 100px 48px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.statsGrid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 64px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00F0FF, #0066FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+  letter-spacing: -2px;
+}
+
+.statLabel {
+  font-size: 16px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* CTA */
+.cta {
+  padding: 160px 48px;
+  text-align: center;
+}
+
+.ctaInner {
+  max-width: 800px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 32px;
+  padding: 80px 40px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaInner::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at center, rgba(0, 102, 255, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+    padding-top: 140px;
+  }
+  .heroSubtitle {
+    margin: 0 auto 40px;
+  }
+  .bentoGrid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .bentoCardLarge {
+    grid-column: span 1;
+  }
+  .flowContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+  }
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 64px;
+  }
+}

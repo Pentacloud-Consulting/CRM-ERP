@@ -91,7 +91,7 @@ export default function ShipmentsPage() {
         );
       } 
     },
-    { key: 'route', label: 'Route', accessor: row => `${row.origin_location}–${row.destination_location}`,
+    { key: 'route', label: 'Route', accessor: row => `${getLocationName(row.origin_location)}–${getLocationName(row.destination_location)}`,
       render: (row) => (
         <span className={styles.route}>
           <span className={styles.airport}>{getLocationName(row.origin_location)}</span>

@@ -13,7 +13,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "country-state-city": "^3.2.1",
-    "framer-motion": "^13.1.0",
+    "framer-motion": "^13.1.1",
     "html2pdf.js": "^0.14.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.31.0",

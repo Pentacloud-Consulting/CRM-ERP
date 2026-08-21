@@ -12,15 +12,28 @@ export default function Shell({ children }) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const { state } = useApp();
+  const { state, isHydrated } = useApp();
 
-  // Client-facing pages (e.g. /sign/...) render without the CRM shell
-  if (pathname?.startsWith('/sign')) {
+  const isPublicRoute = pathname === '/' || pathname === '/login' || pathname?.startsWith('/sign');
+
+  if (isPublicRoute) {
     return <>{children}</>;
   }
 
+  // Return empty or loading state until hydration is complete to prevent flashing
+  if (!isHydrated) {
+    return null;
+  }
+
   if (!state?.isAuthenticated) {
-    return <LoginScreen />;
+    // We could use router.push('/login'), but rendering inline for protected routes 
+    // completely prevents flashing. If the user hits a protected URL, they see the login.
+    // However, the user specifically asked for a standalone /login route.
+    // So we will redirect them to /login if they hit a protected route unauthenticated.
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    return null; // Return null while redirecting
   }
 
   return (

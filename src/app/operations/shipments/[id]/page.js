@@ -539,7 +539,7 @@ export default function ShipmentDetailPage() {
           </div>
           <div className={styles.flightSummaryCard}>
             <div className={styles.flightSummaryAirport}>
-              <div className={styles.flightSummaryCode}>{shipment.origin_airport}</div>
+              <div className={styles.flightSummaryCode}>{getLocationName(shipment.origin_airport || shipment.origin_location)}</div>
               <div className={styles.flightSummaryCity}>{LOCATIONS[shipment.origin_location || shipment.origin_airport]?.name || ''}</div>
             </div>
             <div className={styles.flightSummaryMid}>
@@ -553,7 +553,7 @@ export default function ShipmentDetailPage() {
               <div className={styles.flightAutoLabel}><CheckCircle size={12} /> Auto-fetched from Booking</div>
             </div>
             <div className={styles.flightSummaryAirport}>
-              <div className={styles.flightSummaryCode}>{shipment.destination_airport}</div>
+              <div className={styles.flightSummaryCode}>{getLocationName(shipment.destination_airport || shipment.destination_location)}</div>
               <div className={styles.flightSummaryCity}>{LOCATIONS[shipment.destination_location || shipment.destination_airport]?.name || ''}</div>
             </div>
           </div>
