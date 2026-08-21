@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import AIPanel from './AIPanel';
+import LoginScreen from '../auth/LoginScreen';
+import { useApp } from '@/lib/store/AppContext';
 import styles from './Shell.module.css';
 
 export default function Shell({ children }) {
@@ -10,10 +12,15 @@ export default function Shell({ children }) {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { state } = useApp();
 
   // Client-facing pages (e.g. /sign/...) render without the CRM shell
   if (pathname?.startsWith('/sign')) {
     return <>{children}</>;
+  }
+
+  if (!state?.isAuthenticated) {
+    return <LoginScreen />;
   }
 
   return (

@@ -15,6 +15,7 @@ function getInitialState() {
     notifications: [],
     aiMessages: [],
     selectedEntity: null,
+    isAuthenticated: false,
   };
 }
 
@@ -38,6 +39,14 @@ function appReducer(state, action) {
         hydrated.organizations = [...(hydrated.organizations || []), ...missingOrgs];
       }
       return hydrated;
+    }
+    
+    case 'LOGIN': {
+      return { ...state, isAuthenticated: true };
+    }
+    
+    case 'LOGOUT': {
+      return { ...state, isAuthenticated: false };
     }
 
     // ---- CRM ----
