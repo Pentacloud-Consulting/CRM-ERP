@@ -4,12 +4,13 @@ import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import { Plus, Edit } from 'lucide-react';
-import { formatWeight, getStatusColor } from '@/lib/utils/formatters';
-import { AIRPORTS, CARRIERS } from '@/lib/data/seedData';
+import DataTable from '@/components/ui/DataTable';
+import { Plus, Edit2, Box, Package, Activity, Compass, Target, Navigation, ShieldCheck, LayoutGrid, List, Plane } from 'lucide-react';
+import { formatDate, formatWeight } from '@/lib/utils/formatters';
+import { LOCATIONS } from '@/lib/data/seedData';
 import styles from './uld.module.css';
 
-const ULD_STATUS_ORDER = ['Available', 'Build-Up in Progress', 'Built-Up', 'Loaded', 'In Transit', 'Empty Return', 'Damaged', 'Under Repair'];
+const ULD_STATUS_ORDER = ['Available', 'Build-Up in Progress', 'Built-Up', 'Loaded', 'In Transit', 'Delivered'];
 
 const ULD_TYPES = [
   { code: 'AKE', name: 'LD3 Container' },
@@ -22,20 +23,42 @@ const ULD_TYPES = [
 
 export default function ULDPage() {
   const { state, dispatch, getULDTotalAllocatedWeight } = useApp();
+  const [viewMode, setViewMode] = useState('kanban');
+  
   const [showNew, setShowNew] = useState(false);
   const [newULD, setNewULD] = useState({
-    uld_number: '', uld_type: 'AKE', owner_code: '', tare_weight_kg: '', max_gross_weight_kg: '',
+    uld_number: '', uld_type: 'AKE', owner_id: '', tare_weight_kg: '', max_gross_weight_kg: '',
     current_location: '', status: 'Available'
   });
   const [showEdit, setShowEdit] = useState(false);
   const [editULD, setEditULD] = useState(null);
 
+  const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
+  const airports = useMemo(() => Object.values(LOCATIONS).filter(l => l.type === 'Airport'), []);
+
   const columns = useMemo(() => {
     return ULD_STATUS_ORDER.map(status => ({
       status,
       ulds: state.ulds.filter(u => u.status === status),
-    })).filter(col => col.ulds.length > 0 || ['Available', 'Build-Up in Progress', 'Built-Up'].includes(col.status));
+    }));
   }, [state.ulds]);
+
+  const metrics = useMemo(() => {
+    let totalMax = 0;
+    let totalAllocated = 0;
+    
+    state.ulds.forEach(u => {
+      totalMax += (u.max_gross_weight_kg || 0) - (u.tare_weight_kg || 0);
+      totalAllocated += getULDTotalAllocatedWeight(u.uld_id);
+    });
+
+    const activeUlds = state.ulds.filter(u => ['Build-Up in Progress', 'Built-Up', 'Loaded', 'In Transit'].includes(u.status)).length;
+    const available = state.ulds.filter(u => u.status === 'Available').length;
+    const transit = state.ulds.filter(u => u.status === 'In Transit').length;
+    const utilPct = totalMax > 0 ? (totalAllocated / totalMax) * 100 : 0;
+
+    return { total: state.ulds.length, active: activeUlds, available, transit, utilPct: Math.round(utilPct) };
+  }, [state.ulds, getULDTotalAllocatedWeight]);
 
   const handleDragStart = (e, uldId) => {
     e.dataTransfer.setData('text/plain', uldId);
@@ -45,15 +68,14 @@ export default function ULDPage() {
     e.preventDefault();
     const uldId = e.dataTransfer.getData('text/plain');
     if (uldId) {
-      // Simplified: in real app, would validate weight limits
-      // dispatch({ type: 'UPDATE_ULD', payload: { uld_id: uldId, status } });
+      dispatch({ type: 'UPDATE_ULD', payload: { uld_id: uldId, status } });
     }
   };
 
   const handleDragOver = (e) => e.preventDefault();
 
   const handleCreate = () => {
-    if (!newULD.uld_number.trim() || !newULD.owner_code) return;
+    if (!newULD.uld_number.trim() || !newULD.owner_id) return;
     dispatch({ 
       type: 'CREATE_ULD', 
       payload: { 
@@ -63,244 +85,405 @@ export default function ULDPage() {
       } 
     });
     setShowNew(false);
-    setNewULD({ uld_number: '', uld_type: 'AKE', owner_code: '', tare_weight_kg: '', max_gross_weight_kg: '', current_location: '', status: 'Available' });
+    setNewULD({ uld_number: '', uld_type: 'AKE', owner_id: '', tare_weight_kg: '', max_gross_weight_kg: '', current_location: '', status: 'Available' });
   };
 
   const handleUpdate = () => {
     if (!editULD) return;
     dispatch({
       type: 'UPDATE_ULD',
-      payload: {
-        ...editULD,
-        tare_weight_kg: Number(editULD.tare_weight_kg) || 0,
-        max_gross_weight_kg: Number(editULD.max_gross_weight_kg) || 0,
-      }
+      payload: { ...editULD, tare_weight_kg: Number(editULD.tare_weight_kg) || 0, max_gross_weight_kg: Number(editULD.max_gross_weight_kg) || 0 }
     });
     setShowEdit(false);
   };
 
-  const statusColors = {
-    'Available': '#3DB56D',
-    'Build-Up in Progress': '#F5A623',
-    'Built-Up': '#5FC7BE',
-    'Loaded': '#2E8F86',
-    'In Transit': '#3B82F6',
-    'Empty Return': '#8A9B9A',
-    'Damaged': '#E5484D',
-    'Under Repair': '#F5A623',
+  const getStatusBadgeVariant = (status) => {
+    switch (status) {
+      case 'Available': return 'success';
+      case 'Build-Up in Progress': return 'warning';
+      case 'Built-Up': return 'primary';
+      case 'Loaded': return 'violet';
+      case 'In Transit': return 'blue';
+      case 'Delivered': return 'neutral';
+      default: return 'neutral';
+    }
   };
+
+  const statusColors = {
+    'Available': '#10B981', // Emerald
+    'Build-Up in Progress': '#F59E0B', // Amber
+    'Built-Up': '#0EA5E9', // Sky
+    'Loaded': '#8B5CF6', // Violet
+    'In Transit': '#3B82F6', // Blue
+    'Delivered': '#64748B', // Slate
+  };
+
+  const getColumnGradient = (status) => {
+    switch (status) {
+      case 'Available': return 'linear-gradient(90deg, #10B981, #34D399)';
+      case 'Build-Up in Progress': return 'linear-gradient(90deg, #F59E0B, #FBBF24)';
+      case 'Built-Up': return 'linear-gradient(90deg, #0EA5E9, #38BDF8)';
+      case 'Loaded': return 'linear-gradient(90deg, #8B5CF6, #A78BFA)';
+      case 'In Transit': return 'linear-gradient(90deg, #3B82F6, #60A5FA)';
+      case 'Delivered': return 'linear-gradient(90deg, #64748B, #94A3B8)';
+      default: return 'linear-gradient(90deg, #CBD5E1, #E2E8F0)';
+    }
+  };
+
+  const listColumns = [
+    { key: 'number', label: 'ULD NUMBER', accessor: 'uld_number', render: (row) => <span className={styles.uldNumberCell}>{row.uld_number}</span> },
+    { key: 'type', label: 'TYPE', accessor: 'uld_type', render: (row) => <Badge variant="neutral">{row.uld_type}</Badge> },
+    { key: 'owner', label: 'OWNER', accessor: 'owner_id', render: (row) => {
+      const org = carriers.find(c => c.org_id === row.owner_id);
+      return <span style={{ fontWeight: 800, color: '#6366F1' }}>{org?.legal_name || row.owner_id}</span>
+    }},
+    { key: 'location', label: 'LOCATION', accessor: 'current_location', render: (row) => <span style={{ fontWeight: 600 }}>{row.current_location}</span> },
+    { key: 'capacity', label: 'UTILIZATION', accessor: 'utilization', render: (row) => {
+        const allocated = getULDTotalAllocatedWeight(row.uld_id);
+        const maxPayload = Math.max(0, (row.max_gross_weight_kg || 0) - (row.tare_weight_kg || 0));
+        const pct = maxPayload > 0 ? Math.min(100, Math.round((allocated / maxPayload) * 100)) : 0;
+        let capColor = '#10B981';
+        if (pct > 60) capColor = '#F59E0B';
+        if (pct > 85) capColor = '#F43F5E';
+        return (
+          <div className={styles.listCapacityCell}>
+            <div className={styles.capHeader}>
+              <span className={styles.capPct} style={{ color: capColor, fontSize: '12px' }}>{pct}%</span>
+              <span className={styles.capDetails} style={{ fontSize: '10px' }}>{formatWeight(allocated)} / {formatWeight(maxPayload)}</span>
+            </div>
+            <div className={styles.capTrack}>
+              <div className={styles.capFill} style={{ width: `${pct}%`, backgroundColor: capColor }} />
+            </div>
+          </div>
+        );
+    }},
+    { key: 'status', label: 'STATUS', accessor: 'status', render: (row) => <Badge variant={getStatusBadgeVariant(row.status)} dot>{row.status}</Badge> },
+    { key: 'updated', label: 'UPDATED', accessor: 'updated_at', render: (row) => <span style={{ fontSize: '12px', color: '#64748B' }}>{row.updated_at ? formatDate(row.updated_at) : 'Just now'}</span> },
+    { key: 'actions', label: '', accessor: 'actions', align: 'right', render: (row) => (
+      <div className={styles.listActionButtons}>
+        <button className={styles.listActionBtn} title="Edit" onClick={(e) => { e.stopPropagation(); setEditULD(row); setShowEdit(true); }}>
+          <Edit2 size={16} />
+        </button>
+      </div>
+    )}
+  ];
 
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.page}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>ULD Build-Up Board</h1>
-            <p className={styles.subtitle}>{state.ulds.length} ULDs · Drag to change status</p>
+        
+        {/* ══════ HERO & COMMAND CENTER ══════ */}
+        <div className={styles.heroHeader}>
+          <div className={styles.heroLeft}>
+            <div className={styles.titleRow}>
+              <div className={styles.titleIcon}>
+                <Box size={32} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h1 className={styles.title}>ULD Control Center</h1>
+                  <Badge variant="blue"><Plane size={12} style={{marginRight: 4}}/> Air Freight Only</Badge>
+                </div>
+                <p className={styles.subtitle}>
+                  <ShieldCheck size={16} color="#10B981" />
+                  Live unit load device capacity tracking, build-up management, and routing.
+                </p>
+              </div>
+            </div>
           </div>
-          <Button icon={Plus} onClick={() => setShowNew(true)}>New ULD</Button>
+          <div className={styles.heroActions}>
+            <Button variant="secondary" icon={Activity}>Export Report</Button>
+            <Button icon={Plus} onClick={() => setShowNew(true)} style={{ background: '#0F172A', color: 'white', border: 'none' }}>New ULD</Button>
+          </div>
         </div>
 
-      <div className={styles.board}>
-        {columns.map(({ status, ulds }) => (
-          <div
-            key={status}
-            className={styles.column}
-            onDrop={(e) => handleDrop(e, status)}
-            onDragOver={handleDragOver}
-          >
-            <div className={styles.columnHeader}>
-              <span className={styles.columnDot} style={{ background: statusColors[status] }} />
-              <span className={styles.columnTitle}>{status}</span>
-              <span className={styles.columnCount}>{ulds.length}</span>
-            </div>
-            <div className={styles.columnBody}>
-              {ulds.map(uld => {
-                const allocatedWeight = getULDTotalAllocatedWeight(uld.uld_id);
-                const maxWeight = uld.max_gross_weight_kg || 0;
-                const tare = uld.tare_weight_kg || 0;
-                const maxPayload = Math.max(0, maxWeight - tare);
-                const usedPct = maxPayload > 0 ? Math.min(100, Math.round((allocatedWeight / maxPayload) * 100)) : 0;
-                const availableWeight = Math.max(0, maxPayload - allocatedWeight);
+        {/* ══════ 3D OPERATIONS DASHBOARD ══════ */}
+        <div className={styles.opsDashboard}>
+          <div className={styles.opsMetric}>
+            <div className={styles.metricLabel}><Package size={14} /> Total ULDs</div>
+            <div className={styles.metricValue}>{metrics.total}</div>
+          </div>
+          <div className={styles.opsMetric}>
+            <div className={styles.metricLabel}><Target size={14} /> Available</div>
+            <div className={styles.metricValue}>{metrics.available}</div>
+          </div>
+          <div className={styles.opsMetric}>
+            <div className={styles.metricLabel}><Activity size={14} /> Active Build-Up</div>
+            <div className={styles.metricValue}>{metrics.active}</div>
+          </div>
+          <div className={styles.opsMetric}>
+            <div className={styles.metricLabel}><Navigation size={14} /> In Transit</div>
+            <div className={styles.metricValue}>{metrics.transit}</div>
+          </div>
+          <div className={styles.opsMetric} style={{ gridColumn: 'span 2' }}>
+            <div className={styles.metricLabel}><Compass size={14} /> Global Capacity Utilization</div>
+            <div className={styles.metricValue}>{metrics.utilPct}%</div>
+            <div className={styles.metricTrend}>Network health is optimal</div>
+          </div>
+        </div>
 
+        {/* ══════ VIEW SEGMENTED TOGGLE ══════ */}
+        <div className={styles.viewToggle}>
+          <button 
+            className={`${styles.viewToggleBtn} ${viewMode === 'kanban' ? styles.active : ''}`}
+            onClick={() => setViewMode('kanban')}
+          >
+            <LayoutGrid size={16} /> Kanban View
+          </button>
+          <button 
+            className={`${styles.viewToggleBtn} ${viewMode === 'list' ? styles.active : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            <List size={16} /> List View
+          </button>
+        </div>
+
+        {/* ══════ CONDITIONAL RENDER: BOARD OR LIST ══════ */}
+        {viewMode === 'kanban' ? (
+          <div className={styles.boardContainer}>
+            <div className={styles.board}>
+              {columns.map(({ status, ulds }) => {
+                const totalAllocatedInStatus = ulds.reduce((sum, u) => sum + getULDTotalAllocatedWeight(u.uld_id), 0);
+                
                 return (
-                  <div
-                    key={uld.uld_id}
-                    className={styles.card}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, uld.uld_id)}
-                  >
-                    <div className={styles.cardHeader}>
-                      <span className={styles.uldNumber}>{uld.uld_number}</span>
-                      <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                        <Badge variant={getStatusColor(uld.status)} size="small">{uld.uld_type}</Badge>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setEditULD(uld); setShowEdit(true); }}
-                          style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
-                        >
-                          <Edit size={14} />
-                        </button>
+                  <div key={status} className={styles.column} onDrop={(e) => handleDrop(e, status)} onDragOver={handleDragOver}>
+                    <div className={styles.columnBorder} style={{ background: getColumnGradient(status) }} />
+                    <div className={styles.columnHeader}>
+                      <div className={styles.columnHeaderTop}>
+                        <div className={styles.columnDot} style={{ background: statusColors[status] || '#94A3B8' }} />
+                        <div className={styles.columnTitle}>{status}</div>
+                      </div>
+                      
+                      <div className={styles.columnStats}>
+                        <div className={styles.statBlock}>
+                          <span className={styles.statValue}>{ulds.length}</span>
+                          <span className={styles.statLabel}>ULDS</span>
+                        </div>
+                        <div className={`${styles.statBlock} ${styles.right}`}>
+                          <span className={styles.statValue}>{formatWeight(totalAllocatedInStatus)}</span>
+                          <span className={styles.statLabel}>Allocated</span>
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.cardDetails}>
-                      <div className={styles.detailRow}>
-                        <span>Owner</span>
-                        <span className={styles.ownerCode}>{uld.owner_code}</span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span>Location</span>
-                        <span className={styles.location}>{uld.current_location}</span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span>Max Gross</span>
-                        <span className="tabular-nums">{formatWeight(uld.max_gross_weight_kg)}</span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span>Tare</span>
-                        <span className="tabular-nums">{formatWeight(uld.tare_weight_kg)}</span>
-                      </div>
-                    </div>
-                    <div className={styles.capacityBar}>
-                      <div className={styles.capacityFill} style={{ width: `${usedPct}%`, backgroundColor: usedPct > 90 ? 'var(--danger)' : usedPct > 70 ? 'var(--warning)' : 'var(--success)' }} />
-                    </div>
-                    <div className={styles.capacityLabel} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>{usedPct}% Full</span>
-                      <span>{formatWeight(availableWeight)} available</span>
+
+                    <div className={styles.columnBody}>
+                      {ulds.map(uld => {
+                        const org = carriers.find(c => c.org_id === uld.owner_id);
+                        const allocatedWeight = getULDTotalAllocatedWeight(uld.uld_id);
+                        const maxWeight = uld.max_gross_weight_kg || 0;
+                        const tare = uld.tare_weight_kg || 0;
+                        const maxPayload = Math.max(0, maxWeight - tare);
+                        const usedPct = maxPayload > 0 ? Math.min(100, Math.round((allocatedWeight / maxPayload) * 100)) : 0;
+                        const availableWeight = Math.max(0, maxPayload - allocatedWeight);
+
+                        let capColor = '#10B981'; // green
+                        if (usedPct > 60) capColor = '#F59E0B'; // amber
+                        if (usedPct > 85) capColor = '#F43F5E'; // red
+
+                        return (
+                          <div key={uld.uld_id} className={styles.card} draggable onDragStart={(e) => handleDragStart(e, uld.uld_id)}>
+                            <div className={styles.cardTop}>
+                              <div className={styles.uldId}>{uld.uld_number}</div>
+                              <div className={styles.cardActions}>
+                                <Edit2 size={14} className={styles.actionIcon} onClick={(e) => { e.stopPropagation(); setEditULD(uld); setShowEdit(true); }} />
+                              </div>
+                            </div>
+
+                            <div className={styles.cardMeta}>
+                              <div className={styles.metaRow}>
+                                <span className={styles.metaLabel}>Type</span>
+                                <span className={styles.metaValue}><Badge variant="neutral">{uld.uld_type}</Badge></span>
+                              </div>
+                              <div className={styles.metaRow}>
+                                <span className={styles.metaLabel}>Owner</span>
+                                <span className={styles.metaValue}><span className={styles.ownerLogo}>{org?.legal_name || uld.owner_id}</span></span>
+                              </div>
+                              <div className={styles.metaRow}>
+                                <span className={styles.metaLabel}>Location</span>
+                                <span className={styles.metaValue}>{uld.current_location}</span>
+                              </div>
+                            </div>
+
+                            <div className={styles.capacitySection}>
+                              <div className={styles.capHeader}>
+                                <span className={styles.capPct} style={{ color: capColor }}>{usedPct}%</span>
+                                <span className={styles.capDetails}>{formatWeight(allocatedWeight)} / {formatWeight(maxPayload)}</span>
+                              </div>
+                              <div className={styles.capTrack}>
+                                <div className={styles.capFill} style={{ width: `${usedPct}%`, backgroundColor: capColor }} />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {ulds.length === 0 && (
+                        <div className={styles.emptyCol}>
+                          <div className={styles.emptyTitle}>No ULDs in {status}</div>
+                          <div className={styles.emptySubtitle}>Drag ULDs here to change their operational status.</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })}
-              {ulds.length === 0 && (
-                <div className={styles.emptyCol}>Drop ULDs here</div>
-              )}
             </div>
           </div>
-        ))}
-      </div>
+        ) : (
+          <div className={styles.listContainer}>
+            <DataTable 
+              columns={listColumns} 
+              data={state.ulds} 
+              searchPlaceholder="Search by ULD number, owner, or location..."
+              filters={[
+                { key: 'status', label: 'Status', options: ULD_STATUS_ORDER },
+                { key: 'uld_type', label: 'Type', options: ULD_TYPES.map(t => t.code) },
+              ]}
+              onRowClick={(row) => { setEditULD(row); setShowEdit(true); }}
+            />
+          </div>
+        )}
 
+      {/* ══════ CREATE / EDIT MODALS ══════ */}
       <Modal
         open={showNew}
         onClose={() => setShowNew(false)}
-        title="New ULD"
-        subtitle="Register a Unit Load Device in inventory"
-        size="medium"
+        title="Register Unit Load Device"
+        subtitle="Add a new ULD to network inventory (Air Freight)"
+        size="large"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newULD.uld_number.trim() || !newULD.owner_code}>Register ULD</Button>
+            <Button onClick={handleCreate} disabled={!newULD.uld_number.trim() || !newULD.owner_id} style={{ background: '#0F172A', borderColor: '#0F172A' }}>Register ULD</Button>
           </>
         }
       >
-        <div className={styles.form}>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">ULD Number *</label>
-              <input className="form-input" value={newULD.uld_number} onChange={e => setNewULD(p => ({ ...p, uld_number: e.target.value }))} placeholder="e.g. AKE12345QR" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
+          
+          <div className={styles.formSection}>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Identification</div>
+            <div className={styles.formGrid}>
+              <div className="form-group">
+                <label className="form-label">ULD Number <span style={{ color: '#f43f5e' }}>*</span></label>
+                <input className="form-input" style={{ fontSize: '16px', fontWeight: 'bold' }} value={newULD.uld_number} onChange={e => setNewULD(p => ({ ...p, uld_number: e.target.value }))} placeholder="e.g. AKE12345QR" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">ULD Type</label>
+                <select className="form-select" value={newULD.uld_type} onChange={e => setNewULD(p => ({ ...p, uld_type: e.target.value }))}>
+                  {ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">ULD Type</label>
-              <select className="form-select" value={newULD.uld_type} onChange={e => setNewULD(p => ({ ...p, uld_type: e.target.value }))}>
-                {ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Owner Code *</label>
-              <select className="form-select" value={newULD.owner_code} onChange={e => setNewULD(p => ({ ...p, owner_code: e.target.value }))}>
+            <div className="form-group" style={{ marginTop: '20px' }}>
+              <label className="form-label">Owner Airline <span style={{ color: '#f43f5e' }}>*</span></label>
+              <select className="form-select" value={newULD.owner_id} onChange={e => setNewULD(p => ({ ...p, owner_id: e.target.value }))}>
                 <option value="">Select Carrier...</option>
-                {CARRIERS.map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Current Location</label>
-              <select className="form-select" value={newULD.current_location} onChange={e => setNewULD(p => ({ ...p, current_location: e.target.value }))}>
-                <option value="">Select Airport...</option>
-                {Object.values(AIRPORTS).map(a => <option key={a.code} value={a.code}>{a.city} ({a.code})</option>)}
+                {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
               </select>
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Tare Weight (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={newULD.tare_weight_kg} onChange={e => setNewULD(p => ({ ...p, tare_weight_kg: e.target.value }))} placeholder="0.0" />
+
+          <div className={styles.formSection}>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Operational Specs</div>
+            <div className={styles.formGrid}>
+              <div className="form-group">
+                <label className="form-label">Current Airport</label>
+                <select className="form-select" value={newULD.current_location} onChange={e => setNewULD(p => ({ ...p, current_location: e.target.value }))}>
+                  <option value="">Select Airport...</option>
+                  {airports.map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Initial Status</label>
+                <select className="form-select" value={newULD.status} onChange={e => setNewULD(p => ({ ...p, status: e.target.value }))}>
+                  {ULD_STATUS_ORDER.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Max Gross Weight (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={newULD.max_gross_weight_kg} onChange={e => setNewULD(p => ({ ...p, max_gross_weight_kg: e.target.value }))} placeholder="0.0" />
+            <div className={styles.formGrid} style={{ marginTop: '20px' }}>
+              <div className="form-group">
+                <label className="form-label">Tare Weight (kg)</label>
+                <input className="form-input" type="number" step="0.1" value={newULD.tare_weight_kg} onChange={e => setNewULD(p => ({ ...p, tare_weight_kg: e.target.value }))} placeholder="0.0" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Max Gross Weight (kg)</label>
+                <input className="form-input" type="number" step="0.1" value={newULD.max_gross_weight_kg} onChange={e => setNewULD(p => ({ ...p, max_gross_weight_kg: e.target.value }))} placeholder="0.0" />
+              </div>
             </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">Status</label>
-            <select className="form-select" value={newULD.status} onChange={e => setNewULD(p => ({ ...p, status: e.target.value }))}>
-              {ULD_STATUS_ORDER.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+
         </div>
       </Modal>
 
       <Modal
         open={showEdit}
         onClose={() => setShowEdit(false)}
-        title="Edit ULD"
-        subtitle={`Update details for ${editULD?.uld_number}`}
-        size="medium"
+        title="Edit Unit Load Device"
+        subtitle={`Update operational details for ${editULD?.uld_number}`}
+        size="large"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEdit(false)}>Cancel</Button>
-            <Button onClick={handleUpdate}>Save Changes</Button>
+            <Button onClick={handleUpdate} style={{ background: '#0F172A', borderColor: '#0F172A' }}>Save Changes</Button>
           </>
         }
       >
         {editULD && (
-          <div className={styles.form}>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">ULD Number *</label>
-                <input className="form-input" value={editULD.uld_number} disabled />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
+            <div className={styles.formSection}>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Identification</div>
+              <div className={styles.formGrid}>
+                <div className="form-group">
+                  <label className="form-label">ULD Number <span style={{ color: '#f43f5e' }}>*</span></label>
+                  <input className="form-input" style={{ background: '#F1F5F9' }} value={editULD.uld_number} disabled />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">ULD Type</label>
+                  <select className="form-select" value={editULD.uld_type} onChange={e => setEditULD(p => ({ ...p, uld_type: e.target.value }))}>
+                    {ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">ULD Type</label>
-                <select className="form-select" value={editULD.uld_type} onChange={e => setEditULD(p => ({ ...p, uld_type: e.target.value }))}>
-                  {ULD_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} ({t.name})</option>)}
+              <div className="form-group" style={{ marginTop: '20px' }}>
+                <label className="form-label">Owner Airline <span style={{ color: '#f43f5e' }}>*</span></label>
+                <select className="form-select" value={editULD.owner_id} onChange={e => setEditULD(p => ({ ...p, owner_id: e.target.value }))}>
+                  {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
                 </select>
               </div>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Owner Code *</label>
-                <select className="form-select" value={editULD.owner_code} onChange={e => setEditULD(p => ({ ...p, owner_code: e.target.value }))}>
-                  {CARRIERS.map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
-                </select>
+
+            <div className={styles.formSection}>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '12px' }}>Operational Specs</div>
+              <div className={styles.formGrid}>
+                <div className="form-group">
+                  <label className="form-label">Current Airport</label>
+                  <select className="form-select" value={editULD.current_location} onChange={e => setEditULD(p => ({ ...p, current_location: e.target.value }))}>
+                    <option value="">Select Airport...</option>
+                    {airports.map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Initial Status</label>
+                  <select className="form-select" value={editULD.status} onChange={e => setEditULD(p => ({ ...p, status: e.target.value }))}>
+                    {ULD_STATUS_ORDER.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Current Location</label>
-                <select className="form-select" value={editULD.current_location} onChange={e => setEditULD(p => ({ ...p, current_location: e.target.value }))}>
-                  <option value="">Select Airport...</option>
-                  {Object.values(AIRPORTS).map(a => <option key={a.code} value={a.code}>{a.city} ({a.code})</option>)}
-                </select>
+              <div className={styles.formGrid} style={{ marginTop: '20px' }}>
+                <div className="form-group">
+                  <label className="form-label">Tare Weight (kg)</label>
+                  <input className="form-input" type="number" step="0.1" value={editULD.tare_weight_kg} onChange={e => setEditULD(p => ({ ...p, tare_weight_kg: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Max Gross Weight (kg)</label>
+                  <input className="form-input" type="number" step="0.1" value={editULD.max_gross_weight_kg} onChange={e => setEditULD(p => ({ ...p, max_gross_weight_kg: e.target.value }))} />
+                </div>
               </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Tare Weight (kg)</label>
-                <input className="form-input" type="number" step="0.1" value={editULD.tare_weight_kg} onChange={e => setEditULD(p => ({ ...p, tare_weight_kg: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Max Gross Weight (kg)</label>
-                <input className="form-input" type="number" step="0.1" value={editULD.max_gross_weight_kg} onChange={e => setEditULD(p => ({ ...p, max_gross_weight_kg: e.target.value }))} />
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Status</label>
-              <select className="form-select" value={editULD.status} onChange={e => setEditULD(p => ({ ...p, status: e.target.value }))}>
-                {ULD_STATUS_ORDER.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
             </div>
           </div>
         )}
       </Modal>
-    </div>
+
+      </div>
     </div>
   );
 }

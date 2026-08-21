@@ -1,257 +1,317 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Mail, Phone, Building2, User, FileText, Shield, Ship, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Building2, Briefcase, FileText, ChevronRight, Activity, Calendar, Lock, Shield, Ship, Package, Navigation, Check } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
-import { formatDate, formatWeight, formatCurrency, getStatusColor, formatAWBNumber } from '@/lib/utils/formatters';
-import { CARRIERS } from '@/lib/data/seedData';
-import styles from '../../leads/[id]/detail.module.css';
-import lk from '@/components/ui/lookup.module.css';
+import Button from '@/components/ui/Button';
+import { formatDate, formatDateTime, formatWeight, formatCurrency, getStatusColor, formatAWBNumber } from '@/lib/utils/formatters';
+import styles from './detail.module.css';
 
 export default function ContactDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { state, getAccount, getShipmentsForContact, getRelatedDataForShipment } = useApp();
+  const { state, getOrganization, getRelatedDataForShipment } = useApp();
   const [expandedShipment, setExpandedShipment] = useState(null);
 
   const contact = state.contacts.find(c => c.contact_id === id);
 
   if (!contact) {
     return (
-      <div className={`ambient-mesh-bg`} style={{ minHeight: '100vh', padding: '24px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <Breadcrumbs items={[{ label: 'Contacts', href: '/crm/contacts' }, { label: 'Not Found' }]} />
+      <div className={styles.pageWrapper}>
+        <div className={styles.page}>
+          <Button variant="ghost" icon={ArrowLeft} onClick={() => router.push('/crm/contacts')}>Back to Contacts</Button>
           <div className={styles.notFound}>Contact not found</div>
         </div>
       </div>
     );
   }
 
-  const account = getAccount(contact.account_id);
-  // Get shipments specifically assigned to this contact
-  const shipments = getShipmentsForContact(contact.contact_id);
-
-  // Always resolve full breadcrumb from data (fix #4)
-  const breadcrumbItems = [
-    { label: 'Accounts', href: '/crm/accounts' },
-    ...(account ? [{ label: account.legal_name, href: `/crm/accounts/${account.account_id}` }] : []),
-    { label: contact.full_name },
-  ];
+  const account = getOrganization(contact.org_id);
+  const shipments = state.shipments.filter(s => s.contact_id === contact.contact_id);
 
   const toggleShipment = (shipmentId) => {
     setExpandedShipment(expandedShipment === shipmentId ? null : shipmentId);
   };
 
+  // Construct activity timeline from domain events targeting this contact or its shipments
+  const activityEvents = useMemo(() => {
+    let events = [];
+    
+    // Add domain events mentioning the contact
+    if (state.domainEvents) {
+      events = [...events, ...state.domainEvents.filter(de => 
+        de.message.includes(contact.contact_id) || 
+        de.message.includes(contact.full_name) ||
+        de.message.includes('Contact created')
+      ).map(de => ({
+        id: de.id,
+        type: 'contact',
+        title: de.message,
+        desc: de.source || 'System',
+        time: de.timestamp,
+        icon: <UserIcon />
+      }))];
+    }
+
+    // Add recent shipment status changes if available
+    shipments.forEach(s => {
+      const rel = getRelatedDataForShipment(s.shipment_id);
+      if (rel.tracking && rel.tracking.length > 0) {
+        // Take the latest tracking event
+        const latest = rel.tracking[0];
+        events.push({
+          id: latest.event_id,
+          type: 'tracking',
+          title: `Shipment ${s.shipment_reference} — ${latest.fsu_code}`,
+          desc: latest.description,
+          time: latest.event_time,
+          icon: <Navigation size={16} />
+        });
+      }
+    });
+
+    // Sort descending
+    return events.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
+  }, [state.domainEvents, contact, shipments, getRelatedDataForShipment]);
+
   return (
-    <div className={`ambient-mesh-bg`} style={{ minHeight: '100vh', padding: '24px' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <Breadcrumbs items={breadcrumbItems} />
+    <div className={styles.pageWrapper} style={{ '--primary': '#8B5CF6', '--primary-tint': 'rgba(139, 92, 246, 0.1)' }}>
+      <div className={styles.page}>
+        <div style={{ marginBottom: '24px' }}>
+          <Button variant="ghost" icon={ArrowLeft} onClick={() => router.push('/crm/contacts')}>Contacts</Button>
+        </div>
 
-        {/* Contact Header */}
-        <div className="glass-card" style={{ padding: '32px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--border-light)', paddingBottom: '24px' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.1)', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-              {contact.full_name?.charAt(0) || <User size={28} />}
+        {/* ══════ HERO CARD ══════ */}
+        <div className={styles.heroCard}>
+          <div className={styles.heroLeft}>
+            <div className={styles.heroAvatar}>
+              {(() => {
+                const displayName = contact.full_name || [contact.first_name, contact.last_name].filter(Boolean).join(' ') || '?';
+                return displayName.substring(0, 2).toUpperCase();
+              })()}
             </div>
-            <div style={{ flex: 1 }}>
-              <h1 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 4px 0', color: '#0F172A' }}>{contact.full_name}</h1>
-              <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '14px', fontWeight: 500 }}>{contact.title || 'Contact'}</p>
+            <div>
+              <div className={styles.heroTitleRow}>
+                <h1 className={styles.heroTitle}>{contact.full_name || [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unknown'}</h1>
+                {contact.is_primary && (
+                  <div className={styles.primaryBadge}>Primary Contact</div>
+                )}
+              </div>
+              <p className={styles.heroSubtitle}>{contact.title || 'Contact'}</p>
+              
+              <div className={styles.heroContactInfo}>
+                {contact.email && (
+                  <a href={`mailto:${contact.email}`} className={styles.heroContactItem}>
+                    <Mail size={16} className={styles.heroContactIcon} /> {contact.email}
+                  </a>
+                )}
+                {contact.phone && (
+                  <a href={`tel:${contact.phone}`} className={styles.heroContactItem}>
+                    <Phone size={16} className={styles.heroContactIcon} /> {contact.phone}
+                  </a>
+                )}
+              </div>
             </div>
-            {contact.is_primary && (
-              <Badge variant="primary">Primary Contact</Badge>
-            )}
           </div>
-
-          <div className="grid2" style={{ gap: '20px' }}>
-            <div className={styles.field}>
-              <span className={styles.fieldLabel} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Mail size={12} /> Email</span>
-              <span className={styles.fieldValue} style={{ color: 'var(--primary)' }}>{contact.email || '—'}</span>
-            </div>
-            <div className={styles.field}>
-              <span className={styles.fieldLabel} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={12} /> Phone</span>
-              <span className={styles.fieldValue}>{contact.phone || '—'}</span>
+          <div className={styles.heroRight}>
+            <div className={styles.quickActions}>
+              {contact.email && (
+                <a href={`mailto:${contact.email}`} className={`${styles.quickActionBtn} ${styles.btnSecondary}`}>
+                  <Mail size={14} /> Email
+                </a>
+              )}
+              {contact.phone && (
+                <a href={`tel:${contact.phone}`} className={`${styles.quickActionBtn} ${styles.btnSecondary}`}>
+                  <Phone size={14} /> Call
+                </a>
+              )}
+              <button 
+                className={`${styles.quickActionBtn} ${styles.btnSecondary}`}
+                onClick={() => router.push('/crm/contacts?edit=' + contact.contact_id)}
+              >
+                Edit Contact
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Parent Account Summary Card */}
-        {account && (
-          <div
-            className={lk.accountSummaryCard}
-            onClick={() => router.push(`/crm/accounts/${account.account_id}`)}
-          >
-            <div className={lk.accountSummaryIcon}>
-              <Building2 size={20} />
-            </div>
-            <div className={lk.accountSummaryInfo}>
-              <div className={lk.accountSummaryName}>{account.legal_name}</div>
-              <div className={lk.accountSummaryMeta}>{account.industry || 'Account'} · {account.country || ''} · {account.default_currency || ''}</div>
-            </div>
-            <ChevronRight size={20} style={{ color: 'var(--text-tertiary)' }} />
-          </div>
-        )}
-
-        {/* Related Shipments (for this Contact) */}
-        <div className="glass-card" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>Contact's Shipments</h2>
-          <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', margin: '0 0 20px' }}>
-            All shipments assigned specifically to {contact.full_name}. Expand to see AWBs, customs, bookings, and tracking.
-          </p>
-
-          {shipments.length === 0 ? (
-            <div className={lk.emptyState}>No shipments assigned specifically to this contact yet.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {shipments.map((s, sIdx) => {
-                const isExpanded = expandedShipment === s.shipment_id;
-                const related = isExpanded ? getRelatedDataForShipment(s.shipment_id) : null;
-
-                return (
-                  <div key={s.shipment_id || sIdx} className={lk.accordion}>
-                    <button className={lk.accordionHeader} onClick={() => toggleShipment(s.shipment_id)}>
-                      <span className={`${lk.accordionChevron} ${isExpanded ? lk.accordionChevronOpen : ''}`}>
-                        <ChevronRight size={16} />
-                      </span>
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div 
-                          style={{ fontWeight: 700, fontSize: '14px', color: 'var(--primary)', fontFamily: 'var(--font-mono)', textDecoration: 'underline', cursor: 'pointer' }}
-                          onClick={(e) => { e.stopPropagation(); router.push(`/operations/shipments/${s.shipment_id}`); }}
-                        >
-                          {s.shipment_reference}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                          {s.origin_airport} → {s.destination_airport} · {s.pieces} pcs · {formatWeight(s.gross_weight_kg)}
-                        </div>
-                      </div>
-                      <Badge variant={getStatusColor(s.status)} size="small" dot>{s.status}</Badge>
-                    </button>
-
-                    {isExpanded && related && (
-                      <div className={lk.accordionBody}>
-                        <div className="grid2" style={{ gap: '24px', alignItems: 'start' }}>
-                          {/* 1. AWBs */}
-                          <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
-                            <div className={lk.relatedSectionTitle}><FileText size={14} /> Air Waybills ({related.awbs.length})</div>
-                            {related.awbs.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No AWBs linked</div> :
-                              related.awbs.map((a, aIdx) => {
-                                const carrier = CARRIERS.find(c => c.id === a.carrier_id);
-                                return (
-                                  <div 
-                                    key={a.awb_id || aIdx} 
-                                    className={lk.relatedCard} 
-                                    style={{ cursor: 'pointer', padding: '16px' }} 
-                                    onClick={() => router.push(`/operations/awb/${a.awb_id}`)}
-                                  >
-                                    <div className="grid2" style={{ gap: '16px' }}>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>AWB Number</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{formatAWBNumber(a.awb_number)}</span></div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Carrier</span><span className={lk.relatedValue}>{carrier?.name || '—'}</span></div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Charges</span><span className={lk.relatedValue}>{formatCurrency(a.total_charges, a.currency_code)}</span></div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Type</span><span className={lk.relatedValue}>{a.awb_type}</span></div>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            }
-                          </div>
-
-                          {/* 2. Bookings */}
-                          <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
-                            <div className={lk.relatedSectionTitle}><Ship size={14} /> Booking Requests ({related.bookings.length})</div>
-                            {related.bookings.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No bookings</div> :
-                              related.bookings.map((b, bIdx) => (
-                                <div 
-                                  key={b.booking_request_id || bIdx} 
-                                  className={lk.relatedCard} 
-                                  style={{ cursor: 'pointer', padding: '16px' }}
-                                  onClick={() => router.push(`/operations/bookings/${b.booking_request_id}`)}
-                                >
-                                  <div className="grid2" style={{ gap: '16px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Flight</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{b.confirmed_flight_number || '—'}</span></div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Status</span><Badge variant={getStatusColor(b.status)} size="small">{b.status}</Badge></div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}><span className={lk.relatedLabel}>Date</span><span className={lk.relatedValue}>{b.confirmed_flight_date || b.requested_flight_date || '—'}</span></div>
-                                  </div>
-                                </div>
-                              ))
-                            }
-                          </div>
-
-                          {/* 3. Customs */}
-                          <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
-                            <div className={lk.relatedSectionTitle}><Shield size={14} /> Customs Clearance ({related.customs.length})</div>
-                            {related.customs.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No clearances</div> :
-                              related.customs.map((c, cIdx) => (
-                                <div 
-                                  key={c.clearance_id || cIdx} 
-                                  className={lk.relatedCard}
-                                  style={{ padding: '16px' }}
-                                >
-                                  <div className="grid2" style={{ gap: '16px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Declaration</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{c.declaration_number}</span></div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Type</span><span className={lk.relatedValue}>{c.clearance_type}</span></div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Status</span><Badge variant={getStatusColor(c.status)} size="small">{c.status}</Badge></div>
-                                  </div>
-                                </div>
-                              ))
-                            }
-                          </div>
-
-                          {/* 4. Tracking Timeline */}
-                          <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
-                            <div className={lk.relatedSectionTitle}>Tracking Events ({related.tracking.length})</div>
-                            {related.tracking.length === 0 ? <div className={lk.emptyState} style={{padding:'12px'}}>No tracking events</div> : (
-                              <div className={lk.timeline}>
-                                {related.tracking.map((t, i) => (
-                                  <div key={t.event_id || i} className={lk.timelineItem}>
-                                    <div className={lk.timelineLine}>
-                                      <div className={lk.timelineDot} />
-                                      {i < related.tracking.length - 1 && <div className={lk.timelineConnector} />}
-                                    </div>
-                                    <div className={lk.timelineContent}>
-                                      <div className={lk.timelineCode}>{t.fsu_code} — {t.airport_code}</div>
-                                      <div className={lk.timelineDesc}>{t.description}</div>
-                                      <div className={lk.timelineTime}>{formatDate(t.event_time)}</div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* 5. ULD Allocations */}
-                          {related.uldAllocations.length > 0 && (
-                            <div className={lk.relatedSection} style={{ marginBottom: 0 }}>
-                              <div className={lk.relatedSectionTitle}>ULD Allocations ({related.uldAllocations.length})</div>
-                              {related.uldAllocations.map((u, uIdx) => {
-                                const uld = state.ulds.find(ud => ud.uld_id === u.uld_id);
-                                return (
-                                  <div 
-                                    key={u.allocation_id || uIdx} 
-                                    className={lk.relatedCard}
-                                    style={{ cursor: 'pointer', padding: '16px' }}
-                                    onClick={() => router.push(`/operations/uld/${u.uld_id}`)}
-                                  >
-                                    <div className="grid2" style={{ gap: '16px' }}>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}><span className={lk.relatedLabel}>ULD</span><span className={lk.relatedValue} style={{fontFamily:'var(--font-mono)'}}>{uld?.uld_number || u.uld_id}</span></div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Pieces</span><span className={lk.relatedValue}>{u.allocated_pieces}</span></div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><span className={lk.relatedLabel}>Weight</span><span className={lk.relatedValue}>{formatWeight(u.allocated_weight_kg)}</span></div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+        <div className="grid2" style={{ gap: '24px', alignItems: 'start' }}>
+          <div>
+            {/* ══════ ACCOUNT RELATIONSHIP ══════ */}
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionTitleGroup}>
+                  <Building2 size={18} color="#8B5CF6" />
+                  <h2 className={styles.sectionTitle}>Account Relationship</h2>
+                </div>
+              </div>
+              
+              {account ? (
+                <div className={styles.accountCard} onClick={() => router.push(`/crm/accounts/${account.org_id}`)}>
+                  <div className={styles.accountLeft}>
+                    <div className={styles.accountIcon}>
+                      <Building2 size={24} />
+                    </div>
+                    <div>
+                      <div className={styles.accountName}>{account.legal_name}</div>
+                      <div className={styles.accountMeta}>Account • {account.default_currency || 'USD'}</div>
+                    </div>
                   </div>
-                );
-              })}
+                  <div className={styles.accountRight}>
+                    View Account <ChevronRight size={18} className={styles.accountArrow} />
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.emptyBlock}>
+                  <Building2 size={24} className={styles.emptyBlockIcon} />
+                  <div className={styles.emptyBlockText}>No account associated</div>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* ══════ CONTACT INFORMATION ══════ */}
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionTitleGroup}>
+                  <FileText size={18} color="#8B5CF6" />
+                  <h2 className={styles.sectionTitle}>Contact Information</h2>
+                </div>
+              </div>
+              
+              <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Email</span>
+                  <span className={styles.infoValue}>{contact.email || '—'}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Phone</span>
+                  <span className={styles.infoValue}>{contact.phone || '—'}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Job Title</span>
+                  <span className={styles.infoValue}>{contact.title || '—'}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Contact Type</span>
+                  <span className={styles.infoValue}>{contact.is_primary ? 'Primary Contact' : 'Secondary Contact'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ══════ RECENT ACTIVITY ══════ */}
+            {activityEvents.length > 0 && (
+              <div className={styles.sectionCard}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitleGroup}>
+                    <Activity size={18} color="#8B5CF6" />
+                    <h2 className={styles.sectionTitle}>Recent Activity</h2>
+                  </div>
+                </div>
+                
+                <div className={styles.timeline}>
+                  {activityEvents.map((evt, idx) => (
+                    <div key={evt.id || idx} className={styles.timelineItem}>
+                      <div className={styles.timelineIcon} style={{ borderColor: evt.type === 'tracking' ? '#14B8A6' : '#8B5CF6', color: evt.type === 'tracking' ? '#14B8A6' : '#8B5CF6' }}>
+                        {evt.icon}
+                      </div>
+                      <div className={styles.timelineContent}>
+                        <h4 className={styles.timelineTitle}>{evt.title}</h4>
+                        <p className={styles.timelineDesc}>{evt.desc}</p>
+                        <span className={styles.timelineTime}>{formatDateTime(evt.time)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            {/* ══════ CONTACT'S SHIPMENTS ══════ */}
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionHeader} style={{ marginBottom: '16px' }}>
+                <div>
+                  <div className={styles.sectionTitleGroup}>
+                    <Package size={18} color="#8B5CF6" />
+                    <h2 className={styles.sectionTitle}>Contact's Shipments</h2>
+                  </div>
+                  <div className={styles.sectionSubtitle}>All shipments assigned specifically to this contact.</div>
+                </div>
+              </div>
+
+              {shipments.length === 0 ? (
+                <div className={styles.emptyBlock}>
+                  <Ship size={24} className={styles.emptyBlockIcon} />
+                  <div className={styles.emptyBlockText}>No shipments associated with this contact</div>
+                </div>
+              ) : (
+                <div>
+                  {shipments.map(s => {
+                    const isExpanded = expandedShipment === s.shipment_id;
+                    const routeText = s.origin_airport && s.destination_airport 
+                      ? <><span style={{fontFamily:'var(--font-mono)', color:'#0F172A'}}>{s.origin_airport}</span> <ChevronRight size={12} className={styles.routeArrow} /> <span style={{fontFamily:'var(--font-mono)', color:'#0F172A'}}>{s.destination_airport}</span></>
+                      : 'Route TBD';
+                      
+                    return (
+                      <div key={s.shipment_id} className={styles.shipmentRow}>
+                        <div className={styles.shipmentHeader} onClick={() => toggleShipment(s.shipment_id)}>
+                          <div className={styles.shipmentHeaderLeft}>
+                            <ChevronRight size={18} className={`${styles.shipmentChevron} ${isExpanded ? styles.open : ''}`} />
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                                <span className={styles.shipmentRef}>{s.shipment_reference}</span>
+                                <Badge variant={getStatusColor(s.status)} dot>{s.status}</Badge>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div className={styles.shipmentRoute}>{routeText}</div>
+                                <div className={styles.shipmentMeta}>
+                                  {s.pieces} pcs • {formatWeight(s.gross_weight_kg)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div className={styles.shipmentBody}>
+                            <div className={styles.shipmentDetailGrid}>
+                              <div className={styles.shipmentDetailItem}>
+                                <span className={styles.shipmentDetailLabel}>Date Created</span>
+                                <span className={styles.shipmentDetailValue}>{formatDate(s.created_at)}</span>
+                              </div>
+                              <div className={styles.shipmentDetailItem}>
+                                <span className={styles.shipmentDetailLabel}>Incoterm</span>
+                                <span className={styles.shipmentDetailValue}>{s.incoterm || '—'}</span>
+                              </div>
+                              <div className={styles.shipmentDetailItem}>
+                                <span className={styles.shipmentDetailLabel}>Service Level</span>
+                                <span className={styles.shipmentDetailValue}>{s.service_level || '—'}</span>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="secondary" 
+                              onClick={(e) => { e.stopPropagation(); router.push(`/operations/shipments/${s.shipment_id}`); }}
+                              style={{ width: '100%', justifyContent: 'center' }}
+                            >
+                              View Complete Shipment Details
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
+}
+
+function UserIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
 }

@@ -1,12 +1,23 @@
 'use client';
+import { Plane } from 'lucide-react';
 import { formatDate, formatWeight, formatCurrency, formatAWBNumber } from '@/lib/utils/formatters';
-import { CARRIERS, AIRPORTS } from '@/lib/data/seedData';
+import { LOCATIONS } from '@/lib/data/seedData';
 import styles from './documents.module.css';
 
+const findLocation = (locations, ...keys) => {
+  for (const key of keys) {
+    if (!key) continue;
+    if (locations[key]) return locations[key];
+    const match = Object.values(locations).find(l => l.code === key || l.name === key || l.city === key);
+    if (match) return match;
+  }
+  return null;
+};
+
 export default function ComprehensiveAWB({ awb, shipment, account, signature, doc }) {
-  const carrier = CARRIERS.find(c => c.id === awb?.carrier_id);
-  const origin = AIRPORTS[awb?.origin_airport];
-  const dest = AIRPORTS[awb?.destination_airport];
+  const carrierId = awb?.carrier_id || awb?.provider_id || shipment?.carrier_id || '';
+  const origin = findLocation(LOCATIONS, awb?.origin_airport, awb?.origin_location, shipment?.origin_airport, shipment?.origin_location);
+  const dest = findLocation(LOCATIONS, awb?.destination_airport, awb?.destination_location, shipment?.destination_airport, shipment?.destination_location);
 
   if (!shipment && !awb) return null;
 
@@ -45,7 +56,7 @@ export default function ComprehensiveAWB({ awb, shipment, account, signature, do
         </div>
         <div className={styles.docHeaderRight}>
           <div className={styles.docType} style={{ fontSize: 20 }}>COMPREHENSIVE WAYBILL & INVOICE</div>
-          <div className={styles.awbNumber}>{awb ? formatAWBNumber(awb.awb_number) : 'PENDING AWB'}</div>
+          <div className={styles.awbNumber}>{awb ? formatAWBNumber(awb.doc_number || awb.awb_number) : 'PENDING AWB'}</div>
           <div className={styles.invoiceDate}>Date: {formatDate(awb?.created_at || new Date().toISOString())}</div>
         </div>
       </div>
@@ -72,19 +83,17 @@ export default function ComprehensiveAWB({ awb, shipment, account, signature, do
       <div className={styles.routingSection} style={{ marginBottom: 16 }}>
         <div className={styles.routeBox}>
           <div className={styles.routeLabel}>DEPARTURE</div>
-          <div className={styles.routeCode}>{awb?.origin_airport || shipment?.origin_airport}</div>
-          <div className={styles.routeCity}>{origin?.city || ''}, {origin?.country || ''}</div>
+          <div className={styles.routeCode}>{origin?.code || awb?.origin_airport || awb?.origin_location || shipment?.origin_location || '-'}</div>
+          <div className={styles.routeCity}>{origin?.city || 'Unknown'}, {origin?.country || ''}</div>
         </div>
-        <div className={styles.routeArrow}>
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <path d="M8 20h24M24 12l8 8-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <div className={styles.routeCarrier}>{carrier?.code} — {carrier?.name}</div>
+        <div className={styles.routeArrow} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0EA5E9' }}>
+          <Plane size={32} strokeWidth={1.5} />
+          <div className={styles.routeCarrier} style={{ marginTop: 4, color: '#64748B' }}>{carrierId}</div>
         </div>
         <div className={styles.routeBox}>
           <div className={styles.routeLabel}>DESTINATION</div>
-          <div className={styles.routeCode}>{awb?.destination_airport || shipment?.destination_airport}</div>
-          <div className={styles.routeCity}>{dest?.city || ''}, {dest?.country || ''}</div>
+          <div className={styles.routeCode}>{dest?.code || awb?.destination_airport || awb?.destination_location || shipment?.destination_location || '-'}</div>
+          <div className={styles.routeCity}>{dest?.city || 'Unknown'}, {dest?.country || ''}</div>
         </div>
       </div>
 
@@ -216,7 +225,7 @@ export default function ComprehensiveAWB({ awb, shipment, account, signature, do
       </div>
 
       <div className={styles.docWatermark}>
-        <div>Comprehensive Bill Ref: {awb?.awb_number || shipment?.shipment_reference || 'PENDING'}</div>
+        <div>Comprehensive Bill Ref: {awb?.doc_number || awb?.awb_number || shipment?.shipment_reference || 'PENDING'}</div>
         <div>Generated: {formatDate(new Date().toISOString())}</div>
       </div>
     </div>

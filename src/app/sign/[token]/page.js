@@ -8,7 +8,7 @@ import styles from '@/components/documents/documents.module.css';
 
 export default function ClientSigningPage() {
   const { token } = useParams();
-  const { state, dispatch, getAccount } = useApp();
+  const { state, dispatch, getOrganization } = useApp();
   const [signatureData, setSignatureData] = useState(null);
   const [signerName, setSignerName] = useState('');
   const [selectedFont, setSelectedFont] = useState(null);
@@ -16,9 +16,9 @@ export default function ClientSigningPage() {
 
   const signatureFonts = ['Dancing Script', 'Pacifico', 'Caveat', 'Great Vibes', 'Satisfy'];
 
-  // Look up the document or legacy invoice by share_token
-  const doc = state.documents.find(d => d.share_token === token);
-  const invoice = !doc ? state.invoices?.find(i => i.share_token === token) : null;
+  // Look up the document or legacy invoice by share_token or ID fallback
+  const doc = (state.documents || []).find(d => d.share_token === token || d.document_id === token);
+  const invoice = !doc ? (state.invoices || []).find(i => i.share_token === token || i.invoice_id === token) : null;
   const item = doc || invoice;
 
   // Mark as Viewed if not already
@@ -51,8 +51,8 @@ export default function ClientSigningPage() {
   }
 
   const shipment = state.shipments.find(s => s.shipment_id === item.shipment_id);
-  const awb = item.awb_id ? state.airWaybills.find(a => a.awb_id === item.awb_id) : null;
-  const account = shipment ? getAccount(shipment.account_id) : null;
+  const awb = item.doc_id ? state.transportDocuments.find(a => a.doc_id === item.doc_id) : (item.awb_id ? state.transportDocuments.find(a => a.doc_id === item.awb_id) : null);
+  const account = shipment ? getOrganization(shipment.org_id) : null;
 
   const isAlreadySigned = item.status === 'Signed' || item.status === 'Completed';
 

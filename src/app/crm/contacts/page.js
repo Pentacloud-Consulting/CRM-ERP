@@ -1,57 +1,128 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/store/AppContext';
 import DataTable from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import { Plus, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Eye, Edit2, Trash2, Mail, Phone, Building2, User, ChevronRight, Contact, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import AccountLookup from '@/components/ui/AccountLookup';
-import styles from '../leads/leads.module.css';
+import styles from './contacts.module.css';
+
+const EMPTY_CONTACT = {
+  full_name: '', email: '', phone: '', title: '', org_id: '', is_primary: false
+};
 
 export default function ContactsPage() {
   const router = useRouter();
-  const { state, dispatch, getAccount } = useApp();
+  const { state, dispatch, getOrganization } = useApp();
   const [showNew, setShowNew] = useState(false);
   const [editingContactId, setEditingContactId] = useState(null);
-  const [newContact, setNewContact] = useState({
-    full_name: '', email: '', phone: '', title: '', account_id: '', is_primary: false
-  });
+  const [newContact, setNewContact] = useState({ ...EMPTY_CONTACT });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [kpiFilter, setKpiFilter] = useState(null);
 
+  // ──────── KPI Data ────────
+  const kpis = useMemo(() => {
+    const contacts = state.contacts;
+    return {
+      total: contacts.length,
+      primary: contacts.filter(c => c.is_primary).length,
+      organizations: new Set(contacts.map(c => c.org_id).filter(Boolean)).size,
+      withEmail: contacts.filter(c => !!c.email).length,
+      withPhone: contacts.filter(c => !!c.phone).length,
+    };
+  }, [state.contacts]);
+
+  // ──────── Filtered data for table ────────
+  const filteredContacts = useMemo(() => {
+    if (!kpiFilter) return state.contacts;
+    if (kpiFilter === 'primary') return state.contacts.filter(c => c.is_primary);
+    if (kpiFilter === 'withEmail') return state.contacts.filter(c => !!c.email);
+    if (kpiFilter === 'withPhone') return state.contacts.filter(c => !!c.phone);
+    return state.contacts;
+  }, [state.contacts, kpiFilter]);
+
+  // ──────── Helper for shipments ────────
+  const getShipmentCount = (contactId) => {
+    return state.shipments.filter(s => s.contact_id === contactId).length;
+  };
+
+  // ──────── Table Columns ────────
   const columns = [
-    { key: 'name', label: 'Name', accessor: 'full_name', render: (row) => <span className={styles.companyName}>{row.full_name}</span> },
-    { key: 'email', label: 'Email', accessor: 'email', render: (row) => <span style={{ color: 'var(--text-link)' }}>{row.email}</span> },
-    { key: 'phone', label: 'Phone', accessor: 'phone' },
-    { key: 'title', label: 'Title', accessor: 'title' },
-    { key: 'account', label: 'Account', accessor: row => getAccount(row.account_id)?.legal_name || '—', render: (row) => {
-      return <AccountLookup accountId={row.account_id} />;
-    }},
-    { key: 'primary', label: 'Primary', accessor: 'is_primary', width: '80px', render: (row) => row.is_primary ? <Badge variant="primary">Primary</Badge> : null },
+    { key: 'contact', label: 'Contact', accessor: 'full_name',
+      render: (row) => {
+        const displayName = row.full_name || [row.first_name, row.last_name].filter(Boolean).join(' ') || 'Unknown';
+        return (
+          <div className={styles.contactCell}>
+            <div className={styles.contactAvatar}>{displayName.substring(0, 2).toUpperCase()}</div>
+            <div>
+              <div className={styles.contactName}>{displayName}</div>
+              {row.is_primary && (
+                <div className={styles.contactPrimaryBadge}>Primary Contact</div>
+              )}
+            </div>
+          </div>
+        );
+      }
+    },
+    { key: 'email', label: 'Email', accessor: 'email',
+      render: (row) => row.email ? (
+        <a href={`mailto:${row.email}`} onClick={e => e.stopPropagation()} className={styles.linkText}>
+          <Mail size={14} className={styles.iconMuted} /> {row.email}
+        </a>
+      ) : <span className={styles.emptyText}>—</span>
+    },
+    { key: 'phone', label: 'Phone', accessor: 'phone',
+      render: (row) => row.phone ? (
+        <a href={`tel:${row.phone}`} onClick={e => e.stopPropagation()} className={styles.linkText}>
+          <Phone size={14} className={styles.iconMuted} /> {row.phone}
+        </a>
+      ) : <span className={styles.emptyText}>—</span>
+    },
+    { key: 'title', label: 'Title', accessor: 'title', render: (row) => row.title || <span className={styles.emptyText}>—</span> },
+    { key: 'organization', label: 'Organization', accessor: row => getOrganization(row.org_id)?.legal_name || '—', 
+      render: (row) => {
+        const org = getOrganization(row.org_id);
+        if (!org) return <span className={styles.emptyText}>—</span>;
+        return (
+          <div className={styles.accountCell} onClick={(e) => { e.stopPropagation(); router.push(`/crm/accounts/${org.org_id}`); }}>
+            <Building2 size={14} className={styles.accountIcon} /> {org.legal_name}
+          </div>
+        );
+      }
+    },
+    { key: 'activity', label: 'Activity', accessor: row => getShipmentCount(row.contact_id), align: 'center',
+      render: (row) => {
+        const count = getShipmentCount(row.contact_id);
+        return <div className={styles.shipmentCell}><span>{count}</span> {count === 1 ? 'Shipment' : 'Shipments'}</div>;
+      }
+    },
     { key: 'actions', label: '', accessor: 'actions', align: 'right',
       render: (row) => (
         <div className={styles.actionButtons}>
-          <button className={`${styles.actionBtn} hover-scale click-spin`} title="View Details" onClick={(e) => { e.stopPropagation(); router.push(`/crm/contacts/${row.contact_id}`); }}>
-            <Eye size={16} className="click-spin-inner" />
+          <button className={styles.actionBtn} title="View Details" onClick={(e) => { e.stopPropagation(); router.push(`/crm/contacts/${row.contact_id}`); }}>
+            <Eye size={15} />
           </button>
-          <button className={`${styles.actionBtn} hover-scale click-spin`} title="Edit" onClick={(e) => { 
+          <button className={styles.actionBtn} title="Edit" onClick={(e) => { 
             e.stopPropagation(); 
             setEditingContactId(row.contact_id);
-            setNewContact({ ...row });
+            setNewContact({ ...row, full_name: row.full_name || [row.first_name, row.last_name].filter(Boolean).join(' ') || '' });
             setShowNew(true);
           }}>
-            <Edit2 size={16} className="click-spin-inner" />
+            <Edit2 size={15} />
           </button>
-          <button className={`${styles.actionBtn} ${styles.deleteBtn} hover-scale click-spin`} title="Delete" onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_CONTACT', payload: row.contact_id }); }}>
-            <Trash2 size={16} className="click-spin-inner" />
+          <button className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Delete" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(row.contact_id); }}>
+            <Trash2 size={15} />
           </button>
         </div>
       )
     },
   ];
 
+  // ──────── Handlers ────────
   const handleCreateOrUpdate = () => {
-    if (!newContact.full_name.trim() || !newContact.account_id) return;
+    if (!(newContact.full_name || '').trim() || !newContact.org_id) return;
     
     if (editingContactId) {
       dispatch({ type: 'UPDATE_CONTACT', payload: { ...newContact, contact_id: editingContactId } });
@@ -59,94 +130,229 @@ export default function ContactsPage() {
       dispatch({ type: 'CREATE_CONTACT', payload: newContact });
     }
     
-    setShowNew(false);
-    setEditingContactId(null);
-    setNewContact({ full_name: '', email: '', phone: '', title: '', account_id: '', is_primary: false });
+    closeModal();
   };
 
+  const handleDelete = (contactId) => {
+    dispatch({ type: 'DELETE_CONTACT', payload: contactId });
+    setShowDeleteConfirm(null);
+  };
+
+  const openNewContact = () => {
+    setEditingContactId(null);
+    setNewContact({ ...EMPTY_CONTACT });
+    setShowNew(true);
+  };
+
+  const closeModal = () => {
+    setShowNew(false);
+    setEditingContactId(null);
+    setNewContact({ ...EMPTY_CONTACT });
+  };
+
+  // ──────── RENDER ────────
   return (
-    <div className={`ambient-mesh-bg ${styles.pageWrapper}`}>
+    <div className={styles.pageWrapper} style={{ '--primary': '#8B5CF6', '--primary-tint': 'rgba(139, 92, 246, 0.1)', '--primary-hover': '#7C3AED' }}>
       <div className={styles.page}>
+
+        {/* ══════ HEADER ══════ */}
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Contacts</h1>
-            <p className={styles.subtitle}>{state.contacts.length} contacts</p>
+            <p className={styles.subtitle}>Manage customer contacts, accounts and shipment relationships.</p>
           </div>
-          <Button icon={Plus} onClick={() => {
-            setEditingContactId(null);
-            setNewContact({ full_name: '', email: '', phone: '', title: '', account_id: '', is_primary: false });
-            setShowNew(true);
-          }}>New Contact</Button>
+          <Button icon={Plus} onClick={openNewContact} style={{ background: '#8B5CF6', borderColor: '#8B5CF6' }}>New Contact</Button>
         </div>
         
-        <div className={`glass-panel ${styles.tableContainer}`}>
-          <DataTable 
-            columns={columns} 
-            data={state.contacts} 
-            searchPlaceholder="Search contacts..." 
-            onRowClick={(row) => router.push(`/crm/contacts/${row.contact_id}`)}
-          />
+        {/* ══════ KPI CARDS ══════ */}
+        <div className={styles.kpiRow}>
+          <div className={styles.kpiCard} onClick={() => setKpiFilter(null)} style={{ borderColor: kpiFilter === null ? '#8B5CF6' : '', cursor: 'pointer' }}>
+            <div className={styles.kpiValue}>{kpis.total}</div>
+            <div className={styles.kpiLabel}>Total Contacts</div>
+          </div>
+          <div className={styles.kpiCard} onClick={() => setKpiFilter(kpiFilter === 'primary' ? null : 'primary')} style={{ borderColor: kpiFilter === 'primary' ? '#8B5CF6' : '', cursor: 'pointer' }}>
+            <div className={styles.kpiValue}>{kpis.primary}</div>
+            <div className={styles.kpiLabel}>Primary Contacts</div>
+          </div>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiValue}>{kpis.organizations}</div>
+            <div className={styles.kpiLabel}>Organizations</div>
+          </div>
+          <div className={styles.kpiCard} onClick={() => setKpiFilter(kpiFilter === 'withEmail' ? null : 'withEmail')} style={{ borderColor: kpiFilter === 'withEmail' ? '#8B5CF6' : '', cursor: 'pointer' }}>
+            <div className={styles.kpiValue}>{kpis.withEmail}</div>
+            <div className={styles.kpiLabel}>With Email</div>
+          </div>
+          <div className={styles.kpiCard} onClick={() => setKpiFilter(kpiFilter === 'withPhone' ? null : 'withPhone')} style={{ borderColor: kpiFilter === 'withPhone' ? '#8B5CF6' : '', cursor: 'pointer' }}>
+            <div className={styles.kpiValue}>{kpis.withPhone}</div>
+            <div className={styles.kpiLabel}>With Phone</div>
+          </div>
         </div>
 
+        {/* ══════ TABLE (Desktop) ══════ */}
+        {filteredContacts.length > 0 ? (
+          <>
+            <div className={styles.tableContainer}>
+              <DataTable 
+                columns={columns} 
+                data={filteredContacts} 
+                searchPlaceholder="Search contacts by name, email, phone..." 
+                onRowClick={(row) => router.push(`/crm/contacts/${row.contact_id}`)}
+                filters={[
+                  { key: 'is_primary', label: 'Type', options: ['Primary', 'Non-primary'] }
+                ]}
+              />
+            </div>
+
+            {/* ══════ MOBILE CARDS ══════ */}
+            <div className={styles.mobileCards}>
+              {filteredContacts.map(contact => {
+                const org = getOrganization(contact.org_id);
+                const shipments = getShipmentCount(contact.contact_id);
+                const displayName = contact.full_name || [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unknown';
+                return (
+                  <div key={contact.contact_id} className={styles.mobileCard} onClick={() => router.push(`/crm/contacts/${contact.contact_id}`)}>
+                    <div className={styles.mobileCardHeader}>
+                      <div className={styles.contactAvatar}>{displayName.substring(0, 2).toUpperCase()}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div className={styles.contactName} style={{ fontSize: '16px' }}>{displayName}</div>
+                          {contact.is_primary && <Badge variant="primary" size="small">Primary</Badge>}
+                        </div>
+                        {contact.title && <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{contact.title}</div>}
+                      </div>
+                    </div>
+                    
+                    <div className={styles.mobileCardBody}>
+                      {contact.email && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0F172A' }}>
+                          <Mail size={14} className={styles.iconMuted} /> {contact.email}
+                        </div>
+                      )}
+                      {contact.phone && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0F172A' }}>
+                          <Phone size={14} className={styles.iconMuted} /> {contact.phone}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className={styles.mobileCardFooter}>
+                      {org ? (
+                        <div className={styles.accountCell} onClick={(e) => { e.stopPropagation(); router.push(`/crm/accounts/${org.org_id}`); }}>
+                          <Building2 size={12} className={styles.accountIcon} /> {org.legal_name}
+                        </div>
+                      ) : <span />}
+                      <div className={styles.shipmentCell}><span>{shipments}</span> {shipments === 1 ? 'Shipment' : 'Shipments'}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}><Contact size={28} /></div>
+            <h3 className={styles.emptyTitle}>{kpiFilter ? 'No matching contacts' : 'No contacts yet'}</h3>
+            <p className={styles.emptyDesc}>
+              {kpiFilter ? 'Try adjusting your filters or clear the selection.' : 'Add your first customer contact to start managing account relationships.'}
+            </p>
+            {!kpiFilter && <Button icon={Plus} onClick={openNewContact} style={{ background: '#8B5CF6', borderColor: '#8B5CF6' }}>Create Contact</Button>}
+            {kpiFilter && <Button variant="secondary" onClick={() => setKpiFilter(null)}>Clear Filter</Button>}
+          </div>
+        )}
+
+      {/* ══════ CREATE / EDIT MODAL ══════ */}
       <Modal
         open={showNew}
-        onClose={() => {
-          setShowNew(false);
-          setEditingContactId(null);
-          setNewContact({ full_name: '', email: '', phone: '', title: '', account_id: '', is_primary: false });
-        }}
-        title={editingContactId ? "Edit Contact" : "New Contact"}
-        subtitle={editingContactId ? "Update contact details" : "Add a new contact to an existing account"}
+        onClose={closeModal}
+        title={editingContactId ? "Edit Contact" : "Create New Contact"}
+        subtitle={editingContactId ? "Update contact information" : "Add a customer contact to your CRM"}
         size="medium"
         footer={
           <>
-            <Button variant="secondary" onClick={() => {
-              setShowNew(false);
-              setEditingContactId(null);
-              setNewContact({ full_name: '', email: '', phone: '', title: '', account_id: '', is_primary: false });
-            }}>Cancel</Button>
-            <Button onClick={handleCreateOrUpdate} disabled={!newContact.full_name.trim() || !newContact.account_id}>{editingContactId ? "Save Changes" : "Create Contact"}</Button>
+            <Button variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button onClick={handleCreateOrUpdate} disabled={!(newContact.full_name || '').trim() || !newContact.org_id} style={{ background: '#8B5CF6', borderColor: '#8B5CF6' }}>
+              {editingContactId ? "Save Changes" : "Create Contact"}
+            </Button>
           </>
         }
       >
         <div className={styles.form}>
+          {/* Personal Information */}
+          <div className={styles.formSectionTitle}>Personal Information</div>
           <div className="form-group">
-            <label className="form-label">Full Name *</label>
+            <label className="form-label">Full Name <span style={{ color: '#f43f5e' }}>*</span></label>
             <input className="form-input" value={newContact.full_name} onChange={e => setNewContact(p => ({ ...p, full_name: e.target.value }))} placeholder="Contact name" />
           </div>
+          <div className="form-group">
+            <label className="form-label">Job Title</label>
+            <input className="form-input" value={newContact.title} onChange={e => setNewContact(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Logistics Manager" />
+          </div>
+
+          {/* Contact Information */}
+          <div className={styles.formSectionTitle} style={{ marginTop: '12px' }}>Contact Information</div>
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Email</label>
+              <label className="form-label">Email Address</label>
               <input className="form-input" type="email" value={newContact.email} onChange={e => setNewContact(p => ({ ...p, email: e.target.value }))} placeholder="email@example.com" />
             </div>
             <div className="form-group">
-              <label className="form-label">Phone</label>
-              <input className="form-input" value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} placeholder="Phone number" />
+              <label className="form-label">Phone Number</label>
+              <input className="form-input" value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} placeholder="+1 234 567 8900" />
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Job Title</label>
-              <input className="form-input" value={newContact.title} onChange={e => setNewContact(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Logistics Manager" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Account *</label>
-              <select className="form-select" value={newContact.account_id} onChange={e => setNewContact(p => ({ ...p, account_id: e.target.value }))}>
-                <option value="">Select Account...</option>
-                {state.accounts.map(a => <option key={a.account_id} value={a.account_id}>{a.legal_name}</option>)}
+
+          {/* Account Relationship */}
+          <div className={styles.formSectionTitle} style={{ marginTop: '12px' }}>Organization Relationship</div>
+          <div className="form-group">
+            <label className="form-label">Organization <span style={{ color: '#f43f5e' }}>*</span></label>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
+              <select className="form-select" value={newContact.org_id} onChange={e => setNewContact(p => ({ ...p, org_id: e.target.value }))} style={{ paddingLeft: '36px' }}>
+                <option value="">Search organizations...</option>
+                {state.organizations.map(a => <option key={a.org_id} value={a.org_id}>🏢 {a.legal_name}</option>)}
               </select>
             </div>
           </div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-            <input 
-              type="checkbox" 
-              id="is_primary"
-              checked={newContact.is_primary} 
-              onChange={e => setNewContact(p => ({ ...p, is_primary: e.target.checked }))} 
-            />
-            <label htmlFor="is_primary" className="form-label" style={{ marginBottom: 0 }}>Make Primary</label>
+          
+          <div className="form-group" style={{ marginTop: '8px', padding: '16px', background: 'rgba(139, 92, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontWeight: 600, color: '#0F172A', fontSize: '14px', marginBottom: '4px' }}>Primary Contact</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>A primary contact is the main point of contact for this account.</div>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                <div style={{ position: 'relative', width: '40px', height: '24px', background: newContact.is_primary ? '#8B5CF6' : '#E2E8F0', borderRadius: '12px', transition: 'background 0.3s' }}>
+                  <div style={{ position: 'absolute', top: '2px', left: newContact.is_primary ? '18px' : '2px', width: '20px', height: '20px', background: 'white', borderRadius: '50%', transition: 'left 0.3s', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={newContact.is_primary} 
+                  onChange={e => setNewContact(p => ({ ...p, is_primary: e.target.checked }))}
+                  style={{ opacity: 0, position: 'absolute' }}
+                />
+              </label>
+            </div>
           </div>
         </div>
+      </Modal>
+
+      {/* ══════ DELETE CONFIRMATION MODAL ══════ */}
+      <Modal
+        open={!!showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(null)}
+        title="Delete Contact?"
+        subtitle="This action cannot be undone."
+        size="small"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="danger" onClick={() => handleDelete(showDeleteConfirm)}>Delete Contact</Button>
+          </>
+        }
+      >
+        <p style={{ fontSize: '14px', color: '#475569', margin: 0, lineHeight: 1.5 }}>
+          Are you sure you want to delete this contact? Any historical data associated with them will be retained on their respective records, but they will be removed from the account.
+        </p>
       </Modal>
       </div>
     </div>

@@ -1,0 +1,230 @@
+/* ===== Bookings Page — Ultra Modern SaaS ===== */
+
+.pageWrapper {
+  padding: 16px 24px;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: #F8FAFC;
+  font-family: var(--font-sans);
+}
+
+.page {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeInUp 0.4s ease both;
+}
+
+/* --- Header --- */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0;
+  font-weight: 500;
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --- KPI Cards Section --- */
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.kpiCard {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border-color: #CBD5E1;
+  background: white;
+}
+
+.kpiHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.kpiIconWrapper {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpiIconWrapper.primary { background: rgba(99, 102, 241, 0.1); color: #6366F1; }
+.kpiIconWrapper.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.kpiIconWrapper.warning { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.kpiIconWrapper.indigo { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+
+.kpiTrend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+.trendUp { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.trendNeutral { background: rgba(148, 163, 184, 0.1); color: #64748B; }
+
+.kpiMetric {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.kpiLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* --- Table Container --- */
+.tableContainer {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+
+/* --- Premium Table Styles overrides via global or specific classes --- */
+.carrierCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.carrierLogo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 800;
+}
+.carrierName {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.routeCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0F172A;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.routeArrow {
+  color: var(--text-tertiary);
+}
+
+/* --- Action Buttons --- */
+.actionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+tr:hover .actionButtons {
+  opacity: 1;
+}
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.actionBtn:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366F1;
+  transform: scale(1.05);
+}
+.deleteBtn:hover {
+  color: var(--danger);
+  background: rgba(244, 63, 94, 0.08);
+}
+
+/* --- Modal Form --- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.formSectionTitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid #F1F5F9;
+  margin-bottom: var(--space-1);
+}
+
+/* --- Responsive --- */
+@media (max-width: 1200px) {
+  .analyticsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .pageWrapper { padding: var(--space-4); }
+  .analyticsGrid { grid-template-columns: 1fr; }
+}

@@ -7,7 +7,7 @@ import styles from './Shell.module.css';
 
 export default function Shell({ children }) {
   const pathname = usePathname();
-  const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 

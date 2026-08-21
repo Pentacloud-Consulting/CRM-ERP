@@ -1,0 +1,431 @@
+/* ===== Flight Manifests — Operations Command Center ===== */
+
+.pageWrapper {
+  padding: 16px 24px;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: #F8FAFC;
+  font-family: var(--font-sans);
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.page {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeInUp 0.4s ease both;
+}
+
+/* --- Hero & Command Center Header --- */
+.heroHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.titleIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+}
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.newManifestBtn {
+  background: linear-gradient(to right, #6366F1, #8B5CF6);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+.newManifestBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+
+/* --- Command Center KPIs --- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpiCard {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+}
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border-color: #CBD5E1;
+  background: white;
+}
+.kpiHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.kpiIconWrapper {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpiIconWrapper.indigo { background: rgba(99, 102, 241, 0.1); color: #6366F1; }
+.kpiIconWrapper.emerald { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.kpiIconWrapper.amber { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.kpiIconWrapper.rose { background: rgba(244, 63, 94, 0.1); color: #F43F5E; }
+
+.kpiMetric {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.kpiLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* --- Layout Grid (Table + Analytics Sidebar) --- */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* --- Table Container --- */
+.tableContainer {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+
+/* --- Premium Table Cells --- */
+.flightNumberCell {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flightDate {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.routeCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.routeCode {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  color: #334155;
+  background: #F1F5F9;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.routeLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #94A3B8;
+}
+.routeLine svg {
+  color: #6366F1;
+}
+
+/* Capacity Progress Bar */
+.capacityCell {
+  width: 140px;
+}
+.capacityHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 6px;
+}
+.capacityPct {
+  font-size: 14px;
+  font-weight: 800;
+}
+.capacityDetails {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+.capacityTrack {
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.capacityFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.capacityFill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* --- Action Buttons --- */
+.actionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+tr:hover .actionButtons {
+  opacity: 1;
+}
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.actionBtn:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366F1;
+  transform: scale(1.05);
+}
+
+/* --- Right Sidebar: Operations Analytics --- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sidebarCard {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.01);
+}
+.sidebarHeader {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+.sidebarHeader svg {
+  color: #6366F1;
+}
+
+.utilList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.utilItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.utilCarrier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+.utilBar {
+  flex: 1;
+  margin: 0 12px;
+  height: 4px;
+  background: #F1F5F9;
+  border-radius: 2px;
+}
+.utilFill {
+  height: 100%;
+  background: #6366F1;
+  border-radius: 2px;
+}
+.utilVal {
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #0F172A;
+  width: 40px;
+  text-align: right;
+}
+
+/* --- AI Live Tracking Panel --- */
+.aiTracker {
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.aiTracker::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm10 10h10v10H10V10zM0 10h10v10H0V10zM10 0h10v10H10V0z' fill='rgba(255,255,255,0.02)' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+.aiTrackerHeader {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.aiTrackerTitle {
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.liveIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: #10B981;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.aiMessage {
+  position: relative;
+  z-index: 2;
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.5;
+  background: rgba(255,255,255,0.05);
+  border-left: 2px solid #6366F1;
+  padding: 10px 12px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 8px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1200px) {
+  .mainGrid { grid-template-columns: 1fr; }
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .pageWrapper { padding: var(--space-4); }
+  .kpiGrid { grid-template-columns: 1fr; }
+}

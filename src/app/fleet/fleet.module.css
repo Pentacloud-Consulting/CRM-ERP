@@ -1,0 +1,299 @@
+/* ===== Enterprise Finance Dashboard (Emerald Theme) ===== */
+
+.pageWrapper {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+  font-family: var(--font-sans);
+  color: #0F172A;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.dashboardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- HERO CONTROL CENTER --- */
+.heroHeader {
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+.heroHeader::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; left: 0; height: 2px;
+  background: linear-gradient(90deg, #10B981, #059669); /* Emerald brand accent */
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.titleIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.subtitle {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
+  font-weight: 500;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 2;
+}
+.heroBtn {
+  background: white;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.heroBtn:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+.heroBtn.primary {
+  background: #10B981;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+.heroBtn.primary:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  color: white;
+}
+
+/* CONTENT WRAPPER */
+.contentPadding {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- KPI ROW --- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.kpiCard {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+}
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+  border-color: #CBD5E1;
+}
+
+.kpiTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kpiIcon {
+  padding: 4px;
+  background: #F1F5F9;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+}
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kpiValue {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #0F172A;
+  margin-bottom: 4px;
+}
+.kpiTrend {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpiTrend.up { color: #10B981; }
+
+/* MAIN GRID */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+}
+.cardHeader {
+  padding: 16px;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+}
+.cardContent {
+  padding: 16px;
+}
+
+.viewAllBtn {
+  background: none;
+  border: none;
+  color: #10B981;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.viewAllBtn:hover {
+  text-decoration: underline;
+}
+
+.activityTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.activityTable th, .activityTable td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #E2E8F0;
+  font-size: 13px;
+}
+.activityTable th {
+  color: #64748B;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.activityTable tr:last-child td {
+  border-bottom: none;
+}
+.activityTable tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.emptyState {
+  color: #64748B;
+  font-size: 13px;
+  text-align: center;
+  padding: 32px;
+}
+
+.actionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.actionLink {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #1E293B;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.actionLink:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #10B981;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.statusBadge.open { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.statusBadge.paid { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.statusBadge.overdue { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.statusBadge.draft { background: rgba(100, 116, 139, 0.1); color: #64748B; }
+.statusBadge.neutral { background: #F1F5F9; color: #64748B; }

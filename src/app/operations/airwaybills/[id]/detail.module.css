@@ -1,0 +1,471 @@
+/* ===== AWB Detail Page — Aviation Operations Hub ===== */
+
+.pageWrapper {
+  padding: var(--space-6) var(--space-8);
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: #F8FAFC;
+  font-family: var(--font-sans);
+}
+
+.page {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeInUp 0.4s ease both;
+}
+
+.notFound {
+  padding: var(--space-16);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--text-lg);
+}
+
+/* --- Hero Section --- */
+.heroCard {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: var(--space-6) var(--space-8);
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.heroIcon {
+  width: 88px;
+  height: 88px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  color: #6366F1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+.heroTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+.heroTitle {
+  font-size: 32px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin: 0 0 var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.heroSubtitle span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.heroRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* --- Smart Grid Layout --- */
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* --- Section Card --- */
+.sectionCard {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.01);
+  transition: all 0.3s ease;
+}
+.sectionCard:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  border-color: #CBD5E1;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sectionTitle svg {
+  color: #6366F1;
+}
+
+/* --- Aviation Route Map (Stylized) --- */
+.aviationRoute {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: var(--space-5) var(--space-8);
+  margin-bottom: var(--space-5);
+  position: relative;
+}
+.airportNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+.airportCode {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: 0.05em;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #E2E8F0;
+}
+.airportName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+.flightPath {
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #CBD5E1, #CBD5E1 6px, transparent 6px, transparent 12px);
+  margin: 0 24px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flightIconWrapper {
+  background: #F8FAFC;
+  padding: 0 16px;
+  color: #6366F1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.flightStatus {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6366F1;
+  text-transform: uppercase;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* --- Data Grid --- */
+.dataGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+.dataGrid1Col {
+  grid-template-columns: 1fr;
+}
+
+.dataItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.dataItem:hover {
+  background: white;
+  border-color: #E2E8F0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.dataLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dataValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+}
+.dataHighlight {
+  color: #6366F1;
+  font-family: var(--font-mono);
+}
+.dataMoney {
+  color: #10B981;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+/* --- Vertical Timeline --- */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--space-2);
+}
+.timelineItem {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  padding-bottom: 24px;
+}
+.timelineItem:last-child {
+  padding-bottom: 0;
+}
+.timelineItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 2px;
+  background: #E2E8F0;
+}
+.timelineItem.active:not(:last-child)::after {
+  background: #6366F1;
+}
+
+.timelineIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 2;
+  background: white;
+  border: 2px solid #E2E8F0;
+  color: #94A3B8;
+  transition: all 0.3s ease;
+}
+.timelineItem.completed .timelineIcon {
+  border-color: #10B981;
+  background: #10B981;
+  color: white;
+}
+.timelineItem.active .timelineIcon {
+  border-color: #6366F1;
+  color: #6366F1;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.timelineContent {
+  flex: 1;
+  padding-top: 4px;
+}
+.timelineTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+}
+.timelineItem.active .timelineTitle {
+  color: #6366F1;
+}
+.timelineDesc {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0 0 4px 0;
+}
+.timelineTime {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+/* --- Document Hub --- */
+.docHubCard {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.docHubCard:hover {
+  border-color: #6366F1;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08);
+}
+.docLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.docIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.docTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+}
+.docMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.docActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Right Sidebar Action Panel --- */
+.actionList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.actionItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+.actionItem:hover {
+  background: white;
+  border-color: #6366F1;
+  color: #6366F1;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+.actionItem svg {
+  color: var(--text-tertiary);
+  transition: color 0.2s ease;
+}
+.actionItem:hover svg {
+  color: #6366F1;
+}
+
+/* --- AI Insights Panel --- */
+.aiInsightPanel {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  border-radius: 20px;
+  padding: 24px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--space-5);
+}
+.aiInsightPanel::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm10 10h10v10H10V10zM0 10h10v10H0V10zM10 0h10v10H10V0z' fill='rgba(255,255,255,0.05)' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+.aiHeader {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.aiContent {
+  position: relative;
+  z-index: 2;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.9);
+  font-weight: 500;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .layoutGrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .pageWrapper { padding: var(--space-4); }
+  .heroCard { flex-direction: column; align-items: flex-start; gap: var(--space-5); }
+  .heroRight { align-items: flex-start; }
+  .dataGrid { grid-template-columns: 1fr; }
+  .aviationRoute { padding: var(--space-4); }
+  .airportCode { font-size: 20px; padding: 6px 12px; }
+  .flightPath { margin: 0 12px; }
+  .docHubCard { flex-direction: column; align-items: flex-start; gap: 16px; }
+}

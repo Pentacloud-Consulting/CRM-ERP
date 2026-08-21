@@ -6,14 +6,14 @@ import {
   LayoutDashboard, Users, UserCircle, Building2, TrendingUp,
   Ship, Plane, FileText, Package, MapPin, ShieldCheck,
   Bot, MessageSquare, FileSearch, ChevronLeft, ChevronRight,
-  AlertTriangle, Anchor
+  AlertTriangle, Anchor, Truck, Warehouse, FileSpreadsheet, CreditCard, ArrowRightLeft, Globe
 } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
   {
-    section: 'Overview',
+    section: 'OVERVIEW',
     items: [
       { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     ],
@@ -28,24 +28,15 @@ const NAV_ITEMS = [
     ],
   },
   {
-    section: 'Operations',
+    section: 'OPERATIONS',
     items: [
       { href: '/operations/shipments', label: 'Shipments', icon: Ship },
-      { href: '/operations/bookings', label: 'Bookings', icon: Plane, badgeKey: 'pendingBookings' },
-      { href: '/operations/awb', label: 'Air Waybills', icon: FileText },
-      { href: '/operations/manifests', label: 'Flight Manifests', icon: Plane },
+      { href: '/operations/bookings', label: 'Bookings', icon: Plane },
+      { href: '/operations/transport-docs', label: 'Air Waybills', icon: FileText },
+      { href: '/operations/transport-manifests', label: 'Flight Manifests', icon: Plane },
       { href: '/operations/uld', label: 'ULD Build-Up', icon: Package },
       { href: '/operations/tracking', label: 'Tracking Board', icon: MapPin },
       { href: '/operations/customs', label: 'Customs', icon: ShieldCheck, badgeKey: 'customsHolds' },
-    ],
-  },
-  {
-    section: 'AI Workspace',
-    items: [
-      { href: '/ai/assistant', label: 'AI Assistant', icon: Bot },
-      { href: '/ai/predictions', label: 'AI Predictions', icon: TrendingUp },
-      { href: '/ai/reports', label: 'AI Reports', icon: FileSearch },
-      { href: '/ai/documents', label: 'Document Intelligence', icon: FileText },
     ],
   },
 ];
@@ -63,7 +54,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
 
   const badges = {
     newLeads: state.leads.filter(l => l.status === 'New').length,
-    pendingBookings: state.bookingRequests.filter(b => b.status === 'Requested' || b.status === 'Waitlisted').length,
     customsHolds: state.customsClearances.filter(c => c.status === 'Held').length,
     exceptions: state.shipments.filter(s => s.status === 'Exception' || s.status === 'Customs Hold').length,
   };

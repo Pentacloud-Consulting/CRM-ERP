@@ -1,16 +1,15 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store/AppContext';
 import DataTable from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import { Plus, Eye, Edit2, Trash2 } from 'lucide-react';
-import { formatDate, formatWeight, formatCurrency, formatAWBNumber, getStatusColor } from '@/lib/utils/formatters';
-import { CARRIERS, AIRPORTS } from '@/lib/data/seedData';
-import styles from '../shipments/shipments.module.css';
-import commonStyles from '@/app/crm/leads/leads.module.css';
+import { Plus, Eye, Edit2, Trash2, ArrowUpRight, Plane, Activity, FileText, ChevronRight, Scale, DollarSign, Files } from 'lucide-react';
+import { formatDate, formatWeight, formatCurrency, formatAWBNumber } from '@/lib/utils/formatters';
+import { LOCATIONS } from '@/lib/data/seedData';
+import styles from './awb.module.css';
 
 export default function AWBPage() {
   const router = useRouter();
@@ -25,41 +24,109 @@ export default function AWBPage() {
     weight_charge: '', other_charges: '', fwb_status: 'Not Transmitted'
   });
 
-  const getCarrier = (id) => CARRIERS.find(c => c.id === id);
+  const getCarrier = (id) => state.organizations.find(c => c.org_id === id);
+  const carriers = useMemo(() => state.organizations.filter(o => o.org_type === 'Carrier'), [state.organizations]);
+
+  // Status mapping for premium FWB badges
+  const getFwbStatusVariant = (status) => {
+    switch (status) {
+      case 'Acknowledged (FMA)': return 'success';
+      case 'Rejected (FNA)': return 'danger';
+      case 'Sent': return 'primary';
+      default: return 'neutral';
+    }
+  };
+
+  // ──────── KPIs ────────
+  const kpis = useMemo(() => {
+    let totalWeight = 0;
+    let totalRevenue = 0;
+    let master = 0;
+    let house = 0;
+    const docs = state.transportDocuments || [];
+
+    docs.forEach(a => {
+      if (a.doc_type === 'MAWB' || a.doc_type === 'MBL' || a.doc_type === 'LR') master++;
+      if (a.doc_type === 'HAWB' || a.doc_type === 'HBL') house++;
+      totalWeight += parseFloat(a.chargeable_weight_kg || a.gross_weight_kg || 0);
+      totalRevenue += parseFloat(a.total_charges || 0);
+    });
+
+    return {
+      total: docs.length,
+      master,
+      house,
+      weight: totalWeight,
+      revenue: totalRevenue
+    };
+  }, [state.transportDocuments]);
 
   const columns = [
-    { key: 'number', label: 'AWB Number', accessor: 'awb_number', render: (row) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--primary-hover)' }}>{formatAWBNumber(row.awb_number)}</span> },
-    { key: 'type', label: 'Type', accessor: 'awb_type', width: '80px', render: (row) => <Badge variant={row.awb_type === 'Master (MAWB)' ? 'primary' : 'neutral'}>{row.awb_type}</Badge> },
-    { key: 'fwb', label: 'FWB', accessor: 'fwb_status', render: (row) => <Badge variant={getStatusColor(row.fwb_status)}>{row.fwb_status}</Badge> },
-    { key: 'carrier', label: 'Carrier', accessor: row => getCarrier(row.carrier_id)?.code, render: (row) => <span style={{ fontWeight: 600 }}>{getCarrier(row.carrier_id)?.code || '—'}</span> },
-    { key: 'route', label: 'Route', accessor: row => `${row.origin_airport}–${row.destination_airport}`, render: (row) => (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'white', background: 'var(--primary)', padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}>{row.origin_airport}</span>
-        <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' }}>→</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'white', background: 'var(--primary)', padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}>{row.destination_airport}</span>
-      </span>
-    )},
-    { key: 'pieces', label: 'Pcs', accessor: 'pieces', align: 'right', render: (row) => <span className="tabular-nums">{row.pieces}</span> },
-    { key: 'weight', label: 'Chg. Wt', accessor: 'chargeable_weight_kg', align: 'right', render: (row) => <span className="tabular-nums">{formatWeight(row.chargeable_weight_kg)}</span> },
-    { key: 'charges', label: 'Total Charges', accessor: 'total_charges', align: 'right', render: (row) => <span className="tabular-nums">{formatCurrency(row.total_charges, row.currency_code)}</span> },
-    { key: 'terms', label: 'Terms', accessor: 'freight_terms', width: '80px' },
-    { key: 'issued', label: 'Issued', accessor: 'issued_at', render: (row) => <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{row.issued_at ? formatDate(row.issued_at) : 'Draft'}</span> },
+    { 
+      key: 'number', 
+      label: 'DOC NUMBER', 
+      accessor: 'doc_number', 
+      render: (row) => (
+        <span className={styles.awbNumberCell}>
+          {row.doc_number}
+        </span>
+      ) 
+    },
+    { 
+      key: 'type', 
+      label: 'TYPE', 
+      accessor: 'doc_type', 
+      render: (row) => (
+        <Badge variant={row.doc_type === 'MAWB' || row.doc_type === 'MBL' ? 'primary' : 'neutral'} dot>
+          {row.doc_type}
+        </Badge>
+      ) 
+    },
+    { 
+      key: 'fwb', 
+      label: 'STATUS', 
+      accessor: 'status', 
+      render: (row) => <Badge variant={getFwbStatusVariant(row.status)}>{row.status}</Badge> 
+    },
+    { 
+      key: 'carrier', 
+      label: 'PROVIDER', 
+      accessor: row => getCarrier(row.provider_id)?.code, 
+      render: (row) => <span style={{ fontWeight: 800, color: '#0F172A' }}>{getCarrier(row.provider_id)?.code || '—'}</span> 
+    },
+    { 
+      key: 'route', 
+      label: 'ROUTE', 
+      accessor: row => `${row.origin_location}–${row.destination_location}`, 
+      render: (row) => (
+        <div className={styles.routeCell}>
+          <span className={styles.routeCode}>{row.origin_location}</span>
+          <ChevronRight size={14} className={styles.routeArrow} />
+          <span className={styles.routeCode}>{row.destination_location}</span>
+        </div>
+      )
+    },
+    { key: 'pieces', label: 'PCS', accessor: 'pieces', align: 'right', render: (row) => <span style={{ fontWeight: 600, color: '#334155' }}>{row.pieces}</span> },
+    { key: 'weight', label: 'WEIGHT', accessor: 'gross_weight_kg', align: 'right', render: (row) => <span style={{ fontWeight: 700, color: '#0F172A' }}>{formatWeight(row.gross_weight_kg)}</span> },
+    { key: 'charges', label: 'TOTAL CHARGES', accessor: 'total_charges', align: 'right', render: (row) => <span style={{ fontWeight: 800, color: '#6366F1' }}>{formatCurrency(row.total_charges, row.currency_code)}</span> },
+    { key: 'terms', label: 'TERMS', accessor: 'freight_terms', render: (row) => <span style={{ fontSize: '13px', color: '#64748B' }}>{row.freight_terms}</span> },
+    { key: 'created', label: 'CREATED', accessor: 'created_at', render: (row) => <span style={{ fontSize: '12px', color: '#94A3B8' }}>{formatDate(row.created_at)}</span> },
     { key: 'actions', label: '', accessor: 'actions', align: 'right',
       render: (row) => (
-        <div className={commonStyles.actionButtons}>
-          <button className={`${commonStyles.actionBtn} hover-scale click-spin`} title="View Details" onClick={(e) => { e.stopPropagation(); router.push(`/operations/awb/${row.awb_id}`); }}>
-            <Eye size={16} className="click-spin-inner" />
+        <div className={styles.actionButtons}>
+          <button className={styles.actionBtn} title="View Details" onClick={(e) => { e.stopPropagation(); router.push(`/operations/transport-docs/${row.doc_id}`); }}>
+            <Eye size={16} />
           </button>
-          <button className={`${commonStyles.actionBtn} hover-scale click-spin`} title="Edit" onClick={(e) => { 
+          <button className={styles.actionBtn} title="Edit" onClick={(e) => { 
             e.stopPropagation(); 
-            setEditingAwbId(row.awb_id);
+            setEditingAwbId(row.doc_id);
             setNewAWB({ ...row });
             setShowNew(true);
           }}>
-            <Edit2 size={16} className="click-spin-inner" />
+            <Edit2 size={16} />
           </button>
-          <button className={`${commonStyles.actionBtn} ${commonStyles.deleteBtn} hover-scale click-spin`} title="Delete" onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_AWB', payload: row.awb_id }); }}>
-            <Trash2 size={16} className="click-spin-inner" />
+          <button className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Delete" onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_TRANSPORT_DOC', payload: row.doc_id }); }}>
+            <Trash2 size={16} />
           </button>
         </div>
       )
@@ -84,9 +151,9 @@ export default function AWBPage() {
     };
 
     if (editingAwbId) {
-      dispatch({ type: 'UPDATE_AWB', payload: { ...payload, awb_id: editingAwbId } });
+      dispatch({ type: 'UPDATE_TRANSPORT_DOC', payload: { ...payload, doc_id: editingAwbId } });
     } else {
-      dispatch({ type: 'CREATE_AWB', payload });
+      dispatch({ type: 'CREATE_TRANSPORT_DOC', payload });
     }
 
     setShowNew(false);
@@ -95,27 +162,70 @@ export default function AWBPage() {
   };
 
   return (
-    <div className={`ambient-mesh-bg ${commonStyles.pageWrapper}`}>
+    <div className={styles.pageWrapper} style={{ '--primary': '#6366F1', '--primary-tint': 'rgba(99, 102, 241, 0.1)', '--primary-hover': '#4F46E5' }}>
       <div className={styles.page}>
+        
+        {/* ══════ HEADER ══════ */}
         <div className={styles.header}>
-          <div>
+          <div className={styles.headerLeft}>
             <h1 className={styles.title}>Air Waybills</h1>
             <p className={styles.subtitle}>
-              {state.airWaybills.length} AWBs · {state.airWaybills.filter(a => a.awb_type === 'Master (MAWB)').length} Master · {state.airWaybills.filter(a => a.awb_type === 'House (HAWB)').length} House
+              Freight documents, billing rates, and routing execution.
             </p>
           </div>
-          <Button icon={Plus} onClick={() => {
-            setEditingAwbId(null);
-            setNewAWB({ awb_number: '', awb_type: 'Master (MAWB)', parent_mawb_id: '', shipment_id: '', carrier_id: '', shipper_contact_id: '', consignee_contact_id: '', origin_airport: '', destination_airport: '', pieces: '', gross_weight_kg: '', rate_class: 'Q', declared_value_for_carriage: '', declared_value_for_customs: '', freight_terms: 'Prepaid', currency_code: 'USD', weight_charge: '', other_charges: '', fwb_status: 'Not Transmitted' });
-            setShowNew(true);
-          }}>New Air Waybill</Button>
+          <div className={styles.headerActions}>
+            <Button icon={Plus} onClick={() => {
+              setEditingAwbId(null);
+              setNewAWB({ awb_number: '', awb_type: 'Master (MAWB)', parent_mawb_id: '', shipment_id: '', carrier_id: '', shipper_contact_id: '', consignee_contact_id: '', origin_airport: '', destination_airport: '', pieces: '', gross_weight_kg: '', rate_class: 'Q', declared_value_for_carriage: '', declared_value_for_customs: '', freight_terms: 'Prepaid', currency_code: 'USD', weight_charge: '', other_charges: '', fwb_status: 'Not Transmitted' });
+              setShowNew(true);
+            }} style={{ background: 'linear-gradient(to right, #6366F1, #8B5CF6)', borderColor: 'transparent', border: 'none' }}>
+              New Air Waybill
+            </Button>
+          </div>
         </div>
         
-        <div className={`glass-panel ${commonStyles.tableContainer}`}>
+        {/* ══════ ANALYTICS ══════ */}
+        <div className={styles.analyticsGrid}>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} indigo`}><Files size={20} /></div>
+              <div className={`${styles.kpiTrend} trendUp`}><ArrowUpRight size={14} /> +24%</div>
+            </div>
+            <div className={styles.kpiMetric}>{kpis.total}</div>
+            <div className={styles.kpiLabel}>Total AWBs</div>
+          </div>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} primary`}><Plane size={20} /></div>
+              <div className={`${styles.kpiTrend} trendNeutral`}>—</div>
+            </div>
+            <div className={styles.kpiMetric}>{kpis.master}</div>
+            <div className={styles.kpiLabel}>Master AWBs</div>
+          </div>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} violet`}><Scale size={20} /></div>
+              <div className={`${styles.kpiTrend} trendUp`}><ArrowUpRight size={14} /></div>
+            </div>
+            <div className={styles.kpiMetric}>{formatWeight(kpis.weight)}</div>
+            <div className={styles.kpiLabel}>Total Chargeable Weight</div>
+          </div>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiHeader}>
+              <div className={`${styles.kpiIconWrapper} success`}><DollarSign size={20} /></div>
+              <div className={`${styles.kpiTrend} trendUp`}><ArrowUpRight size={14} /> +18%</div>
+            </div>
+            <div className={styles.kpiMetric}>{formatCurrency(kpis.revenue, 'USD')}</div>
+            <div className={styles.kpiLabel}>Revenue Generated</div>
+          </div>
+        </div>
+
+        {/* ══════ PREMIUM TABLE ══════ */}
+        <div className={styles.tableContainer}>
           <DataTable
             columns={columns}
-            data={state.airWaybills}
-            onRowClick={(row) => router.push(`/operations/awb/${row.awb_id}`)}
+            data={state.transportDocuments || []}
+            onRowClick={(row) => router.push(`/operations/transport-docs/${row.doc_id}`)}
             searchPlaceholder="Search by AWB number, carrier..."
             filters={[
               { key: 'awb_type', label: 'Type', options: ['Master (MAWB)', 'House (HAWB)', 'Direct'] },
@@ -124,6 +234,7 @@ export default function AWBPage() {
           />
         </div>
 
+      {/* ══════ CREATE / EDIT MODAL ══════ */}
       <Modal
         open={showNew}
         onClose={() => {
@@ -141,14 +252,16 @@ export default function AWBPage() {
               setEditingAwbId(null);
               setNewAWB({ awb_number: '', awb_type: 'Master (MAWB)', parent_mawb_id: '', shipment_id: '', carrier_id: '', shipper_contact_id: '', consignee_contact_id: '', origin_airport: '', destination_airport: '', pieces: '', gross_weight_kg: '', rate_class: 'Q', declared_value_for_carriage: '', declared_value_for_customs: '', freight_terms: 'Prepaid', currency_code: 'USD', weight_charge: '', other_charges: '', fwb_status: 'Not Transmitted' });
             }}>Cancel</Button>
-            <Button onClick={handleCreateOrUpdate} disabled={!newAWB.awb_number.trim() || !newAWB.shipment_id || !newAWB.carrier_id}>{editingAwbId ? "Save Changes" : "Issue AWB"}</Button>
+            <Button onClick={handleCreateOrUpdate} disabled={!newAWB.awb_number.trim() || !newAWB.shipment_id || !newAWB.carrier_id} style={{ background: '#6366F1', borderColor: '#6366F1' }}>
+              {editingAwbId ? "Save Changes" : "Issue AWB"}
+            </Button>
           </>
         }
       >
         <div className={styles.form}>
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">AWB Number *</label>
+              <label className="form-label">AWB Number <span style={{ color: '#f43f5e' }}>*</span></label>
               <input className="form-input" value={newAWB.awb_number} onChange={e => setNewAWB(p => ({ ...p, awb_number: e.target.value }))} placeholder="e.g. 157-12345675" />
             </div>
             <div className="form-group">
@@ -165,27 +278,30 @@ export default function AWBPage() {
                 <label className="form-label">Parent Master AWB</label>
                 <select className="form-select" value={newAWB.parent_mawb_id} onChange={e => setNewAWB(p => ({ ...p, parent_mawb_id: e.target.value }))}>
                   <option value="">Select MAWB...</option>
-                  {state.airWaybills.filter(a => a.awb_type === 'Master (MAWB)').map(a => <option key={a.awb_id} value={a.awb_id}>{a.awb_number}</option>)}
+                  {(state.transportDocuments || []).filter(a => a.doc_type === 'MAWB').map(a => <option key={a.doc_id} value={a.doc_id}>{a.doc_number}</option>)}
                 </select>
               </div>
             </div>
           )}
+          
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Logistics Route</div>
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Shipment *</label>
+              <label className="form-label">Shipment <span style={{ color: '#f43f5e' }}>*</span></label>
               <select className="form-select" value={newAWB.shipment_id} onChange={e => setNewAWB(p => ({ ...p, shipment_id: e.target.value }))}>
                 <option value="">Select Shipment...</option>
                 {state.shipments.map(s => <option key={s.shipment_id} value={s.shipment_id}>{s.shipment_reference}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Carrier *</label>
+              <label className="form-label">Carrier <span style={{ color: '#f43f5e' }}>*</span></label>
               <select className="form-select" value={newAWB.carrier_id} onChange={e => setNewAWB(p => ({ ...p, carrier_id: e.target.value }))}>
                 <option value="">Select Carrier...</option>
-                {CARRIERS.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+                {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
               </select>
             </div>
           </div>
+          
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Shipper Contact</label>
@@ -202,22 +318,25 @@ export default function AWBPage() {
               </select>
             </div>
           </div>
+
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Origin Airport</label>
               <select className="form-select" value={newAWB.origin_airport} onChange={e => setNewAWB(p => ({ ...p, origin_airport: e.target.value }))}>
                 <option value="">Select Origin...</option>
-                {Object.values(AIRPORTS).map(a => <option key={a.code} value={a.code}>{a.code}</option>)}
+                {Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Destination Airport</label>
               <select className="form-select" value={newAWB.destination_airport} onChange={e => setNewAWB(p => ({ ...p, destination_airport: e.target.value }))}>
                 <option value="">Select Destination...</option>
-                {Object.values(AIRPORTS).map(a => <option key={a.code} value={a.code}>{a.code}</option>)}
+                {Object.values(LOCATIONS).map(a => <option key={a.code} value={a.code}>{a.name}, {a.country} ({a.code})</option>)}
               </select>
             </div>
           </div>
+
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Freight Charges</div>
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Pieces</label>
@@ -234,6 +353,7 @@ export default function AWBPage() {
               </select>
             </div>
           </div>
+          
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Freight Terms</label>
@@ -249,6 +369,7 @@ export default function AWBPage() {
               </select>
             </div>
           </div>
+          
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Weight Charge</label>
@@ -259,6 +380,18 @@ export default function AWBPage() {
               <input className="form-input" type="number" value={newAWB.other_charges} onChange={e => setNewAWB(p => ({ ...p, other_charges: e.target.value }))} placeholder="0" />
             </div>
           </div>
+
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Documentation</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">FWB Status</label>
+              <select className="form-select" value={newAWB.fwb_status} onChange={e => setNewAWB(p => ({ ...p, fwb_status: e.target.value }))}>
+                {['Not Transmitted', 'Sent', 'Acknowledged (FMA)', 'Rejected (FNA)'].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-group"></div>
+          </div>
+
         </div>
       </Modal>
       </div>

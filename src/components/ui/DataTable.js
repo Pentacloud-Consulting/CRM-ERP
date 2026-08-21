@@ -138,7 +138,7 @@ export default function DataTable({
             ) : (
               filtered.map((row, i) => (
                 <tr
-                  key={row.id || row.lead_id || row.shipment_id || row.account_id || row.contact_id || row.opportunity_id || row.awb_id || row.booking_request_id || i}
+                  key={(row.id || row.lead_id || row.shipment_id || row.account_id || row.contact_id || row.opportunity_id || row.awb_id || row.booking_request_id || row.manifest_id || row.declaration_id || 'row') + '-' + i}
                   className={`${styles.row} ${onRowClick ? styles.clickable : ''}`}
                   onClick={() => onRowClick?.(row)}
                   style={{ animationDelay: `${Math.min(i * 20, 300)}ms` }}

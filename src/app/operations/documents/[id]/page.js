@@ -12,7 +12,7 @@ import styles from '@/components/documents/documents.module.css';
 export default function DocumentViewerPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { state, dispatch, getAccount } = useApp();
+  const { state, dispatch, getOrganization } = useApp();
   const [copied, setCopied] = useState(false);
 
   const doc = state.documents.find(d => d.document_id === id);
@@ -28,10 +28,11 @@ export default function DocumentViewerPage() {
   }
 
   const shipment = state.shipments.find(s => s.shipment_id === item.shipment_id);
-  const awb = item.awb_id ? state.airWaybills.find(a => a.awb_id === item.awb_id) : state.airWaybills.find(a => a.shipment_id === item.shipment_id);
-  const account = shipment ? getAccount(shipment.account_id) : null;
+  const awb = item.doc_id ? state.transportDocuments.find(a => a.doc_id === item.doc_id) : (item.awb_id ? state.transportDocuments.find(a => a.doc_id === item.awb_id) : state.transportDocuments.find(a => a.shipment_id === item.shipment_id));
+  const account = shipment ? getOrganization(shipment.org_id) : null;
 
-  const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/sign/${item.share_token}`;
+  const shareToken = item.share_token || item.document_id || item.invoice_id;
+  const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/sign/${shareToken}`;
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -94,7 +95,7 @@ export default function DocumentViewerPage() {
       </div>
 
       {/* Share Link */}
-      {item.share_token && (
+      {shareToken && (
         <div className={styles.shareLink}>
           <ExternalLink size={14} />
           <span>Client Link:</span>

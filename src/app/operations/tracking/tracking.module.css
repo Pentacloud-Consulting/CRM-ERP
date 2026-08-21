@@ -1,41 +1,425 @@
-.page {
-  max-width: 1400px;
-  animation: fadeInUp var(--transition-slow) ease both;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+/* ===== Live Tracking Board — Global Command Center ===== */
+
+.pageWrapper {
+  padding: 16px 24px;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: #F8FAFC;
+  font-family: var(--font-sans);
+  background-image: 
+    linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
-.header {
+.page {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeInUp 0.4s ease both;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- Command Center Header --- */
+.heroHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
+}
+.titleIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0F172A, #334155);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  position: relative;
+}
+.pulseDot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #10B981;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulseGreen 2s infinite;
+}
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 .title {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-bold);
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
   margin: 0;
 }
-
 .subtitle {
-  font-size: var(--text-sm);
+  font-size: 13px;
   color: var(--text-tertiary);
-  margin-top: var(--space-1);
+  margin: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
+/* --- Live KPIs --- */
+.opsDashboard {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.opsMetric {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+.opsMetric::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background: #F1F5F9;
+}
+.opsMetric:last-child::after { display: none; }
+
+.metricLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.metricValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.1;
+  font-family: var(--font-mono);
+}
+
+/* --- Map Section --- */
 .mapSection {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2);
-  box-shadow: var(--shadow-sm);
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  height: 380px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.04);
+  position: relative;
+}
+/* Map overlays to make it look premium */
+.mapOverlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  gap: 16px;
+}
+.mapLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
 
-.tableSection {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-sm);
+/* --- Split Layout: Cards + Feed --- */
+.splitLayout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* --- Shipment Cards Feed --- */
+.shipmentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+}
+.searchInput {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+.searchInput:focus {
+  border-color: #6366F1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.shipmentCard {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr 40px;
+  gap: 16px;
+  align-items: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.shipmentCard:hover { border-color: rgba(106,76,255,0.3); box-shadow: 0 4px 16px rgba(106,76,255,0.06); transform: translateY(-1px); }
+.selectedCard {
+  border-color: #6A4CFF;
+  background: rgba(106, 76, 255, 0.04);
+  box-shadow: 0 4px 20px rgba(106,76,255,0.1);
+}
+.detailsBtn {
+  display: flex; justify-content: flex-end; color: #94A3B8;
+  padding: var(--space-2); margin: calc(-1 * var(--space-2));
+  border-radius: 8px; transition: all 0.2s;
+}
+.detailsBtn:hover {
+  background: rgba(106, 76, 255, 0.1);
+  color: #6A4CFF;
+}
+
+.cardBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.shpRef {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+}
+.shpAccount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.routeVisual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.routePort {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+}
+.routeLine {
+  flex: 1;
+  height: 2px;
+  background: #E2E8F0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.routePlane {
+  position: absolute;
+  color: #6366F1;
+  background: white;
+  padding: 0 4px;
+}
+
+.progressBlock {
+  width: 100%;
+}
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.flightBadge {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366F1;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+}
+.etaText {
+  color: #10B981;
+}
+.progressBar {
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+  border-radius: 3px;
+}
+
+/* --- Real-Time Activity Feed --- */
+.activityFeed {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 16px;
+  position: sticky;
+  top: 16px;
+}
+.feedHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+}
+.liveIndicator {
+  background: #FEE2E2;
+  color: #EF4444;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: pulseRed 2s infinite;
+}
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.feedItem {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+.feedItem::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: -16px;
+  width: 2px;
+  background: #E2E8F0;
+}
+.feedItem:last-child::before { display: none; }
+
+.feedIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  z-index: 1;
+  font-size: 12px;
+}
+.feedIcon.success { background: #D1FAE5; color: #10B981; border-color: #A7F3D0; }
+.feedIcon.flight { background: #E0E7FF; color: #6366F1; border-color: #C7D2FE; }
+
+.feedContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
+.feedDesc {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+}
+.feedMeta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 1024px) {
+  .splitLayout { grid-template-columns: 1fr; }
+  .opsDashboard { grid-template-columns: repeat(3, 1fr); }
+  .shipmentCard { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .opsDashboard { grid-template-columns: 1fr 1fr; }
+  .shipmentCard { grid-template-columns: 1fr; }
 }
