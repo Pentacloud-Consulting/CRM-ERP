@@ -205,6 +205,24 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.logoutBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.logoutBtn:hover {
+  background: rgba(239, 68, 68, 0.15); /* Red tint */
+  color: var(--danger);
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     position: fixed;

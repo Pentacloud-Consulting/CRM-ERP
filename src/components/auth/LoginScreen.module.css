@@ -9,7 +9,7 @@
 /* Left Panel - Dark Navy with Abstract Background */
 .leftPanel {
   flex: 0 0 55%;
-  background: radial-gradient(circle at top right, #1E293B, #0F172A 60%, #020617);
+  background: radial-gradient(circle at top right, #1a1625, #0a0910 60%, #000000);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -34,7 +34,7 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #0EA5E9, #38BDF8);
+  background: linear-gradient(135deg, #6D4AFF, #8B6FFF);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,7 +64,7 @@
 }
 
 .taglineAccent {
-  color: #38BDF8;
+  color: #8B6FFF;
 }
 
 .subTagline {
@@ -82,8 +82,8 @@
   height: 100%;
   z-index: 1;
   background-image: 
-    radial-gradient(circle at 30% 70%, rgba(14, 165, 233, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.1) 0%, transparent 40%);
+    radial-gradient(circle at 30% 70%, rgba(109, 74, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 70% 30%, rgba(139, 111, 255, 0.1) 0%, transparent 40%);
 }
 
 .routeLine1, .routeLine2 {
@@ -189,8 +189,8 @@
 
 .input:focus {
   background: #FFFFFF;
-  border-color: #0EA5E9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  border-color: #6D4AFF;
+  box-shadow: 0 0 0 3px rgba(109, 74, 255, 0.15);
 }
 
 .inputOptions {
@@ -213,23 +213,23 @@
   height: 16px;
   border-radius: 4px;
   border: 1px solid #CBD5E1;
-  accent-color: #0EA5E9;
+  accent-color: #6D4AFF;
   cursor: pointer;
 }
 
 .forgotLink {
-  color: #0EA5E9;
+  color: #6D4AFF;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .forgotLink:hover {
-  color: #0284C7;
+  color: #4B27DB;
 }
 
 .button {
-  background: #0EA5E9;
+  background: #6D4AFF;
   color: white;
   border: none;
   border-radius: 12px;
@@ -239,16 +239,16 @@
   cursor: pointer;
   transition: all 0.2s ease;
   margin-top: 8px;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+  box-shadow: 0 4px 12px rgba(109, 74, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .button:hover:not(:disabled) {
-  background: #0284C7;
+  background: #4B27DB;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
+  box-shadow: 0 6px 16px rgba(109, 74, 255, 0.35);
 }
 
 .button:active:not(:disabled) {

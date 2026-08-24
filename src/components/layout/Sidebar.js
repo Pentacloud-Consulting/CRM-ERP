@@ -6,8 +6,9 @@ import {
   LayoutDashboard, Users, UserCircle, Building2, TrendingUp,
   Ship, Plane, FileText, Package, MapPin, ShieldCheck,
   Bot, MessageSquare, FileSearch, ChevronLeft, ChevronRight,
-  AlertTriangle, Anchor, Truck, Warehouse, FileSpreadsheet, CreditCard, ArrowRightLeft, Globe
+  AlertTriangle, Anchor, Truck, Warehouse, FileSpreadsheet, CreditCard, ArrowRightLeft, Globe, LogOut
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store/AppContext';
 import styles from './Sidebar.module.css';
 
@@ -43,8 +44,14 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const pathname = usePathname();
-  const { state } = useApp();
+  const router = useRouter();
+  const { state, dispatch } = useApp();
   const [spinningItem, setSpinningItem] = useState(null);
+
+  const handleLogout = () => {
+    dispatch({ type: 'LOGOUT' });
+    router.push('/login');
+  };
 
   const handleItemClick = (href) => {
     setSpinningItem(href);
@@ -131,10 +138,13 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         <div className={styles.footer}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>JD</div>
-            <div>
+            <div style={{ flex: 1 }}>
               <div className={styles.userName}>Jane Doe</div>
               <div className={styles.userRole}>Operations Manager</div>
             </div>
+            <button className={styles.logoutBtn} onClick={handleLogout} title="Log Out">
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       )}
