@@ -120,13 +120,16 @@ export default function PipelineDetailPage() {
               <span className={styles.pipelineValueLabel}>Pipeline Value</span>
               <span className={styles.pipelineValue}>{formatCurrency(opp.expected_revenue || 0, account.default_currency || 'USD')}</span>
             </div>
-            <select 
-              className={styles.statusDropdown}
-              value={opp.status || 'New'}
-              onChange={(e) => dispatch({ type: 'UPDATE_OPPORTUNITY', payload: { ...opp, status: e.target.value } })}
-            >
-              {['New', 'Active', 'On Hold', 'Closed Won', 'Closed Lost'].map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            {opp.won_shipment_id && (
+              <div className={styles.heroActionGroup}>
+                <button 
+                  className={styles.shipmentRedirectBtn} 
+                  onClick={() => router.push(`/operations/shipments/${opp.won_shipment_id}`)}
+                >
+                  <Package size={16} /> View Auto-Shipment
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

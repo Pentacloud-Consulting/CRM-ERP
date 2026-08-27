@@ -228,7 +228,51 @@ function appReducer(state, action) {
       return { ...state, opportunities: [opp, ...state.opportunities] };
     }
     case 'UPDATE_OPPORTUNITY': {
-      return { ...state, opportunities: state.opportunities.map(o => o.opportunity_id === action.payload.opportunity_id ? { ...o, ...action.payload } : o) };
+      const { opportunity_id, status, stage } = action.payload;
+      const now = new Date().toISOString();
+      let newState = {
+        ...state,
+        opportunities: state.opportunities.map(o => 
+          o.opportunity_id === opportunity_id ? { ...o, ...action.payload, updated_at: now } : o
+        )
+      };
+
+      if (status === 'Closed Won' || stage === 'Won') {
+        const opp = state.opportunities.find(o => o.opportunity_id === opportunity_id);
+        const mergedOpp = { ...opp, ...action.payload };
+        
+        if (mergedOpp && !mergedOpp.won_shipment_id) {
+          const newShipment = {
+            shipment_id: generateId('shp'),
+            shipment_reference: `SHP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, '0')}`,
+            opportunity_id,
+            org_id: mergedOpp.org_id,
+            contact_id: mergedOpp.contact_id || null,
+            transport_mode: mergedOpp.transport_mode || 'AIR',
+            service_type: 'Port-to-Port',
+            origin_location: mergedOpp.origin_location || '',
+            destination_location: mergedOpp.destination_location || '',
+            incoterm: mergedOpp.incoterm || 'FOB',
+            cargo_type: mergedOpp.cargo_type || 'General',
+            special_handling_codes: [],
+            pieces: mergedOpp.est_pieces || 0,
+            gross_weight_kg: mergedOpp.estimated_weight_kg || 0,
+            chargeable_weight_kg: mergedOpp.estimated_weight_kg || 0,
+            master_doc_id: null,
+            status: 'Booked',
+            created_at: now,
+          };
+
+          newState = {
+            ...newState,
+            shipments: [newShipment, ...newState.shipments],
+            opportunities: newState.opportunities.map(o =>
+              o.opportunity_id === opportunity_id ? { ...o, won_shipment_id: newShipment.shipment_id } : o
+            ),
+          };
+        }
+      }
+      return newState;
     }
     case 'DELETE_OPPORTUNITY': {
       return { ...state, opportunities: state.opportunities.filter(o => o.opportunity_id !== action.payload) };

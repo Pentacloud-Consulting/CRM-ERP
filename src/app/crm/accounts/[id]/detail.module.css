@@ -156,16 +156,16 @@
 .heroInfoGrid {
   display: flex;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 28px;
   z-index: 1;
 }
 
 .heroInfoItem {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 24px;
-  border-right: 1px solid rgba(16, 24, 40, 0.08);
+  gap: 8px;
+  padding: 0 32px;
+  border-right: 1px solid rgba(16, 24, 40, 0.06);
 }
 .heroInfoItem:first-child {
   padding-left: 0;
@@ -285,16 +285,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: max-content;
-  max-width: 65%;
+  width: 60%;
   background: white;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin-top: 20px;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-top: 28px;
   border: 1px solid rgba(16, 24, 40, 0.06);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.04);
   z-index: 1;
-  gap: 16px;
+  gap: 24px;
 }
 .metricBlock {
   display: flex;
@@ -451,8 +450,10 @@
 
 .infoList {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 40px;
+  row-gap: 0px;
 }
 
 .infoRow {

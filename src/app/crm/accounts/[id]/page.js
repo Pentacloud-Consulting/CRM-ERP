@@ -181,15 +181,6 @@ export default function AccountDetailPage() {
               <div className={styles.metricTrend}>↑ 14% vs last month</div>
             </div>
           </div>
-          <div className={styles.metricDivider}></div>
-          <div className={styles.metricBlock}>
-            <div className={styles.metricIconBox} style={{ background: 'rgba(20,184,166,0.08)', color: '#14B8A6' }}><HeartPulse size={14} /></div>
-            <div>
-              <div className={styles.metricLabel}>Account Health</div>
-              <div className={styles.metricValue}>{healthScore}%</div>
-              <div style={{ marginTop: '2px' }}><Badge variant="success" dot>Healthy</Badge></div>
-            </div>
-          </div>
         </div>
         </div>
 
@@ -300,15 +291,6 @@ export default function AccountDetailPage() {
                     </div>
                   </div>
 
-                  {/* Right Badge Card */}
-                  <div className={styles.infoBadgeCard}>
-                    <div className={styles.infoBadgeIcon}>
-                      <ShieldCheck size={32} />
-                    </div>
-                    <div className={styles.infoBadgeTitle}>Verified Account</div>
-                    <div className={styles.infoBadgeDesc}>This account is verified and active. All core details are up to date.</div>
-                    <Badge variant="success" dot>Active</Badge>
-                  </div>
                 </div>
               </div>
             )}
