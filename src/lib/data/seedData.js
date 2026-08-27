@@ -132,7 +132,7 @@ export function generateSeedData() {
     { org_id: 'ORG-0014', legal_name: 'Blue Dart', code: 'BLD', org_type: 'Carrier', carrier_type: 'Trucking Company', status: 'Active', created_at: new Date().toISOString() }
   ];
   const contacts = [
-    { contact_id: 'con-0001', first_name: 'Jane', last_name: 'Doe', email: 'jane.doe@pentacloud.com', phone: '+1-555-0100', org_id: 'ORG-0001', is_primary: true, created_at: new Date().toISOString() },
+    { contact_id: 'con-0001', full_name: 'Jane Doe', email: 'jane.doe@pentacloud.com', phone: '+1-555-0100', org_id: 'ORG-0001', is_primary: true, created_at: new Date().toISOString() },
   ];
   
   const opportunities = [

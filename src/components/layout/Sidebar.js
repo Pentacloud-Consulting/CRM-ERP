@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   {
     section: 'OVERVIEW',
     items: [
-      { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     ],
   },
   {

@@ -1,19 +1,19 @@
 /* ===== Lead Detail — Premium CRM Control Center ===== */
 
 .pageWrapper {
-  padding: 40px;
+  padding: 16px 24px;
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
-  background: #F7F9FB;
+  background: var(--bg);
   font-family: 'Inter', sans-serif;
 }
 
 .page {
-  max-width: 1200px;
+  max-width: 100%;
   width: 100%;
   margin: 0 auto;
-  animation: fadeInUp var(--transition-slow) ease both;
+  animation: fadeInUp 400ms ease both;
 }
 
 .notFound {
@@ -28,10 +28,10 @@
   align-items: center;
   gap: 8px;
   color: #64748B;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -41,70 +41,98 @@
 }
 
 /* --- Hero Card --- */
+/* --- Engineered Card Defaults --- */
+.heroCard, .reqCard {
+  background: var(--bg-card);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: all 150ms ease;
+}
+
+.heroCard:hover, .reqCard:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(16, 24, 40, 0.08);
+}
+
+/* Staggered entrances */
+.heroCard { animation: fadeInUp 400ms 50ms ease both; }
+.detailGrid .reqCard:nth-child(1) { animation: fadeInUp 400ms 100ms ease both; }
+.detailGrid .reqCard:nth-child(2) { animation: fadeInUp 400ms 150ms ease both; }
+.detailGrid .reqCard:nth-child(3) { animation: fadeInUp 400ms 200ms ease both; }
+
+/* --- Hero Card --- */
 .heroCard {
-  background: white;
-  border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  gap: 16px;
 }
 
 .heroLeft {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
 }
 
 .heroAvatar {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: #E0F2FE;
-  color: #14B8A6;
+  background: rgba(106, 76, 255, 0.08);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+  box-shadow: 0 0 0 4px rgba(106, 76, 255, 0.04), inset 0 2px 4px rgba(255,255,255,0.5);
+  border: 1px solid rgba(106, 76, 255, 0.1);
 }
 
 .heroAvatarInner {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #14B8A6, #0D9488);
+  background: linear-gradient(135deg, var(--primary), #8B6FFF);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(106, 76, 255, 0.3);
 }
 
 .heroTitleRow {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .heroTitle {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 700;
   color: #0F172A;
   margin: 0;
   letter-spacing: -0.02em;
 }
 
+.statusPillWrapper > div {
+  background: rgba(106, 76, 255, 0.1) !important;
+  border: none !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-full) !important;
+}
+
 .heroMeta {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
   color: #64748B;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   flex-wrap: wrap;
 }
@@ -112,7 +140,17 @@
 .heroMetaItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.metaIcon {
+  color: #9CA3AF;
+}
+
+.metaDivider {
+  color: rgba(16, 24, 40, 0.15);
+  font-size: 16px;
+  line-height: 1;
 }
 
 .heroRight {
@@ -126,18 +164,26 @@
   width: 180px;
   height: 40px;
   border-radius: 8px;
-  border: 1px solid #E2E8F0;
-  background-color: white;
+  border: 1px solid rgba(16, 24, 40, 0.08);
+  background-color: var(--bg-card);
   font-size: 14px;
   font-weight: 500;
-  color: #0F172A;
+  color: var(--text-primary);
   padding: 0 12px;
   appearance: none;
-  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E');
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239CA3AF%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E');
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
   cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all 150ms ease;
+}
+
+.statusSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(106, 76, 255, 0.1);
 }
 
 .convertedBadge {
@@ -145,93 +191,139 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(20, 184, 166, 0.05);
-  border: 1px solid rgba(20, 184, 166, 0.2);
-  border-radius: 12px;
-  color: #0F766E;
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.15);
+  border-radius: var(--radius-full);
+  color: #059669;
   font-size: 13px;
   font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.convertedLockIcon {
+  color: #10B981;
 }
 
 /* --- Detail Grid --- */
 .detailGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  max-width: 600px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
 }
 
 /* --- Requirement Card --- */
 .reqCard {
   background: white;
   border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 24px 32px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #6A4CFF;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.reqCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(106, 76, 255, 0.1);
+}
+
+/* --- Requirement Card Specifics --- */
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(16, 24, 40, 0.04);
 }
 
 .cardTitle {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
-  color: #0F172A;
+  color: #1E293B;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .reqGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 8px 16px;
 }
 
 .reqItem {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.reqItem:hover {
+  background-color: #F8FAFC;
+}
+
+.reqItemHighlight {
+  padding: 10px;
+  background: rgba(106, 76, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(106, 76, 255, 0.1);
+  margin-top: -4px;
+  margin-left: -4px;
+  width: calc(100% + 8px);
 }
 
 .reqLabel {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 10px;
-  font-weight: 700;
-  color: #94A3B8;
+  font-weight: 600;
+  color: #64748B;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
+}
+
+.reqIconBg {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(106, 76, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .reqLabelIcon {
-  color: #14B8A6;
+  color: #6A4CFF;
 }
 
 .reqValue {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   color: #0F172A;
+  padding-left: 28px; /* aligns with text after icon */
 }
 
 .reqTradeLane {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #14B8A6;
-  background: rgba(20, 184, 166, 0.1);
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+  padding-left: 28px;
 }
+
 .tradeLaneArrow {
   font-size: 12px;
-  color: #0F766E;
+  color: #9CA3AF;
+  margin: 0 4px;
 }
 
 /* --- Conversion Card --- */
@@ -245,95 +337,144 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4);
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 16px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid rgba(16, 24, 40, 0.08);
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.02);
 }
 
 .conversionItem:hover {
-  background: white;
-  border-color: rgba(20, 184, 166, 0.3);
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.05);
+  border-color: rgba(106, 76, 255, 0.3);
+  box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+  background: rgba(106, 76, 255, 0.02);
 }
 
 .conversionItemLeft {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .conversionIcon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  background: rgba(20, 184, 166, 0.1);
-  color: #14B8A6;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+.iconOrg {
+  background: rgba(106, 76, 255, 0.1);
+  color: var(--primary);
+}
+
+.iconContact {
+  background: rgba(20, 184, 166, 0.1);
+  color: #14B8A6;
+}
+
+.iconOpp {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8B5CF6;
+}
+
+.conversionTextWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .conversionLabel {
   font-size: 11px;
-  font-weight: 700;
-  color: var(--text-tertiary);
+  font-weight: 600;
+  color: #8A8FA3;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 2px;
 }
 
 .conversionValue {
   font-size: 15px;
-  font-weight: 700;
-  color: #0F172A;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .conversionArrow {
-  color: var(--text-tertiary);
-  transition: transform 0.2s;
+  color: #D1D5DB;
+  transition: transform 150ms ease, color 150ms ease;
 }
 
 .conversionItem:hover .conversionArrow {
-  color: #14B8A6;
+  color: var(--primary);
   transform: translateX(4px);
 }
 
 /* --- Success Conversion Banner --- */
 .successBanner {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: var(--space-6);
-  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 20px;
-  margin-bottom: var(--space-6);
-  text-align: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(16, 185, 129, 0.01) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.05);
+  animation: scaleIn 500ms ease both;
 }
 
-.successIcon {
-  width: 48px;
-  height: 48px;
+.successBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.successIconBadge {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: #22C55E;
-  color: white;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-3);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.04);
+}
+
+.successBannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .successTitle {
-  font-size: 18px;
-  font-weight: 800;
-  color: #166534;
+  font-size: 20px;
+  font-weight: 700;
+  color: #065F46;
   margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.successSubtext {
+  font-size: 14px;
+  color: #047857;
+  margin: 0;
+  font-weight: 500;
+}
+
+.successBannerCta {
+  background: white;
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #065F46;
+}
+.successBannerCta:hover {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 /* --- Convert Steps --- */

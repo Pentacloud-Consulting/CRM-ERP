@@ -18,7 +18,7 @@ export default function BookingsPage() {
   const [editingBookingId, setEditingBookingId] = useState(null);
   
   const [newBooking, setNewBooking] = useState({
-    shipment_id: '', carrier_id: '', requested_flight_date: '', ready_for_carriage_at: '',
+    shipment_id: '', carrier_id: '', customer_contact_id: '', requested_flight_date: '', ready_for_carriage_at: '',
     requested_pieces: '', requested_weight_kg: '',
     allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: ''
   });
@@ -97,7 +97,7 @@ export default function BookingsPage() {
       render: (row) => {
         const shp = getShipment(row.shipment_id);
         const org = getOrg(shp?.customer_org_id || shp?.org_id);
-        const contact = getContact(shp?.shipper_contact_id || shp?.consignee_contact_id || shp?.contact_id) || state.contacts.find(c => c.org_id === (shp?.customer_org_id || shp?.org_id));
+        const contact = getContact(row.customer_contact_id) || getContact(shp?.shipper_contact_id || shp?.consignee_contact_id || shp?.contact_id) || state.contacts.find(c => c.org_id === (shp?.customer_org_id || shp?.org_id));
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '13px' }}>{org?.legal_name || '—'}</span>
@@ -132,9 +132,9 @@ export default function BookingsPage() {
         if (!shipment) return '—';
         return (
           <div className={styles.routeCell}>
-            <span>{shipment.origin_airport}</span>
-            <ChevronRight size={14} className={styles.routeArrow} />
-            <span>{shipment.destination_airport}</span>
+            <span className={styles.routeAirport}>{shipment.origin_airport}</span>
+            <div className={styles.routeLine}><Plane size={12} className={styles.routePlane} /></div>
+            <span className={styles.routeAirport}>{shipment.destination_airport}</span>
           </div>
         );
       }
@@ -202,7 +202,7 @@ export default function BookingsPage() {
 
     setShowNew(false);
     setEditingBookingId(null);
-    setNewBooking({ shipment_id: '', carrier_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
+    setNewBooking({ shipment_id: '', carrier_id: '', customer_contact_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
   };
 
   return (
@@ -220,7 +220,7 @@ export default function BookingsPage() {
           <div className={styles.headerActions}>
             <Button icon={Plus} onClick={() => {
               setEditingBookingId(null);
-              setNewBooking({ shipment_id: '', carrier_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
+              setNewBooking({ shipment_id: '', carrier_id: '', customer_contact_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
               setShowNew(true);
             }} style={{ background: 'linear-gradient(to right, #6366F1, #8B5CF6)', borderColor: 'transparent', border: 'none' }}>
               New Booking Request
@@ -281,7 +281,7 @@ export default function BookingsPage() {
         onClose={() => {
           setShowNew(false);
           setEditingBookingId(null);
-          setNewBooking({ shipment_id: '', carrier_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
+          setNewBooking({ shipment_id: '', carrier_id: '', customer_contact_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
         }}
         title={editingBookingId ? "Edit Booking Request" : "New Booking Request"}
         subtitle={editingBookingId ? "Update booking details" : "Request space from a carrier"}
@@ -291,7 +291,7 @@ export default function BookingsPage() {
             <Button variant="secondary" onClick={() => {
               setShowNew(false);
               setEditingBookingId(null);
-              setNewBooking({ shipment_id: '', carrier_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
+              setNewBooking({ shipment_id: '', carrier_id: '', customer_contact_id: '', requested_flight_date: '', ready_for_carriage_at: '', requested_pieces: '', requested_weight_kg: '', allotment_reference: '', confirmed_flight_number: '', confirmed_flight_date: '' });
             }}>Cancel</Button>
             <Button onClick={handleCreateOrUpdate} disabled={!newBooking.shipment_id || !newBooking.carrier_id} style={{ background: '#6366F1', borderColor: '#6366F1' }}>
               {editingBookingId ? "Save Changes" : "Submit Request"}
@@ -340,6 +340,21 @@ export default function BookingsPage() {
                 <option value="">Select Carrier...</option>
                 {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
               </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Customer Contact</label>
+              <select className="form-select" value={newBooking.customer_contact_id || ''} onChange={e => setNewBooking(p => ({ ...p, customer_contact_id: e.target.value }))}>
+                <option value="">Select Contact...</option>
+                {newBooking.shipment_id && (() => {
+                  const s = getShipment(newBooking.shipment_id);
+                  const orgId = s?.customer_org_id || s?.org_id;
+                  return state.contacts.filter(c => c.org_id === orgId).map(c => <option key={c.contact_id} value={c.contact_id}>{c.full_name}</option>);
+                })()}
+              </select>
+            </div>
+            <div className="form-group">
             </div>
           </div>
 

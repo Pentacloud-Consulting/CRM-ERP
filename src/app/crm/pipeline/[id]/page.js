@@ -1,20 +1,18 @@
 'use client';
 import { useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, TrendingUp, Building2, User, Globe, Briefcase, ChevronRight, Activity, Package, Mail, Phone, Calendar } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Building2, User, Globe, ChevronRight, Activity, Package, Calendar, Ship, Truck, PlaneTakeoff, Scale, Box, DollarSign, FileText, CalendarClock, Check, X } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
-import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { formatDate, formatDateTime, formatCurrency } from '@/lib/utils/formatters';
-import { LOCATIONS } from '@/lib/data/seedData';
-import { PlaneTakeoff, Ship, Truck, Anchor } from 'lucide-react';
 import { getLocationName, getLocationCountry } from '@/app/crm/leads/page';
+import { OPPORTUNITY_STAGES } from '@/lib/data/seedData';
 import styles from './detail.module.css';
 
 export default function PipelineDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { state, getOrganization, getContact } = useApp();
+  const { state, dispatch, getOrganization, getContact } = useApp();
 
   const opp = state.opportunities.find(o => o.opportunity_id === id);
 
@@ -22,15 +20,16 @@ export default function PipelineDetailPage() {
     return (
       <div className={styles.pageWrapper}>
         <div className={styles.page}>
-          <Button variant="ghost" icon={ArrowLeft} onClick={() => router.push('/crm/pipeline')}>Back to Pipeline</Button>
-          <div className={styles.notFound}>Opportunity not found</div>
+          <div className={styles.backBtn} onClick={() => router.push('/crm/pipeline')}><ArrowLeft size={14} /> Sales Pipeline</div>
+          <div style={{ padding: '64px', textAlign: 'center', color: '#64748B' }}>Opportunity not found</div>
         </div>
       </div>
     );
   }
 
-  const account = getOrganization(opp.org_id);
-  const contact = opp.primary_contact_id ? getContact(opp.primary_contact_id) : null;
+  const account = getOrganization(opp.org_id) || {};
+  const contactId = opp.primary_contact_id || opp.contact_id;
+  const contact = contactId ? getContact(contactId) : {};
   const shipments = state.shipments.filter(s => s.opportunity_id === opp.opportunity_id);
 
   // Construct activity timeline from domain events targeting this opportunity
@@ -64,215 +63,376 @@ export default function PipelineDetailPage() {
 
 
   // Format Route & Mode
-  let routeDisplay = <span style={{ color: 'var(--text-tertiary)' }}>—</span>;
-  if (opp.origin_location || opp.destination_location) {
+  let originName = getLocationName(opp.origin_location) || 'Mumbai';
+  let destName = getLocationName(opp.destination_location) || 'Dubai';
+  let isDomestic = false;
+  if (opp.origin_location && opp.destination_location) {
     const o = getLocationCountry(opp.origin_location);
     const d = getLocationCountry(opp.destination_location);
-    const isDomestic = o && d && o === d;
-    
-    routeDisplay = (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#94A3B8', display: 'flex' }}>
-            {opp.transport_mode === 'SEA' ? <Ship size={14} /> : opp.transport_mode === 'ROAD' ? <Truck size={14} /> : <PlaneTakeoff size={14} />}
-          </span>
-          <span style={{ fontWeight: 600 }}>{opp.transport_mode || 'AIR'}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>{getLocationName(opp.origin_location)}</span>
-          <ChevronRight size={14} style={{ color: '#94A3B8' }} />
-          <span>{getLocationName(opp.destination_location)}</span>
-          {o && d && (
-            <Badge variant={isDomestic ? 'neutral' : 'primary'} dot style={{ marginLeft: '4px' }}>
-              {isDomestic ? 'Domestic' : 'International'}
-            </Badge>
-          )}
-        </div>
-      </div>
-    );
+    isDomestic = o && d && o === d;
   }
 
-  // Determine Stage Colors for Badges
-  const getStageColor = (stage) => {
-    if (stage === 'Won') return 'success';
-    if (stage === 'Lost') return 'danger';
-    if (stage === 'Negotiation') return 'warning';
-    return 'primary';
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Delivered': return 'success';
-      case 'In Transit': return 'primary';
-      case 'Customs Clearance': return 'warning';
-      case 'Exception': return 'danger';
-      default: return 'neutral';
-    }
-  };
-
-
   return (
-    <div className={styles.pageWrapper} style={{ '--primary': '#14B8A6', '--primary-tint': 'rgba(20, 184, 166, 0.1)' }}>
+    <div className={styles.pageWrapper}>
       <div className={styles.page}>
-        <div style={{ marginBottom: '24px' }}>
-          <Button variant="ghost" icon={ArrowLeft} onClick={() => router.push('/crm/pipeline')}>Sales Pipeline</Button>
-        </div>
-
-        {/* ══════ HERO CARD ══════ */}
-        <div className={styles.heroCard}>
-          <div className={styles.heroLeft}>
-            <div className={styles.heroIcon}>
-              <TrendingUp size={36} />
-            </div>
-            <div>
-              <div className={styles.heroTitleRow}>
-                <h1 className={styles.heroTitle}>{opp.name}</h1>
-                <Badge variant={getStageColor(opp.stage)}>{opp.stage}</Badge>
-              </div>
-              <div className={styles.heroSubtitle}>
-                <Building2 size={16} />
-                <span>{account?.legal_name || 'Opportunity'}</span>
-              </div>
-              <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
-                Created {formatDate(opp.created_at)}
-              </div>
-            </div>
+        
+        {/* --- Top Nav --- */}
+        <div className={styles.topNav}>
+          <div className={styles.backBtn} onClick={() => router.push('/crm/pipeline')}>
+            <ArrowLeft size={14} /> Sales Pipeline
           </div>
-          <div className={styles.heroRight}>
-            <div className={styles.heroValueLabel}>Pipeline Value</div>
-            <div className={styles.heroValueAmount}>{formatCurrency(opp.pipeline_value, opp.currency_code)}</div>
+          <div className={styles.calendarBtn}>
+            <CalendarClock size={16} />
           </div>
         </div>
 
-        {/* ══════ 2-COLUMN LAYOUT ══════ */}
-        <div className={styles.layoutGrid}>
+        {/* --- Hero Banner --- */}
+        <div className={styles.heroBanner}>
+          <img src="/images/custom_hero_bg.png" alt="Map Graphic" className={styles.mapBg} onError={(e) => e.target.style.display = 'none'} />
           
-          {/* Left Column */}
-          <div>
-            {/* Freight Requirements */}
-            <div className={styles.sectionCard}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}><Globe size={18} color="#14B8A6" /> Freight Requirements</h2>
-              </div>
-              <div className={styles.dataGrid}>
-                <div className={styles.dataItem} style={{ gridColumn: 'span 2' }}>
-                  <span className={styles.dataLabel}><Anchor size={12} style={{marginRight: 4}} /> Route & Mode</span>
-                  <div className={styles.dataLane} style={{ marginTop: 8 }}>{routeDisplay}</div>
-                </div>
-                <div className={styles.dataItem}>
-                  <span className={styles.dataLabel}>Cargo Type</span>
-                  <span className={styles.dataValue}>{opp.cargo_type || '—'}</span>
-                </div>
-                <div className={styles.dataItem}>
-                  <span className={styles.dataLabel}>Incoterm</span>
-                  <span className={styles.dataValue}>{opp.incoterm || '—'}</span>
-                </div>
-                <div className={styles.dataItem}>
-                  <span className={styles.dataLabel}>Est. Weight</span>
-                  <span className={styles.dataValue}>{opp.est_chargeable_weight_kg ? `${opp.est_chargeable_weight_kg} kg` : '—'}</span>
-                </div>
-                <div className={styles.dataItem}>
-                  <span className={styles.dataLabel}>Currency</span>
-                  <span className={styles.dataValue}>{opp.currency_code || 'USD'}</span>
-                </div>
-              </div>
+          <div className={styles.heroLeft}>
+            <div className={styles.heroIconBox}>
+              <TrendingUp size={36} strokeWidth={2.5} />
             </div>
-
-            {/* Opportunity Timeline */}
-            <div className={styles.sectionCard}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}><Activity size={18} color="#14B8A6" /> Opportunity Timeline</h2>
+            
+            <div className={styles.heroTitleBlock}>
+              <select 
+                className={styles.qualifyingDropdown}
+                value={opp.stage || 'Qualifying'}
+                onChange={(e) => dispatch({ type: 'UPDATE_OPPORTUNITY_STAGE', payload: { opportunity_id: opp.opportunity_id, stage: e.target.value } })}
+              >
+                {OPPORTUNITY_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <div className={styles.heroTitleRow}>
+                <h1 className={styles.heroTitle}>{account.legal_name || opp.name || 'Abc company'}</h1>
+                <span className={styles.newBadge}>New</span>
               </div>
-              <div className={styles.timeline}>
-                {activityEvents.map((evt, idx) => (
-                  <div key={evt.id || idx} className={styles.timelineItem}>
-                    <div className={styles.timelineIcon} style={{ borderColor: evt.title.includes('Won') ? '#10B981' : '#14B8A6', color: evt.title.includes('Won') ? '#10B981' : '#14B8A6' }}>
-                      {evt.title.includes('Won') ? <TrendingUp size={16} /> : <Calendar size={16} />}
-                    </div>
-                    <div className={styles.timelineContent}>
-                      <h4 className={styles.timelineTitle}>{evt.title}</h4>
-                      <p className={styles.timelineDesc}>{evt.desc}</p>
-                      <span className={styles.timelineTime}>{formatDateTime(evt.time)}</span>
-                    </div>
-                  </div>
-                ))}
+              <div className={styles.heroMeta}>
+                <div className={styles.heroMetaItem}><Globe size={12} /> Inbound RFQ Portal</div>
+                <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#CBD5E1' }}></div>
+                <div className={styles.heroMetaItem}><Calendar size={12} /> Created 25 Aug 2026</div>
               </div>
             </div>
           </div>
 
-          {/* Right Column */}
-          <div>
-            {/* Account Relationship */}
-            <div className={styles.sectionCard}>
-              <div className={styles.sectionHeader} style={{ marginBottom: '16px', paddingBottom: '16px' }}>
-                <h2 className={styles.sectionTitle} style={{ fontSize: '14px' }}>CRM Relationships</h2>
+          <div className={styles.heroRight}>
+            <div className={styles.pipelineValueBlock}>
+              <span className={styles.pipelineValueLabel}>Pipeline Value</span>
+              <span className={styles.pipelineValue}>{formatCurrency(opp.expected_revenue || 0, account.default_currency || 'USD')}</span>
+            </div>
+            <select 
+              className={styles.statusDropdown}
+              value={opp.status || 'New'}
+              onChange={(e) => dispatch({ type: 'UPDATE_OPPORTUNITY', payload: { ...opp, status: e.target.value } })}
+            >
+              {['New', 'Active', 'On Hold', 'Closed Won', 'Closed Lost'].map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* --- Pipeline Flow Visualizer --- */}
+        <div className={styles.pipelineFlow}>
+          {OPPORTUNITY_STAGES.map((stage, index) => {
+            const currentIndex = OPPORTUNITY_STAGES.indexOf(opp.stage || 'Qualifying');
+            
+            // Logic for visual states
+            let stateClass = '';
+            let icon = null;
+            
+            if (stage === opp.stage) {
+              if (stage === 'Lost') stateClass = styles.lost;
+              else stateClass = styles.active;
+            } else if (index < currentIndex) {
+              if (opp.stage === 'Lost') stateClass = styles.lostCompleted;
+              else {
+                stateClass = styles.completed;
+                icon = <Check size={18} strokeWidth={3} />;
+              }
+            }
+            
+            if (stage === 'Lost' && opp.stage === 'Lost') {
+              icon = <X size={18} strokeWidth={3} />;
+            }
+            
+            return (
+              <div 
+                key={stage} 
+                className={`${styles.pipelineStep} ${stateClass}`}
+                onClick={() => dispatch({ type: 'UPDATE_OPPORTUNITY_STAGE', payload: { opportunity_id: opp.opportunity_id, stage } })}
+              >
+                <div className={styles.stepIndicator}>
+                  {icon || <div className={styles.stepInner} />}
+                </div>
+                <div className={styles.stepLabel}>{stage}</div>
               </div>
+            );
+          })}
+        </div>
+
+        {/* --- Main Layout Grid --- */}
+        <div className={styles.mainLayout}>
+          
+          {/* LEFT SIDE */}
+          <div className={styles.leftSide}>
+            
+            {/* TOP CARDS ROW */}
+            <div className={styles.topCards}>
               
-              <div className={styles.relCard} onClick={() => account && router.push(`/crm/accounts/${account.org_id}`)}>
-                <div className={styles.relLeft}>
-                  <div className={styles.relIcon}><Building2 size={20} /></div>
-                  <div>
-                    <div className={styles.relSubtitle}>ACCOUNT</div>
-                    <div className={styles.relTitle}>{account?.legal_name || 'No Account'}</div>
+              {/* Freight Requirements */}
+              <div className={styles.glassCard}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardHeaderLeft}>
+                    <div className={`${styles.cardIcon} ${styles.green}`}><Globe size={14} /></div>
+                    <span className={styles.cardTitle}>Freight Requirements</span>
                   </div>
                 </div>
-                <div className={styles.relRight}>
-                  View <ChevronRight size={16} className={styles.relArrow} />
-                </div>
-              </div>
-
-              {contact && (
-                <div className={styles.relCard} onClick={() => router.push(`/crm/contacts/${contact.contact_id}`)}>
-                  <div className={styles.relLeft}>
-                    <div className={styles.relIcon}><User size={20} /></div>
-                    <div>
-                      <div className={styles.relSubtitle}>PRIMARY CONTACT</div>
-                      <div className={styles.relTitle}>{contact.full_name}</div>
+                <div className={styles.cardBody}>
+                  <div className={styles.routeMode}>
+                    <span className={styles.routeModeTitle}>Route & Mode</span>
+                    <span className={styles.routeModeValue}>
+                      {opp.transport_mode === 'SEA' ? <Ship size={16} color="#6D4AFF" /> : opp.transport_mode === 'ROAD' ? <Truck size={16} color="#6D4AFF" /> : <PlaneTakeoff size={16} color="#6D4AFF" />}
+                      {opp.transport_mode || 'AIR'}
+                    </span>
+                    <div className={styles.routePathContainer}>
+                      <span className={styles.routePathCity}>{originName}</span>
+                      <ArrowLeft size={14} className={styles.routeArrow} style={{ transform: 'rotate(180deg)' }} />
+                      <span className={styles.routePathCity}>{destName}</span>
+                      <Badge variant={isDomestic ? 'neutral' : 'primary'} style={{ marginLeft: '4px' }}>
+                        {isDomestic ? 'Domestic' : 'International'}
+                      </Badge>
                     </div>
                   </div>
-                  <div className={styles.relRight}>
-                    View <ChevronRight size={16} className={styles.relArrow} />
+                  
+                  <div className={styles.infoGrid3}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}><Package size={12} /> Cargo Type</span>
+                      <span className={styles.infoValue}>{opp.cargo_type || 'General'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}><FileText size={12} /> Incoterm</span>
+                      <span className={styles.infoValue}>{opp.incoterm || 'CPT'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}><Scale size={12} /> Est. Weight</span>
+                      <span className={styles.infoValue}>{opp.est_gross_weight_kg ? `${opp.est_gross_weight_kg} kg` : '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}><Box size={12} /> Volume</span>
+                      <span className={styles.infoValue}>{opp.volume_cbm ? `${opp.volume_cbm} CBM` : '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}><DollarSign size={12} /> Currency</span>
+                      <span className={styles.infoValue}>{opp.currency_code || 'USD'}</span>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Shipment Readiness / Conversion */}
-            <div className={styles.sectionCard}>
-              <div className={styles.sectionHeader} style={{ marginBottom: '16px', paddingBottom: '16px' }}>
-                <h2 className={styles.sectionTitle} style={{ fontSize: '14px' }}>Logistics Execution</h2>
               </div>
 
-              {shipments.length > 0 ? (
-                shipments.map(s => (
-                  <div key={s.shipment_id} className={styles.relCard} onClick={() => router.push(`/operations/shipments/${s.shipment_id}`)} style={{ borderColor: '#8B5CF6' }}>
-                    <div className={styles.relLeft}>
-                      <div className={styles.relIcon} style={{ color: '#8B5CF6', borderColor: '#8B5CF6', background: 'rgba(139, 92, 246, 0.05)' }}>
-                        <Package size={20} />
-                      </div>
-                      <div>
-                        <div className={styles.relSubtitle} style={{ color: '#8B5CF6', fontWeight: 700 }}>SHIPMENT CREATED</div>
-                        <div className={styles.relTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)' }}>{s.shipment_reference}</span>
+              {/* Account Details */}
+              <div className={styles.glassCard}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardHeaderLeft}>
+                    <div className={`${styles.cardIcon} ${styles.green}`}><Building2 size={14} /></div>
+                    <span className={styles.cardTitle}>Account Details</span>
+                  </div>
+                  <div className={styles.cardAction} onClick={() => router.push(`/crm/accounts/${account.org_id}`)}>
+                    View Account <ChevronRight size={12} />
+                  </div>
+                </div>
+                <div className={styles.cardBody}>
+                  <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Legal Name</span>
+                      <span className={styles.infoValue}>{account.legal_name || opp.name || 'Abc company'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Tier</span>
+                      <span className={styles.infoValue}>{account.tier || 'Standard'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Industry</span>
+                      <span className={styles.infoValue}>{account.industry || '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Tax ID</span>
+                      <span className={styles.infoValue}>{account.tax_id || '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Country</span>
+                      <span className={styles.infoValue}>{account.country_code || '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Billing Address</span>
+                      <span className={styles.infoValue}>{account.billing_address_line1 || '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Phone</span>
+                      <span className={styles.infoValue}>{account.phone || '—'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Owner</span>
+                      <span className={styles.infoValue}>{opp.owner_id === 'user-1' ? 'Alex Miller' : opp.owner_id === 'user-2' ? 'Sarah Jenkins' : 'Alex Miller'}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Website</span>
+                      <span className={styles.infoValue}>{account.website || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* BOTTOM CARDS ROW (Timeline + Logistics) */}
+            <div className={styles.topCards}>
+              {/* Opportunity Timeline */}
+              <div className={styles.glassCard}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardHeaderLeft}>
+                    <div className={`${styles.cardIcon} ${styles.green}`} style={{ background: '#F0FDF4' }}><Activity size={14} /></div>
+                    <span className={styles.cardTitle}>Opportunity Timeline</span>
+                  </div>
+                </div>
+                <div className={styles.cardBody} style={{ overflow: 'hidden', position: 'relative' }}>
+                  <div className={styles.timelineWrapper}>
+                    {activityEvents.map((evt, idx) => (
+                      <div key={idx} className={styles.timelineItem}>
+                        <div className={styles.timelineIcon}>
+                          {evt.title.includes('Created') ? <Calendar size={14} /> : <TrendingUp size={14} />}
+                        </div>
+                        <div className={styles.timelineContent}>
+                          <span className={styles.timelineTitle}>{evt.title}</span>
+                          <span className={styles.timelineDesc}>{evt.desc}</span>
+                          <span className={styles.timelineDate}>{formatDateTime(evt.time)}</span>
                         </div>
                       </div>
-                    </div>
-                    <div className={styles.relRight} style={{ color: '#8B5CF6' }}>
-                      <ChevronRight size={16} className={styles.relArrow} />
-                    </div>
+                    ))}
                   </div>
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-tertiary)' }}>
-                  <Package size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-                  <div style={{ fontSize: '13px', fontWeight: 600 }}>No Shipments Created</div>
-                  <div style={{ fontSize: '12px', marginTop: '4px' }}>Shipments will appear here once the deal converts to an operational job.</div>
                 </div>
-              )}
+              </div>
 
+              {/* Logistics Execution */}
+              <div className={styles.glassCard}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardHeaderLeft}>
+                    <div className={`${styles.cardIcon} ${styles.purple}`}><Package size={14} /></div>
+                    <span className={styles.cardTitle}>Logistics Execution</span>
+                  </div>
+                </div>
+                
+                <div className={styles.cardBody}>
+                  {shipments.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <div className={styles.emptyStateIcon}><Package size={24} /></div>
+                      <div className={styles.emptyStateTitle}>No Shipments Created</div>
+                      <div className={styles.emptyStateDesc}>Shipments will appear here once the deal converts to an operational job.</div>
+                    </div>
+                  ) : (
+                    <div className={styles.shipmentsList}>
+                      {shipments.slice(0, 3).map(shipment => (
+                        <div key={shipment.shipment_id} className={styles.shipmentItem} onClick={() => router.push(`/operations/shipments/${shipment.shipment_id}`)}>
+                          <div className={styles.shipmentHeader}>
+                            <span className={styles.shipmentRef}>{shipment.shipment_reference || 'SHP-PENDING'}</span>
+                            <Badge variant={shipment.status === 'Delivered' ? 'success' : 'primary'} size="small">{shipment.status}</Badge>
+                          </div>
+                          <div className={styles.shipmentRoute}>
+                            <span className={styles.shipmentCity}>{getLocationName(shipment.origin_location) || originName}</span>
+                            <ArrowLeft size={12} style={{ transform: 'rotate(180deg)', color: '#94A3B8' }} />
+                            <span className={styles.shipmentCity}>{getLocationName(shipment.destination_location) || destName}</span>
+                          </div>
+                          <div className={styles.shipmentMeta}>
+                            <span className={styles.shipmentMetaItem}><Package size={10} /> {shipment.pieces || opp.est_pieces || 0} pcs</span>
+                            <span className={styles.shipmentMetaItem}><Scale size={10} /> {shipment.gross_weight_kg || opp.estimated_weight_kg || 0} kg</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+
           </div>
 
+          {/* RIGHT COLUMN */}
+          <div className={styles.rightCol}>
+            
+            {/* Opportunity Details */}
+            <div className={styles.glassCard}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                  <div className={`${styles.cardIcon} ${styles.green}`}><TrendingUp size={14} /></div>
+                  <span className={styles.cardTitle}>Opportunity Details</span>
+                </div>
+              </div>
+              <div className={styles.cardBody}>
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Opportunity Owner</span>
+                    <span className={styles.infoValue}>{opp.owner_id === 'user-1' ? 'Alex Miller' : opp.owner_id === 'user-2' ? 'Sarah Jenkins' : 'Alex Miller'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Win Probability</span>
+                    <span className={styles.infoValue}>{opp.win_probability ? `${opp.win_probability}%` : '—'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Expected Close</span>
+                    <span className={styles.infoValue}>{opp.expected_close_date ? formatDate(opp.expected_close_date) : '—'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Cargo Ready</span>
+                    <span className={styles.infoValue}>{opp.cargo_ready_date ? formatDate(opp.cargo_ready_date) : '28 Aug 2026'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Req. Delivery</span>
+                    <span className={styles.infoValue}>{opp.required_delivery_date ? formatDate(opp.required_delivery_date) : '—'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Details */}
+            <div className={styles.glassCard}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                  <div className={`${styles.cardIcon} ${styles.green}`} style={{ color: '#10B981', background: '#ECFDF5' }}><User size={14} /></div>
+                  <span className={styles.cardTitle}>Contact Details</span>
+                </div>
+                {contact.contact_id && (
+                  <div className={styles.cardAction} onClick={() => router.push(`/crm/contacts/${contact.contact_id}`)}>
+                    View Contact <ChevronRight size={12} />
+                  </div>
+                )}
+              </div>
+              <div className={styles.cardBody}>
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Full Name</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={styles.infoValue}>{contact.full_name || contact.first_name || 'sadadsads'}</span>
+                      <Badge variant="primary" size="small">Primary</Badge>
+                    </div>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Job Title</span>
+                    <span className={styles.infoValue}>{contact.title || '—'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Email</span>
+                    <span className={styles.infoValue} style={{ color: '#10B981' }}>{contact.email || 'dssda@dafad.okn'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Role</span>
+                    <span className={styles.infoValue}>Decision Maker</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Phone</span>
+                    <span className={styles.infoValue} style={{ color: '#10B981' }}>{contact.phone || '9988777777'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>

@@ -1,7 +1,7 @@
 /* ===== Booking Details — Ultra Modern SaaS ===== */
 
 .pageWrapper {
-  padding: var(--space-6) var(--space-8);
+  padding: 16px 24px;
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
@@ -27,9 +27,9 @@
 .heroCard {
   background: white;
   border: 1px solid #E2E8F0;
-  border-radius: 24px;
-  padding: var(--space-6) var(--space-8);
-  margin-bottom: var(--space-6);
+  border-radius: 20px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,13 +41,13 @@
 .heroLeft {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: 16px;
 }
 
 .heroIcon {
-  width: 88px;
-  height: 88px;
-  border-radius: 24px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
   color: #6366F1;
   display: flex;
@@ -59,11 +59,11 @@
 .heroTitleRow {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-2);
+  gap: 12px;
+  margin-bottom: 4px;
 }
 .heroTitle {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 800;
   color: #0F172A;
   margin: 0;
@@ -71,10 +71,10 @@
 }
 
 .heroSubtitle {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-tertiary);
-  margin: 0 0 var(--space-3);
+  margin: 0 0 8px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -96,7 +96,7 @@
 .layoutGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-5);
+  gap: 16px;
   align-items: start;
 }
 
@@ -104,9 +104,9 @@
 .sectionCard {
   background: white;
   border: 1px solid #E2E8F0;
-  border-radius: 20px;
-  padding: var(--space-6);
-  margin-bottom: var(--space-5);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.01);
   transition: all 0.3s ease;
 }
@@ -119,13 +119,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-5);
-  padding-bottom: var(--space-3);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #F1F5F9;
 }
 
 .sectionTitle {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   color: #0F172A;
   margin: 0;
@@ -141,7 +141,7 @@
 .dataGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-4);
+  gap: 8px;
 }
 
 .dataItem {
@@ -185,9 +185,9 @@
 }
 .timelineItem {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   position: relative;
-  padding-bottom: 24px;
+  padding-bottom: 16px;
 }
 .timelineItem:last-child {
   padding-bottom: 0;
@@ -195,8 +195,8 @@
 .timelineItem:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 15px;
-  top: 32px;
+  left: 11px;
+  top: 28px;
   bottom: 0;
   width: 2px;
   background: #E2E8F0;
@@ -206,8 +206,8 @@
 }
 
 .timelineIcon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -235,18 +235,18 @@
   padding-top: 4px;
 }
 .timelineTitle {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #0F172A;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 .timelineItem.active .timelineTitle {
   color: #6366F1;
 }
 .timelineDesc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-tertiary);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 .timelineTime {
   font-size: 12px;
@@ -295,8 +295,8 @@
   justify-content: space-between;
   padding: var(--space-4);
   background: #F8FAFC;
-  border-radius: 16px;
-  margin-top: var(--space-4);
+  border-radius: 12px;
+  margin-top: 12px;
 }
 .routeNode {
   display: flex;
@@ -343,4 +343,23 @@
   .heroRight { align-items: flex-start; }
   .layoutGrid { grid-template-columns: 1fr; }
   .layoutGrid > *:last-child { grid-column: span 1; }
+}
+
+/* Modal Form Styles */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+}
+
+.formSectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-top: 24px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 8px;
 }

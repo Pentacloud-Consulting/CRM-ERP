@@ -24,31 +24,35 @@ export default function RevenueChart() {
         >
           <defs>
             <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.25} />
+              <stop offset="40%" stopColor="var(--primary)" stopOpacity={0.06} />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+              <stop offset="0%" stopColor="#10B981" stopOpacity={0.2} />
+              <stop offset="40%" stopColor="#10B981" stopOpacity={0.04} />
+              <stop offset="100%" stopColor="#10B981" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+          <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(16,24,40,0.06)" />
           <XAxis 
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} 
+            tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }} 
             dy={10} 
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} 
+            tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }} 
             tickFormatter={(value) => `$${value/1000}k`}
           />
           <Tooltip 
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }}
-            itemStyle={{ fontWeight: 600 }}
+            contentStyle={{ borderRadius: '10px', border: '1px solid rgba(16,24,40,0.08)', boxShadow: '0 4px 16px rgba(16,24,40,0.1)', background: '#fff', padding: '8px 12px' }}
+            itemStyle={{ fontWeight: 600, fontSize: '13px' }}
+            labelStyle={{ fontWeight: 600, fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}
+            cursor={{ stroke: 'rgba(106,76,255,0.2)', strokeWidth: 1, strokeDasharray: '4 4' }}
           />
           <Area 
             type="monotone" 

@@ -25,19 +25,22 @@ function appReducer(state, action) {
     // ---- System ----
     case 'HYDRATE': {
       const hydrated = { ...state, ...action.payload };
-      // Ensure seed organizations (carriers, etc.) are always present and updated
+      // Ensure seed organizations (carriers, etc.) are always present with correct types
       const seedOrgs = getInitialState().organizations;
-      if (hydrated.organizations) {
-        hydrated.organizations = hydrated.organizations.map(org => {
-          const seedOrg = seedOrgs.find(so => so.org_id === org.org_id);
-          return seedOrg ? { ...seedOrg, ...org, carrier_type: seedOrg.carrier_type || org.carrier_type } : org;
-        });
-      }
       const existingIds = new Set((hydrated.organizations || []).map(o => o.org_id));
+      // Add any seed orgs that are completely missing
       const missingOrgs = seedOrgs.filter(o => !existingIds.has(o.org_id));
       if (missingOrgs.length > 0) {
         hydrated.organizations = [...(hydrated.organizations || []), ...missingOrgs];
       }
+      // Ensure seed org critical fields (org_type, carrier_type, code) are always correct
+      hydrated.organizations = (hydrated.organizations || []).map(org => {
+        const seedOrg = seedOrgs.find(so => so.org_id === org.org_id);
+        if (seedOrg) {
+          return { ...org, org_type: seedOrg.org_type, carrier_type: seedOrg.carrier_type, code: seedOrg.code };
+        }
+        return org;
+      });
       return hydrated;
     }
     
@@ -79,8 +82,13 @@ function appReducer(state, action) {
           org_id: generateId('org'),
           legal_name: organization.legal_name || lead.company_name,
           org_type: 'Customer',
-          industry: organization.industry || '',
+          industry: organization.industry || lead.industry || '',
+          phone: lead.phone || '',
+          website: lead.website || '',
+          account_tier: 'Standard',
           status: 'Active',
+          customer_since: now,
+          owner_id: lead.owner_id || null,
           created_at: now,
           updated_at: now,
         };
@@ -90,8 +98,7 @@ function appReducer(state, action) {
 
       const newContact = {
         contact_id: generateId('con'),
-        first_name: contact.first_name || lead.first_name || 'Unknown',
-        last_name: contact.last_name || lead.last_name || '',
+        full_name: contact.full_name || lead.full_name || 'Unknown',
         email: contact.email || lead.email || '',
         phone: contact.phone || lead.phone || '',
         org_id: orgId,
@@ -107,23 +114,28 @@ function appReducer(state, action) {
         try { return JSON.parse(loc).name || '?'; } catch { return loc; }
       };
 
-      const oppName = `${lead.company_name} — ${safeGetLocationName(originLoc)}-${safeGetLocationName(destLoc)}`;
+      const oppName = `${lead.company_name} (${lead.full_name || 'Contact'}) — ${safeGetLocationName(originLoc)} to ${safeGetLocationName(destLoc)}`;
       const newOpportunity = {
         opportunity_id: generateId('opp'),
-        title: opportunity.title || opportunity.name || oppName,
+        title: oppName,
         org_id: orgId,
         contact_id: newContact.contact_id,
-        transport_mode: lead.transport_mode || opportunity.transport_mode || 'AIR',
+        owner_id: lead.owner_id || null,
         stage: 'Qualifying',
+        pipeline_value: Number(lead.pipeline_value) || 0,
+        currency_code: lead.currency_code || 'USD',
+        transport_mode: lead.transport_mode || 'AIR',
         origin_location: originLoc,
         destination_location: destLoc,
-        estimated_weight_kg: Number(lead.est_gross_weight_kg) || 0,
-        est_pieces: Number(lead.est_pieces) || 0,
+        route_type: lead.route_type || '',
         cargo_type: lead.cargo_type || 'General',
         incoterm: lead.incoterm || 'FOB',
-        value: Number(lead.estimated_value) || 0,
-        currency: lead.currency_code || 'USD',
+        est_pieces: Number(lead.est_pieces) || 0,
+        estimated_weight_kg: Number(lead.est_gross_weight_kg) || 0,
+        volume_cbm: Number(lead.volume_cbm) || 0,
+        cargo_ready_date: lead.cargo_ready_date || null,
         created_at: now,
+        updated_at: now,
       };
 
       const updatedLeads = state.leads.map(l =>

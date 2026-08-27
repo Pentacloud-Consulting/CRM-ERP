@@ -12,13 +12,13 @@ import { LEAD_SOURCES, LEAD_STATUSES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, L
 import AccountLookup from '@/components/ui/AccountLookup';
 import AsyncLocationSelect from '@/components/ui/AsyncLocationSelect';
 import styles from './leads.module.css';
-import { PlaneTakeoff, Ship, Truck } from 'lucide-react';
+import { PlaneTakeoff, Ship, Truck, Info } from 'lucide-react';
 
 const EMPTY_LEAD = {
-  company_name: '', first_name: '', last_name: '', phone: '', email: '',
+  company_name: '', full_name: '', phone: '', email: '',
   source: 'Inbound RFQ Portal', status: 'New', transport_mode: 'AIR', origin_location: '', destination_location: '', cargo_type: 'General',
-  est_pieces: '', est_gross_weight_kg: '', incoterm: 'CPT',
-  estimated_value: '', currency_code: 'USD', owner_id: 'user-1',
+  est_pieces: '', est_gross_weight_kg: '', volume_cbm: '', cargo_ready_date: '', incoterm: 'CPT',
+  pipeline_value: '', currency_code: 'USD', owner_id: 'user-1',
 };
 
 export const getLocationName = (loc) => {
@@ -96,10 +96,10 @@ export default function LeadsPage() {
           </div>
         </div>
       )},
-    { key: 'contact', label: 'Contact', accessor: 'first_name',
+    { key: 'contact', label: 'Contact', accessor: 'full_name',
       render: (row) => (
         <div>
-          <div className={styles.contactName}>{row.first_name ? `${row.first_name} ${row.last_name || ''}` : row.contact_name || '—'}</div>
+          <div className={styles.contactName}>{row.full_name || '—'}</div>
           {row.phone && <div className={styles.contactPhone}>{row.phone}</div>}
         </div>
       )},
@@ -136,8 +136,8 @@ export default function LeadsPage() {
       )},
     { key: 'source', label: 'Source', accessor: 'source',
       render: (row) => <span className={styles.source}>{row.source}</span> },
-    { key: 'value', label: 'Est. Value', accessor: 'estimated_value', align: 'right',
-      render: (row) => <span className="tabular-nums" style={{ fontSize: '13px', fontWeight: 600 }}>{row.estimated_value ? formatCurrency(row.estimated_value, row.currency_code) : '—'}</span> },
+    { key: 'value', label: 'Pipeline Value', accessor: 'pipeline_value', align: 'right',
+      render: (row) => <span className="tabular-nums" style={{ fontSize: '13px', fontWeight: 600 }}>{row.pipeline_value ? formatCurrency(row.pipeline_value, row.currency_code) : '—'}</span> },
     { key: 'created', label: 'Created', accessor: 'created_at',
       render: (row) => <span className={styles.date}>{formatDate(row.created_at)}</span> },
     { key: 'actions', label: '', accessor: 'actions', align: 'right',
@@ -163,13 +163,14 @@ export default function LeadsPage() {
 
   // ──────── Handlers ────────
   const handleCreateOrUpdate = () => {
-    if (!newLead.company_name.trim() || (!newLead.first_name.trim() && !newLead.last_name.trim())) return;
+    if (!newLead.company_name.trim() || !newLead.full_name.trim()) return;
 
     const payload = {
       ...newLead,
       est_pieces: Number(newLead.est_pieces) || 0,
       est_gross_weight_kg: Number(newLead.est_gross_weight_kg) || 0,
-      estimated_value: Number(newLead.estimated_value) || 0
+      volume_cbm: Number(newLead.volume_cbm) || 0,
+      pipeline_value: Number(newLead.pipeline_value) || 0
     };
 
     if (editingLeadId) {
@@ -189,7 +190,7 @@ export default function LeadsPage() {
     setNewLead(p => {
       const updates = { ...p, est_gross_weight_kg: weight };
       if (approxRate) {
-        updates.estimated_value = (Number(weight) || 0) * Number(approxRate);
+        updates.pipeline_value = (Number(weight) || 0) * Number(approxRate);
       }
       return updates;
     });
@@ -199,7 +200,7 @@ export default function LeadsPage() {
     const rate = e.target.value;
     setApproxRate(rate);
     if (rate) {
-      setNewLead(p => ({ ...p, estimated_value: (Number(p.est_gross_weight_kg) || 0) * Number(rate) }));
+      setNewLead(p => ({ ...p, pipeline_value: (Number(p.est_gross_weight_kg) || 0) * Number(rate) }));
     }
   };
 
@@ -307,7 +308,7 @@ export default function LeadsPage() {
                   <div className={styles.mobileCardHeader}>
                     <div>
                       <div className={styles.mobileCardCompany}>{lead.company_name}</div>
-                      <div className={styles.mobileCardContact}>{lead.first_name ? `${lead.first_name} ${lead.last_name || ''}` : lead.contact_name || ''}</div>
+                      <div className={styles.mobileCardContact}>{lead.full_name || ''}</div>
                     </div>
                     <Badge variant={getStatusColor(lead.status)} dot>{lead.status}</Badge>
                   </div>
@@ -375,12 +376,15 @@ export default function LeadsPage() {
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">First Name <span style={{ color: '#f43f5e' }}>*</span></label>
-                <input className="form-input" value={newLead.first_name} onChange={e => setNewLead(p => ({ ...p, first_name: e.target.value }))} placeholder="First name" />
+                <label className="form-label">Full Name <span style={{ color: '#f43f5e' }}>*</span></label>
+                <input className="form-input" value={newLead.full_name} onChange={e => setNewLead(p => ({ ...p, full_name: e.target.value }))} placeholder="First and Last Name" />
               </div>
               <div className="form-group">
-                <label className="form-label">Last Name <span style={{ color: '#f43f5e' }}>*</span></label>
-                <input className="form-input" value={newLead.last_name} onChange={e => setNewLead(p => ({ ...p, last_name: e.target.value }))} placeholder="Last name" />
+                <label className="form-label">Lead Owner <span style={{ color: '#f43f5e' }}>*</span></label>
+                <select className="form-select" value={newLead.owner_id} onChange={e => setNewLead(p => ({ ...p, owner_id: e.target.value }))}>
+                  <option value="user-1">Alex Miller</option>
+                  <option value="user-2">Sarah Jenkins</option>
+                </select>
               </div>
             </div>
             <div className="form-row">
@@ -461,6 +465,30 @@ export default function LeadsPage() {
               <div className="form-group">
                 <label className="form-label">Gross Weight (kg)</label>
                 <input className="form-input" type="number" value={newLead.est_gross_weight_kg} onChange={handleWeightChange} placeholder="0" />
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  Volume (CBM)
+                  <span title="Cubic Meters (L x W x H). Example: 100 standard boxes = approx 8 CBM." style={{ cursor: 'help', color: '#94A3B8', display: 'flex' }}>
+                    <Info size={13} />
+                  </span>
+                </label>
+                <input className="form-input" type="number" step="0.01" value={newLead.volume_cbm} onChange={e => setNewLead(p => ({ ...p, volume_cbm: e.target.value }))} placeholder="0.00" />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Cargo Ready Date</label>
+                <input className="form-input" type="date" value={newLead.cargo_ready_date} onChange={e => setNewLead(p => ({ ...p, cargo_ready_date: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  Pipeline Value ({sym})
+                  <span title="Estimated total revenue if won. Example: 1000 kg at $5/kg = 5000." style={{ cursor: 'help', color: '#94A3B8', display: 'flex' }}>
+                    <Info size={13} />
+                  </span>
+                </label>
+                <input className="form-input" type="number" value={newLead.pipeline_value} onChange={e => setNewLead(p => ({ ...p, pipeline_value: e.target.value }))} placeholder="0" />
               </div>
             </div>
 

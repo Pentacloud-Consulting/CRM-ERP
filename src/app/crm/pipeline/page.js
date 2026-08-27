@@ -16,7 +16,10 @@ const EMPTY_OPP = {
   name: '', org_id: '', primary_contact_id: '', pipeline_value: '', currency_code: 'USD',
   stage: 'Qualifying', source: '', status: 'New', transport_mode: 'ROAD', route_type: 'Domestic',
   origin_location: '', destination_location: '', cargo_type: 'General', incoterm: 'CPT',
-  est_pieces: '', est_gross_weight_kg: ''
+  est_pieces: '', est_gross_weight_kg: '', volume_cbm: '', win_probability: '',
+  cargo_ready_date: '', required_delivery_date: '', expected_close_date: '',
+  special_handling: [], loss_reason: '', owner_id: 'user-1',
+  un_number: '', dg_class: ''
 };
 
 const getLocationName = (loc) => {
@@ -217,8 +220,10 @@ export default function PipelinePage() {
     const payload = { 
       ...newOpp, 
       pipeline_value: Number(newOpp.pipeline_value) || 0,
-      est_chargeable_weight_kg: Number(newOpp.est_chargeable_weight_kg) || 0,
-      owner_id: 'user-1'
+      est_chargeable_weight_kg: Number(newOpp.est_gross_weight_kg) || 0,
+      volume_cbm: Number(newOpp.volume_cbm) || 0,
+      win_probability: Number(newOpp.win_probability) || 0,
+      owner_id: newOpp.owner_id || 'user-1'
     };
 
     if (editingOppId) {
@@ -249,7 +254,8 @@ export default function PipelinePage() {
   // ──────── Render Card ────────
   const renderCard = (opp) => {
     const account = getOrganization(opp.org_id);
-    const contact = opp.primary_contact_id ? getContact(opp.primary_contact_id) : null;
+    const contactId = opp.primary_contact_id || opp.contact_id;
+    const contact = contactId ? getContact(contactId) : null;
     
     let routeDisplay = opp.trade_lane || (opp.origin_location && opp.destination_location ? getLocationName(opp.origin_location) + ' - ' + getLocationName(opp.destination_location) : '');
     if (routeDisplay && routeDisplay.includes('-')) {
@@ -532,6 +538,38 @@ export default function PipelinePage() {
               </select>
             </div>
           </div>
+          {newOpp.stage === 'Lost' && (
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Loss Reason <span style={{ color: '#f43f5e' }}>*</span></label>
+                <select className="form-select" value={newOpp.loss_reason} onChange={e => setNewOpp(p => ({ ...p, loss_reason: e.target.value }))}>
+                  <option value="">Select Reason...</option>
+                  <option value="Price too high">Price too high</option>
+                  <option value="Lost to competitor">Lost to competitor</option>
+                  <option value="Transit time too long">Transit time too long</option>
+                  <option value="No capacity">No capacity</option>
+                  <option value="Project cancelled">Project cancelled</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Win Probability (%)</label>
+              <input className="form-input" type="number" min="0" max="100" value={newOpp.win_probability} onChange={e => setNewOpp(p => ({ ...p, win_probability: e.target.value }))} placeholder="0 - 100" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Expected Close Date</label>
+              <input className="form-input" type="date" value={newOpp.expected_close_date} onChange={e => setNewOpp(p => ({ ...p, expected_close_date: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Opportunity Owner</label>
+              <select className="form-select" value={newOpp.owner_id} onChange={e => setNewOpp(p => ({ ...p, owner_id: e.target.value }))}>
+                <option value="user-1">Alex Miller</option>
+                <option value="user-2">Sarah Jenkins</option>
+              </select>
+            </div>
+          </div>
 
           {/* Lead/Logistics Information */}
           <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Logistics Information</div>
@@ -588,6 +626,21 @@ export default function PipelinePage() {
               </select>
             </div>
           </div>
+          {newOpp.cargo_type === 'Dangerous Goods' && (
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">UN Number <span style={{ color: '#f43f5e' }}>*</span></label>
+                <input className="form-input" value={newOpp.un_number} onChange={e => setNewOpp(p => ({ ...p, un_number: e.target.value }))} placeholder="e.g. 1993" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">DG Class <span style={{ color: '#f43f5e' }}>*</span></label>
+                <select className="form-select" value={newOpp.dg_class} onChange={e => setNewOpp(p => ({ ...p, dg_class: e.target.value }))}>
+                  <option value="">Select Class...</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(c => <option key={c} value={`Class ${c}`}>Class {c}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Shipment Details */}
           <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Shipment Details</div>
@@ -599,6 +652,20 @@ export default function PipelinePage() {
             <div className="form-group">
               <label className="form-label">Gross Weight (kg)</label>
               <input className="form-input" type="number" value={newOpp.est_gross_weight_kg} onChange={e => setNewOpp(p => ({ ...p, est_gross_weight_kg: e.target.value }))} placeholder="0" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Volume (CBM)</label>
+              <input className="form-input" type="number" step="0.01" value={newOpp.volume_cbm} onChange={e => setNewOpp(p => ({ ...p, volume_cbm: e.target.value }))} placeholder="0.00" />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Cargo Ready Date</label>
+              <input className="form-input" type="date" value={newOpp.cargo_ready_date} onChange={e => setNewOpp(p => ({ ...p, cargo_ready_date: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Required Delivery Date</label>
+              <input className="form-input" type="date" value={newOpp.required_delivery_date} onChange={e => setNewOpp(p => ({ ...p, required_delivery_date: e.target.value }))} />
             </div>
           </div>
         </div>

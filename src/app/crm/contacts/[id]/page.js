@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Mail, Phone, Building2, Briefcase, FileText, ChevronRight, Activity, Calendar, Lock, Shield, Ship, Package, Navigation, Check } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Building2, Briefcase, FileText, ChevronRight, Activity, Calendar, Lock, Shield, Ship, Package, Navigation, Check, User, Smartphone, Users, Link, Globe, UserCheck, Star } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
@@ -51,7 +51,7 @@ export default function ContactDetailPage() {
         title: de.message,
         desc: de.source || 'System',
         time: de.timestamp,
-        icon: <UserIcon />
+        icon: <User size={16} />
       }))];
     }
 
@@ -88,13 +88,13 @@ export default function ContactDetailPage() {
           <div className={styles.heroLeft}>
             <div className={styles.heroAvatar}>
               {(() => {
-                const displayName = contact.full_name || [contact.first_name, contact.last_name].filter(Boolean).join(' ') || '?';
+                const displayName = contact.full_name || 'Unknown';
                 return displayName.substring(0, 2).toUpperCase();
               })()}
             </div>
             <div>
               <div className={styles.heroTitleRow}>
-                <h1 className={styles.heroTitle}>{contact.full_name || [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unknown'}</h1>
+                <h1 className={styles.heroTitle}>{contact.full_name || 'Unknown'}</h1>
                 {contact.is_primary && (
                   <div className={styles.primaryBadge}>Primary Contact</div>
                 )}
@@ -137,7 +137,7 @@ export default function ContactDetailPage() {
           </div>
         </div>
 
-        <div className="grid2" style={{ gap: '24px', alignItems: 'start' }}>
+        <div className="grid2" style={{ gap: '16px', alignItems: 'start' }}>
           <div>
             {/* ══════ ACCOUNT RELATIONSHIP ══════ */}
             <div className={styles.sectionCard}>
@@ -182,20 +182,36 @@ export default function ContactDetailPage() {
               
               <div className={styles.infoGrid}>
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Email</span>
-                  <span className={styles.infoValue}>{contact.email || '—'}</span>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Mail size={12} className={styles.infoLabelIcon} /></div> Email</div>
+                  <div className={styles.infoValue}>{contact.email || '—'}</div>
                 </div>
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Phone</span>
-                  <span className={styles.infoValue}>{contact.phone || '—'}</span>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Phone size={12} className={styles.infoLabelIcon} /></div> Phone</div>
+                  <div className={styles.infoValue}>{contact.phone || '—'}</div>
                 </div>
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Job Title</span>
-                  <span className={styles.infoValue}>{contact.title || '—'}</span>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Smartphone size={12} className={styles.infoLabelIcon} /></div> Mobile</div>
+                  <div className={styles.infoValue}>{contact.mobile || '—'}</div>
                 </div>
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Contact Type</span>
-                  <span className={styles.infoValue}>{contact.is_primary ? 'Primary Contact' : 'Secondary Contact'}</span>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Link size={12} className={styles.infoLabelIcon} /></div> LinkedIn</div>
+                  <div className={styles.infoValue} style={{ color: contact.linkedin ? '#8B5CF6' : 'inherit', cursor: contact.linkedin ? 'pointer' : 'default' }}>{contact.linkedin || '—'}</div>
+                </div>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Briefcase size={12} className={styles.infoLabelIcon} /></div> Job Title</div>
+                  <div className={styles.infoValue}>{contact.title || '—'}</div>
+                </div>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Users size={12} className={styles.infoLabelIcon} /></div> Department</div>
+                  <div className={styles.infoValue}>{contact.department || '—'}</div>
+                </div>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><UserCheck size={12} className={styles.infoLabelIcon} /></div> Contact Role</div>
+                  <div className={styles.infoValue}>{contact.contact_role || 'Decision Maker'}</div>
+                </div>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoLabel}><div className={styles.infoIconBg}><Star size={12} className={styles.infoLabelIcon} /></div> Contact Type</div>
+                  <div className={styles.infoValue}>{contact.is_primary ? 'Primary Contact' : 'Secondary Contact'}</div>
                 </div>
               </div>
             </div>

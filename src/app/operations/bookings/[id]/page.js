@@ -1,9 +1,12 @@
 'use client';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Plane, Building2, Calendar, FileText, Anchor, Clock, CheckCircle2, Box, PlaneTakeoff, ShieldAlert, Sparkles, ExternalLink, Download, Share2, Edit2, Activity } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Modal from '@/components/ui/Modal';
+import { getLocationName } from '@/app/crm/leads/page';
 import { formatDate, formatDateTime, formatWeight } from '@/lib/utils/formatters';
 
 import styles from './detail.module.css';
@@ -11,7 +14,13 @@ import styles from './detail.module.css';
 export default function BookingDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
+
+  const [showEdit, setShowEdit] = useState(false);
+  const [editBooking, setEditBooking] = useState(null);
+
+  const getShipment = (id) => state.shipments.find(s => s.shipment_id === id);
+  const carriers = state.organizations.filter(o => o.org_type === 'Carrier');
 
   const booking = state.bookingRequests.find(b => b.booking_request_id === id);
 
@@ -44,6 +53,22 @@ export default function BookingDetailPage() {
   const isConfirmed = booking.status === 'Space Confirmed';
   const flightDate = booking.confirmed_flight_date || booking.requested_flight_date;
 
+  const handleUpdate = () => {
+    if (!editBooking.shipment_id || !editBooking.carrier_id) return;
+    const s = getShipment(editBooking.shipment_id);
+    
+    const payload = { 
+      ...editBooking, 
+      requested_pieces: Number(editBooking.requested_pieces) || 0,
+      requested_weight_kg: Number(editBooking.requested_weight_kg) || 0,
+      special_handling_codes: s?.special_handling_codes || [],
+    };
+
+    dispatch({ type: 'UPDATE_BOOKING', payload });
+    setShowEdit(false);
+    setEditBooking(null);
+  };
+
   return (
     <div className={styles.pageWrapper} style={{ '--primary': '#6366F1', '--primary-tint': 'rgba(99, 102, 241, 0.1)' }}>
       <div className={styles.page}>
@@ -75,7 +100,10 @@ export default function BookingDetailPage() {
             </div>
           </div>
           <div className={styles.heroRight}>
-            <Button icon={Edit2} variant="secondary">Edit Booking</Button>
+            <Button icon={Edit2} variant="secondary" onClick={() => {
+              setEditBooking({ ...booking });
+              setShowEdit(true);
+            }}>Edit Booking</Button>
           </div>
         </div>
 
@@ -86,11 +114,15 @@ export default function BookingDetailPage() {
           <div>
             <div className={styles.sectionCard}>
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}><PlaneTakeoff size={18} /> Flight Information</h2>
+                <h2 className={styles.sectionTitle}>
+                  {shipment?.transport_mode === 'SEA' ? <Anchor size={18} /> : shipment?.transport_mode === 'ROAD' ? <Truck size={18} /> : <PlaneTakeoff size={18} />} 
+                  {' '}
+                  {shipment?.transport_mode === 'SEA' ? 'Voyage Information' : shipment?.transport_mode === 'ROAD' ? 'Transit Information' : 'Flight Information'}
+                </h2>
               </div>
               <div className={styles.dataGrid}>
                 <div className={styles.dataItem}>
-                  <span className={styles.dataLabel}><Anchor size={14} /> Flight No.</span>
+                  <span className={styles.dataLabel}><Anchor size={14} /> {shipment?.transport_mode === 'SEA' ? 'Voyage No.' : shipment?.transport_mode === 'ROAD' ? 'Vehicle No.' : 'Flight No.'}</span>
                   <span className={styles.dataValue}>{booking.confirmed_flight_number || 'Pending Assignment'}</span>
                 </div>
                 <div className={styles.dataItem}>
@@ -103,21 +135,27 @@ export default function BookingDetailPage() {
                 </div>
               </div>
 
-              {shipment && (
-                <div className={styles.routeVis}>
-                  <div className={styles.routeNode}>
-                    <div className={styles.routeCode}>{shipment.origin_airport}</div>
-                    <div className={styles.routeName}>Origin</div>
+              {shipment && (() => {
+                let ModeIcon = Plane;
+                if (shipment.transport_mode === 'SEA') ModeIcon = Anchor;
+                else if (shipment.transport_mode === 'ROAD') ModeIcon = Truck;
+                
+                return (
+                  <div className={styles.routeVis}>
+                    <div className={styles.routeNode}>
+                      <div className={styles.routeCode} style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }} title={getLocationName(shipment.origin_airport || shipment.origin_location)}>{getLocationName(shipment.origin_airport || shipment.origin_location) || '—'}</div>
+                      <div className={styles.routeName}>Origin</div>
+                    </div>
+                    <div className={styles.routeLine}>
+                      <ModeIcon size={16} />
+                    </div>
+                    <div className={styles.routeNode}>
+                      <div className={styles.routeCode} style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }} title={getLocationName(shipment.destination_airport || shipment.destination_location)}>{getLocationName(shipment.destination_airport || shipment.destination_location) || '—'}</div>
+                      <div className={styles.routeName}>Destination</div>
+                    </div>
                   </div>
-                  <div className={styles.routeLine}>
-                    <Plane size={16} />
-                  </div>
-                  <div className={styles.routeNode}>
-                    <div className={styles.routeCode}>{shipment.destination_airport}</div>
-                    <div className={styles.routeName}>Destination</div>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
 
@@ -226,6 +264,129 @@ export default function BookingDetailPage() {
           </div>
 
         </div>
+
+      {/* ══════ EDIT MODAL ══════ */}
+      <Modal
+        open={showEdit}
+        onClose={() => {
+          setShowEdit(false);
+          setEditBooking(null);
+        }}
+        title="Edit Booking Request"
+        subtitle="Update booking details"
+        size="large"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => {
+              setShowEdit(false);
+              setEditBooking(null);
+            }}>Cancel</Button>
+            <Button onClick={handleUpdate} disabled={!editBooking?.shipment_id || !editBooking?.carrier_id} style={{ background: '#6366F1', borderColor: '#6366F1' }}>
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        {editBooking && (
+        <div className={styles.form}>
+          <div className={styles.formSectionTitle}>Booking Status</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Status <span style={{ color: '#f43f5e' }}>*</span></label>
+              <select className="form-select" value={editBooking.status || 'Requested'} onChange={e => setEditBooking(p => ({ ...p, status: e.target.value }))}>
+                {['Requested', 'Space Confirmed', 'Waitlisted', 'Rejected', 'Cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group"></div>
+          </div>
+
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Request Details</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Shipment <span style={{ color: '#f43f5e' }}>*</span></label>
+              <select className="form-select" value={editBooking.shipment_id} onChange={e => {
+                const shipmentId = e.target.value;
+                const shipment = getShipment(shipmentId);
+                setEditBooking(p => ({ 
+                  ...p, 
+                  shipment_id: shipmentId,
+                  requested_pieces: shipment ? shipment.pieces : '',
+                  requested_weight_kg: shipment ? shipment.chargeable_weight_kg : ''
+                }));
+              }}>
+                <option value="">Select Shipment...</option>
+                {state.shipments.map(s => <option key={s.shipment_id} value={s.shipment_id}>{s.shipment_reference} ({s.origin_airport}-{s.destination_airport})</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Carrier <span style={{ color: '#f43f5e' }}>*</span></label>
+              <select className="form-select" value={editBooking.carrier_id} onChange={e => setEditBooking(p => ({ ...p, carrier_id: e.target.value }))}>
+                <option value="">Select Carrier...</option>
+                {carriers.map(c => <option key={c.org_id} value={c.org_id}>{c.legal_name}</option>)}
+              </select>
+            </div>
+          </div>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Customer Contact</label>
+              <select className="form-select" value={editBooking.customer_contact_id || ''} onChange={e => setEditBooking(p => ({ ...p, customer_contact_id: e.target.value }))}>
+                <option value="">Select Contact...</option>
+                {editBooking.shipment_id && (() => {
+                  const s = getShipment(editBooking.shipment_id);
+                  const orgId = s?.customer_org_id || s?.org_id;
+                  return state.contacts.filter(c => c.org_id === orgId).map(c => <option key={c.contact_id} value={c.contact_id}>{c.full_name}</option>);
+                })()}
+              </select>
+            </div>
+            <div className="form-group">
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Requested Flight Date</label>
+              <input className="form-input" type="date" value={editBooking.requested_flight_date} onChange={e => setEditBooking(p => ({ ...p, requested_flight_date: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Ready for Carriage</label>
+              <input className="form-input" type="datetime-local" value={editBooking.ready_for_carriage_at} onChange={e => setEditBooking(p => ({ ...p, ready_for_carriage_at: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Requested Pieces</label>
+              <input className="form-input" type="number" value={editBooking.requested_pieces} onChange={e => setEditBooking(p => ({ ...p, requested_pieces: e.target.value }))} placeholder="0" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Requested Weight (kg)</label>
+              <input className="form-input" type="number" step="0.1" value={editBooking.requested_weight_kg} onChange={e => setEditBooking(p => ({ ...p, requested_weight_kg: e.target.value }))} placeholder="0.0" />
+            </div>
+          </div>
+
+          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Airline Confirmation</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Confirmed Flight Number</label>
+              <input className="form-input" value={editBooking.confirmed_flight_number || ''} onChange={e => setEditBooking(p => ({ ...p, confirmed_flight_number: e.target.value }))} placeholder="e.g. QR8410" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirmed Flight Date</label>
+              <input className="form-input" type="date" value={editBooking.confirmed_flight_date || ''} onChange={e => setEditBooking(p => ({ ...p, confirmed_flight_date: e.target.value }))} />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Allotment Reference</label>
+              <input className="form-input" value={editBooking.allotment_reference || ''} onChange={e => setEditBooking(p => ({ ...p, allotment_reference: e.target.value }))} placeholder="e.g. ALOT-123" />
+            </div>
+            <div className="form-group"></div>
+          </div>
+
+        </div>
+        )}
+      </Modal>
 
       </div>
     </div>

@@ -100,7 +100,7 @@ export default function AWBPage() {
       render: (row) => {
         const shp = row.shipment_id ? state.shipments.find(s => s.shipment_id === row.shipment_id) : null;
         const org = getOrg(shp?.customer_org_id || shp?.org_id);
-        const contact = getContact(shp?.shipper_contact_id || shp?.consignee_contact_id || shp?.contact_id) || state.contacts.find(c => c.org_id === (shp?.customer_org_id || shp?.org_id));
+        const contact = getContact(row.shipper_contact_id) || getContact(row.consignee_contact_id) || getContact(shp?.shipper_contact_id || shp?.consignee_contact_id || shp?.contact_id) || state.contacts.find(c => c.org_id === (shp?.customer_org_id || shp?.org_id));
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             <span style={{ fontWeight: 600, color: '#0F172A', fontSize: '13px' }}>{org?.legal_name || '—'}</span>

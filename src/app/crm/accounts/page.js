@@ -15,9 +15,7 @@ import styles from './accounts.module.css';
 const EMPTY_ACCOUNT = {
   legal_name: '', account_tier: 'Standard', tax_id: '',
   country: '', default_currency: 'USD', phone: '', website: '', industry: '', org_type: 'Customer',
-  source: '', status: 'New', transport_mode: 'ROAD', route_type: 'Domestic',
-  origin_location: '', destination_location: '', cargo_type: 'General', incoterm: 'CPT',
-  est_pieces: '', est_gross_weight_kg: ''
+  owner_id: 'user-1', billing_address: ''
 };
 
 export default function AccountsPage() {
@@ -78,7 +76,7 @@ export default function AccountsPage() {
       render: (row) => (
         <div className={styles.accountCell}>
           <div className={styles.accountAvatar}>{(row.legal_name || '?').substring(0, 2).toUpperCase()}</div>
-          <div>
+          <div className={styles.accountInfo}>
             <div className={styles.accountName}>{row.legal_name}</div>
             <div className={styles.accountIndustry}>{row.industry || 'No Industry'} • {row.country || 'Global'}</div>
           </div>
@@ -104,19 +102,19 @@ export default function AccountsPage() {
     { key: 'contacts', label: 'Contacts', accessor: row => getContactsForOrg(row.org_id).length, align: 'center',
       render: (row) => {
         const count = getContactsForOrg(row.org_id).length;
-        return <div className={styles.statsCell} title="Contacts"><Users size={14} className={styles.statsIcon} /> <span>{count}</span></div>;
+        return <div className={styles.statsCell} title="Contacts" style={{ background: '#F5F3FF', borderColor: '#DDD6FE', color: '#7C3AED' }}><Users size={14} /> <span>{count}</span></div>;
       }
     },
     { key: 'opportunities', label: 'Opportunities', accessor: row => getOpportunitiesForOrg(row.org_id).length, align: 'center',
       render: (row) => {
         const count = getOpportunitiesForOrg(row.org_id).length;
-        return <div className={styles.statsCell} title="Opportunities"><Briefcase size={14} className={styles.statsIcon} /> <span>{count}</span></div>;
+        return <div className={styles.statsCell} title="Opportunities" style={{ background: '#FFF7ED', borderColor: '#FED7AA', color: '#EA580C' }}><Briefcase size={14} /> <span>{count}</span></div>;
       }
     },
     { key: 'shipments', label: 'Shipments', accessor: row => getShipmentsForOrg(row.org_id).length, align: 'center',
       render: (row) => {
         const count = getShipmentsForOrg(row.org_id).length;
-        return <div className={styles.statsCell} title="Shipments"><Package size={14} className={styles.statsIcon} /> <span>{count}</span></div>;
+        return <div className={styles.statsCell} title="Shipments" style={{ background: '#EFF6FF', borderColor: '#BFDBFE', color: '#2563EB' }}><Package size={14} /> <span>{count}</span></div>;
       }
     },
     { key: 'currency', label: 'Currency', accessor: 'default_currency', align: 'center',
@@ -200,36 +198,64 @@ export default function AccountsPage() {
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Accounts</h1>
+            <div style={{ width: '60px', height: '4px', background: '#6366F1', borderRadius: '2px', marginBottom: '8px' }}></div>
             <p className={styles.subtitle}>Manage customer organizations, contacts, opportunities and shipment relationships.</p>
           </div>
-          <Button icon={Plus} onClick={openNewAccount} style={{ background: '#14B8A6', borderColor: '#14B8A6' }}>New Account</Button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Button icon={Plus} onClick={openNewAccount} style={{ background: 'linear-gradient(to right, #6366F1, #8B5CF6)', borderColor: 'transparent', border: 'none', color: 'white', borderRadius: '12px', padding: '0 20px', fontWeight: 600 }}>New Account</Button>
+            <button style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366F1', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}><Briefcase size={20} /></button>
+          </div>
         </div>
         
         {/* ══════ KPI CARDS ══════ */}
         <div className={styles.kpiRow}>
           <div className={styles.kpiCard}>
-            <div className={styles.kpiValue}>{kpis.total}</div>
-            <div className={styles.kpiLabel}>Total Accounts</div>
+            <div className={styles.kpiIconWrapper} style={{ background: '#F5F3FF', color: '#6366F1' }}><Building2 size={24} /></div>
+            <div className={styles.kpiContent}>
+              <div className={styles.kpiValue}>{kpis.total}</div>
+              <div className={styles.kpiLabel}>Total Accounts</div>
+            </div>
+            <div className={styles.kpiWave} style={{ background: 'linear-gradient(90deg, transparent, #6366F1)' }}></div>
           </div>
           <div className={styles.kpiCard}>
-            <div className={styles.kpiValue}>{kpis.active}</div>
-            <div className={styles.kpiLabel}>Active Accounts</div>
+            <div className={styles.kpiIconWrapper} style={{ background: '#ECFDF5', color: '#10B981' }}><Activity size={24} /></div>
+            <div className={styles.kpiContent}>
+              <div className={styles.kpiValue}>{kpis.active}</div>
+              <div className={styles.kpiLabel}>Active Accounts</div>
+            </div>
+            <div className={styles.kpiWave} style={{ background: 'linear-gradient(90deg, transparent, #10B981)' }}></div>
           </div>
           <div className={styles.kpiCard}>
-            <div className={styles.kpiValue}>{kpis.contacts}</div>
-            <div className={styles.kpiLabel}>Contacts</div>
+            <div className={styles.kpiIconWrapper} style={{ background: '#F5F3FF', color: '#7C3AED' }}><Users size={24} /></div>
+            <div className={styles.kpiContent}>
+              <div className={styles.kpiValue}>{kpis.contacts}</div>
+              <div className={styles.kpiLabel}>Contacts</div>
+            </div>
+            <div className={styles.kpiWave} style={{ background: 'linear-gradient(90deg, transparent, #7C3AED)' }}></div>
           </div>
           <div className={styles.kpiCard}>
-            <div className={styles.kpiValue}>{kpis.opps}</div>
-            <div className={styles.kpiLabel}>Opportunities</div>
+            <div className={styles.kpiIconWrapper} style={{ background: '#FFF7ED', color: '#F59E0B' }}><Briefcase size={24} /></div>
+            <div className={styles.kpiContent}>
+              <div className={styles.kpiValue}>{kpis.opps}</div>
+              <div className={styles.kpiLabel}>Opportunities</div>
+            </div>
+            <div className={styles.kpiWave} style={{ background: 'linear-gradient(90deg, transparent, #F59E0B)' }}></div>
           </div>
           <div className={styles.kpiCard}>
-            <div className={styles.kpiValue}>{kpis.shipments}</div>
-            <div className={styles.kpiLabel}>Shipments</div>
+            <div className={styles.kpiIconWrapper} style={{ background: '#EFF6FF', color: '#3B82F6' }}><Package size={24} /></div>
+            <div className={styles.kpiContent}>
+              <div className={styles.kpiValue}>{kpis.shipments}</div>
+              <div className={styles.kpiLabel}>Shipments</div>
+            </div>
+            <div className={styles.kpiWave} style={{ background: 'linear-gradient(90deg, transparent, #3B82F6)' }}></div>
           </div>
-          <div className={styles.kpiCard}>
-            <div className={`${styles.kpiValue} ${styles.kpiValueSmall}`}>{formatCurrency(kpis.revenue, 'USD')}</div>
-            <div className={styles.kpiLabel}>Revenue Pipeline</div>
+          <div className={styles.kpiCard} style={{ background: 'linear-gradient(145deg, #ECFDF5, #ffffff)', borderColor: '#D1FAE5' }}>
+            <div className={styles.kpiIconWrapper} style={{ background: '#D1FAE5', color: '#10B981' }}><DollarSign size={24} /></div>
+            <div className={styles.kpiContent}>
+              <div className={`${styles.kpiValue} ${styles.kpiValueSmall}`}>{formatCurrency(kpis.revenue, 'USD')}</div>
+              <div className={styles.kpiLabel} style={{ color: '#10B981' }}>Revenue Pipeline</div>
+            </div>
+            <div className={styles.kpiWave} style={{ background: 'linear-gradient(90deg, transparent, #10B981)' }}></div>
           </div>
         </div>
 
@@ -360,6 +386,8 @@ export default function AccountsPage() {
                 {['USD','EUR','GBP','QAR','AED','SGD','JPY','INR','AUD','HKD'].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+          </div>
+          <div className="form-row">
             <div className="form-group">
               <label className="form-label">Account Tier</label>
               <select className="form-select" value={newAccount.account_tier} onChange={e => setNewAccount(p => ({ ...p, account_tier: e.target.value }))}>
@@ -368,76 +396,20 @@ export default function AccountsPage() {
                 <option value="Enterprise">Enterprise</option>
               </select>
             </div>
+            <div className="form-group">
+              <label className="form-label">Account Owner</label>
+              <select className="form-select" value={newAccount.owner_id} onChange={e => setNewAccount(p => ({ ...p, owner_id: e.target.value }))}>
+                <option value="user-1">Alex Miller</option>
+                <option value="user-2">Sarah Jenkins</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Billing Address</label>
+            <input className="form-input" value={newAccount.billing_address} onChange={e => setNewAccount(p => ({ ...p, billing_address: e.target.value }))} placeholder="123 Main St, City, Country" />
           </div>
 
-          {/* Lead/Logistics Information */}
-          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Logistics Information</div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Source</label>
-              <select className="form-select" value={newAccount.source} onChange={e => setNewAccount(p => ({ ...p, source: e.target.value }))}>
-                <option value="">Select Source...</option>
-                {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Status</label>
-              <select className="form-select" value={newAccount.status} onChange={e => setNewAccount(p => ({ ...p, status: e.target.value }))}>
-                {LEAD_STATUSES.filter(s => s !== 'Converted').map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Transport Mode</label>
-              <select className="form-select" value={newAccount.transport_mode} onChange={e => setNewAccount(p => ({ ...p, transport_mode: e.target.value }))}>
-                {TRANSPORT_MODES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Route Type</label>
-              <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                <Badge variant={newAccount.route_type === 'Domestic' ? 'neutral' : 'primary'} dot>{newAccount.route_type}</Badge>
-              </div>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Origin Location</label>
-              <AsyncLocationSelect value={newAccount.origin_location} onChange={val => setNewAccount(p => ({ ...p, origin_location: val, route_type: (val && newAccount.destination_location && JSON.parse(val).country !== JSON.parse(newAccount.destination_location).country) ? 'International' : 'Domestic' }))} placeholder="Search origin..." />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Destination Location</label>
-              <AsyncLocationSelect value={newAccount.destination_location} onChange={val => setNewAccount(p => ({ ...p, destination_location: val, route_type: (val && newAccount.origin_location && JSON.parse(val).country !== JSON.parse(newAccount.origin_location).country) ? 'International' : 'Domestic' }))} placeholder="Search destination..." />
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Cargo Type</label>
-              <select className="form-select" value={newAccount.cargo_type} onChange={e => setNewAccount(p => ({ ...p, cargo_type: e.target.value }))}>
-                {CARGO_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Incoterm</label>
-              <select className="form-select" value={newAccount.incoterm} onChange={e => setNewAccount(p => ({ ...p, incoterm: e.target.value }))}>
-                {INCOTERMS.map(i => <option key={i} value={i}>{INCOTERM_LABELS[i]}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Shipment Details */}
-          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Shipment Details</div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Pieces</label>
-              <input className="form-input" type="number" value={newAccount.est_pieces} onChange={e => setNewAccount(p => ({ ...p, est_pieces: e.target.value }))} placeholder="0" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Gross Weight (kg)</label>
-              <input className="form-input" type="number" value={newAccount.est_gross_weight_kg} onChange={e => setNewAccount(p => ({ ...p, est_gross_weight_kg: e.target.value }))} placeholder="0" />
-            </div>
-          </div>
+          {/* End Form */}
         </div>
       </Modal>
 

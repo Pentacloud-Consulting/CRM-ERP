@@ -1,7 +1,7 @@
 /* ===== Contact Detail — Premium CRM Control Center ===== */
 
 .pageWrapper {
-  padding: var(--space-6) var(--space-8);
+  padding: 16px 24px;
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
@@ -9,7 +9,7 @@
 }
 
 .page {
-  max-width: 1000px;
+  max-width: 100%;
   width: 100%;
   margin: 0 auto;
   animation: fadeInUp var(--transition-slow) ease both;
@@ -26,33 +26,33 @@
 .heroCard {
   background: white;
   border: 1px solid #E2E8F0;
-  border-radius: 20px;
-  padding: var(--space-6) var(--space-8);
-  margin-bottom: var(--space-6);
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-6);
+  gap: 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 }
 
 .heroLeft {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: 16px;
 }
 
 .heroAvatar {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: rgba(139, 92, 246, 0.1);
   color: #7C3AED;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 800;
   box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2);
 }
@@ -60,12 +60,12 @@
 .heroTitleRow {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-2);
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .heroTitle {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #0F172A;
   margin: 0;
@@ -73,10 +73,10 @@
 }
 
 .heroSubtitle {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-tertiary);
-  margin: 0 0 var(--space-3);
+  margin: 0 0 8px;
 }
 
 .heroContactInfo {
@@ -108,7 +108,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--space-4);
+  gap: 12px;
 }
 
 .primaryBadge {
@@ -164,9 +164,9 @@
 .sectionCard {
   background: white;
   border: 1px solid #E2E8F0;
-  border-radius: 20px;
-  padding: var(--space-6);
-  margin-bottom: var(--space-6);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.01);
 }
 
@@ -174,7 +174,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-5);
+  margin-bottom: 12px;
 }
 
 .sectionTitleGroup {
@@ -184,7 +184,7 @@
 }
 
 .sectionTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #0F172A;
   margin: 0;
@@ -201,10 +201,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-5);
+  padding: 12px 16px;
   background: rgba(20, 184, 166, 0.03);
   border: 1px solid rgba(20, 184, 166, 0.2);
-  border-radius: 16px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -257,24 +257,46 @@
 .infoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
+  gap: 8px 16px;
 }
 .infoItem {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+.infoItem:hover {
+  background-color: #F8FAFC;
 }
 .infoLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+}
+.infoIconBg {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.infoLabelIcon {
+  color: #8B5CF6;
 }
 .infoValue {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #0F172A;
+  padding-left: 28px;
 }
 
 /* --- Shipment Row --- */
@@ -410,7 +432,7 @@
 
 /* --- Empty States --- */
 .emptyBlock {
-  padding: var(--space-8);
+  padding: 24px;
   text-align: center;
   background: #F8FAFC;
   border-radius: 12px;

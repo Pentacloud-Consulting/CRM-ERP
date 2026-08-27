@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRightCircle, Check, AlertCircle, Building2, User, Briefcase, Lock, Target, Phone, Globe, Package, MapPin, Calendar, DollarSign, Anchor, FileText, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRightCircle, Check, AlertCircle, Building2, User, Briefcase, Lock, Target, Phone, Globe, Package, MapPin, Calendar, DollarSign, Anchor, FileText, ChevronRight, Mail } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -67,9 +67,7 @@ export default function LeadDetailPage() {
           organization: { ...accountData, legal_name: lead.company_name },
           contact: { 
             ...contactData, 
-            full_name: lead.contact_name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Primary Contact',
-            first_name: lead.first_name, 
-            last_name: lead.last_name,
+            full_name: lead.full_name || 'Primary Contact',
             is_primary: true
           },
           opportunity: { name: opportunityName },
@@ -100,8 +98,14 @@ export default function LeadDetailPage() {
         {/* ══════ SUCCESS CONVERSION BANNER ══════ */}
         {isConverted && (
           <div className={styles.successBanner}>
-            <div className={styles.successIcon}><Check size={24} /></div>
-            <h2 className={styles.successTitle}>Lead Converted Successfully</h2>
+            <div className={styles.successBannerLeft}>
+              <div className={styles.successIconBadge}><Check size={20} strokeWidth={3} /></div>
+              <div className={styles.successBannerText}>
+                <h2 className={styles.successTitle}>Lead Converted Successfully</h2>
+                <p className={styles.successSubtext}>{lead.company_name} is now an active organization.</p>
+              </div>
+            </div>
+            <Button variant="outline" className={styles.successBannerCta} onClick={() => router.push(`/crm/accounts/${lead.converted_org_id}`)}>View Organization</Button>
           </div>
         )}
 
@@ -116,11 +120,14 @@ export default function LeadDetailPage() {
             <div>
               <div className={styles.heroTitleRow}>
                 <h1 className={styles.heroTitle}>{lead.company_name}</h1>
-                <Badge variant={getStatusColor(lead.status)} dot>{lead.status}</Badge>
+                <div className={styles.statusPillWrapper}>
+                  <Badge variant={getStatusColor(lead.status)} dot>{lead.status}</Badge>
+                </div>
               </div>
               <div className={styles.heroMeta}>
-                <div className={styles.heroMetaItem}><Globe size={14} /> {lead.source}</div>
-                <div className={styles.heroMetaItem}><Calendar size={14} /> Created {formatDate(lead.created_at)}</div>
+                <div className={styles.heroMetaItem}><Globe size={14} className={styles.metaIcon} /> {lead.source}</div>
+                <div className={styles.metaDivider}>•</div>
+                <div className={styles.heroMetaItem}><Calendar size={14} className={styles.metaIcon} /> Created {formatDate(lead.created_at)}</div>
               </div>
             </div>
           </div>
@@ -143,35 +150,86 @@ export default function LeadDetailPage() {
             )}
             {isConverted && (
               <div className={styles.convertedBadge}>
-                <Lock size={14} /> Converted {formatDate(lead.converted_at)}
+                <Lock size={14} className={styles.convertedLockIcon} /> Converted {formatDate(lead.converted_at)}
               </div>
             )}
           </div>
         </div>
 
         <div className={styles.detailGrid}>
-          {/* ══════ LEAD REQUIREMENTS ══════ */}
+          {/* ══════ COMPANY & CONTACT ══════ */}
           <div className={styles.reqCard}>
             <div className={styles.cardHeader}>
-              <FileText size={18} color="#14B8A6" />
-              <h2 className={styles.cardTitle}>Lead Requirements</h2>
+              <User size={16} color="#6A4CFF" />
+              <h2 className={styles.cardTitle}>Company & Contact</h2>
             </div>
             <div className={styles.reqGrid}>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><Anchor size={12} className={styles.reqLabelIcon} /> Route & Mode</div>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Building2 size={12} className={styles.reqLabelIcon} /></div> Company Name</div>
+                <div className={styles.reqValue}>{lead.company_name}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><User size={12} className={styles.reqLabelIcon} /></div> Full Name</div>
+                <div className={styles.reqValue}>{lead.full_name || '—'}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Phone size={12} className={styles.reqLabelIcon} /></div> Phone Number</div>
+                <div className={styles.reqValue}>{lead.phone || '—'}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Mail size={12} className={styles.reqLabelIcon} /></div> Email Address</div>
+                <div className={styles.reqValue}>{lead.email || '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════ OWNERSHIP & QUALIFICATION ══════ */}
+          <div className={styles.reqCard}>
+            <div className={styles.cardHeader}>
+              <Briefcase size={16} color="#6A4CFF" />
+              <h2 className={styles.cardTitle}>Ownership & Qualification</h2>
+            </div>
+            <div className={styles.reqGrid}>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><User size={12} className={styles.reqLabelIcon} /></div> Lead Owner</div>
+                <div className={styles.reqValue}>{lead.owner_id === 'user-1' ? 'Alex Miller' : lead.owner_id === 'user-2' ? 'Sarah Jenkins' : 'Unassigned'}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Target size={12} className={styles.reqLabelIcon} /></div> Status</div>
+                <div className={styles.reqValue}>{lead.status}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Globe size={12} className={styles.reqLabelIcon} /></div> Lead Source</div>
+                <div className={styles.reqValue}>{lead.source}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════ LEAD REQUIREMENTS ══════ */}
+          <div className={styles.reqCard} style={{ gridColumn: '1 / -1' }}>
+            <div className={styles.cardHeader}>
+              <FileText size={16} color="#6A4CFF" />
+              <h2 className={styles.cardTitle}>Lead Requirements</h2>
+            </div>
+            <div className={styles.reqGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              <div className={`${styles.reqItem} ${styles.reqItemHighlight}`} style={{ gridColumn: 'span 2' }}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Anchor size={12} className={styles.reqLabelIcon} /></div> Route & Mode</div>
                 <div className={styles.reqTradeLane}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    {lead.transport_mode === 'SEA' ? <Ship size={14} /> : lead.transport_mode === 'ROAD' ? <Truck size={14} /> : <PlaneTakeoff size={14} />}
-                    <span style={{ fontWeight: 600 }}>{lead.transport_mode || 'AIR'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#14B8A6', background: 'rgba(20, 184, 166, 0.1)', padding: '4px 10px', borderRadius: '16px', fontSize: '12px' }}>
+                    {lead.transport_mode === 'SEA' ? <Ship size={12} /> : lead.transport_mode === 'ROAD' ? <Truck size={12} /> : <PlaneTakeoff size={12} />}
+                    <span style={{ fontWeight: 700 }}>{lead.transport_mode || 'AIR'}</span>
                   </div>
+                  <div className={styles.metaDivider}>•</div>
                   {(lead.origin_location || lead.destination_location) ? (
                     <>
-                      {getLocationName(lead.origin_location)} <span className={styles.tradeLaneArrow}>→</span> {getLocationName(lead.destination_location)}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {getLocationName(lead.origin_location)} <span className={styles.tradeLaneArrow}>→</span> {getLocationName(lead.destination_location)}
+                      </div>
                       {(() => {
                         const o = getLocationCountry(lead.origin_location);
                         const d = getLocationCountry(lead.destination_location);
                         if (o && d) {
-                          return <div style={{ marginTop: '8px' }}><Badge variant={o === d ? 'neutral' : 'primary'} dot>{o === d ? 'Domestic' : 'International'}</Badge></div>;
+                          return <Badge variant={o === d ? 'neutral' : 'primary'} dot>{o === d ? 'Domestic' : 'International'}</Badge>;
                         }
                         return null;
                       })()}
@@ -180,24 +238,32 @@ export default function LeadDetailPage() {
                 </div>
               </div>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><Package size={12} className={styles.reqLabelIcon} /> Cargo Type</div>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Package size={12} className={styles.reqLabelIcon} /></div> Cargo Type</div>
                 <div className={styles.reqValue}>{lead.cargo_type || '—'}</div>
               </div>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><MapPin size={12} className={styles.reqLabelIcon} /> Incoterm</div>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><MapPin size={12} className={styles.reqLabelIcon} /></div> Incoterm</div>
                 <div className={styles.reqValue}>{lead.incoterm || '—'}</div>
               </div>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><Package size={12} className={styles.reqLabelIcon} /> Est. Weight</div>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Package size={12} className={styles.reqLabelIcon} /></div> Est. Weight</div>
                 <div className={styles.reqValue} style={{ fontFamily: 'var(--font-mono)' }}>{lead.est_gross_weight_kg ? formatWeight(lead.est_gross_weight_kg) : '—'}</div>
               </div>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><Package size={12} className={styles.reqLabelIcon} /> Pieces</div>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Package size={12} className={styles.reqLabelIcon} /></div> Volume / CBM</div>
+                <div className={styles.reqValue} style={{ fontFamily: 'var(--font-mono)' }}>{lead.volume_cbm ? `${lead.volume_cbm} CBM` : '—'}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Package size={12} className={styles.reqLabelIcon} /></div> Pieces</div>
                 <div className={styles.reqValue}>{lead.est_pieces || '—'}</div>
               </div>
               <div className={styles.reqItem}>
-                <div className={styles.reqLabel}><DollarSign size={12} className={styles.reqLabelIcon} /> Est. Value</div>
-                <div className={styles.reqValue} style={{ fontFamily: 'var(--font-mono)' }}>{lead.estimated_value ? formatCurrency(lead.estimated_value, lead.currency_code) : '—'}</div>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><DollarSign size={12} className={styles.reqLabelIcon} /></div> Est. Value</div>
+                <div className={styles.reqValue} style={{ fontFamily: 'var(--font-mono)' }}>{lead.pipeline_value ? formatCurrency(lead.pipeline_value, lead.currency_code) : '—'}</div>
+              </div>
+              <div className={styles.reqItem}>
+                <div className={styles.reqLabel}><div className={styles.reqIconBg}><Calendar size={12} className={styles.reqLabelIcon} /></div> Cargo Ready Date</div>
+                <div className={styles.reqValue}>{lead.cargo_ready_date ? formatDate(lead.cargo_ready_date) : '—'}</div>
               </div>
             </div>
           </div>
@@ -212,35 +278,35 @@ export default function LeadDetailPage() {
               <div className={styles.conversionResults}>
                 <div className={styles.conversionItem} onClick={() => router.push(`/crm/accounts/${convertedAccount?.org_id || ''}`)}>
                   <div className={styles.conversionItemLeft}>
-                    <div className={styles.conversionIcon}><Building2 size={20} /></div>
-                    <div>
+                    <div className={`${styles.conversionIcon} ${styles.iconOrg}`}><Building2 size={18} /></div>
+                    <div className={styles.conversionTextWrapper}>
                       <div className={styles.conversionLabel}>Organization</div>
                       <div className={styles.conversionValue}>{convertedAccount?.legal_name || lead.converted_org_id}</div>
                     </div>
                   </div>
-                  <ChevronRight className={styles.conversionArrow} size={20} />
+                  <ChevronRight className={styles.conversionArrow} size={18} />
                 </div>
                 
                 <div className={styles.conversionItem} onClick={() => router.push(`/crm/contacts/${convertedContact?.contact_id || ''}`)}>
                   <div className={styles.conversionItemLeft}>
-                    <div className={styles.conversionIcon}><User size={20} /></div>
-                    <div>
+                    <div className={`${styles.conversionIcon} ${styles.iconContact}`}><User size={18} /></div>
+                    <div className={styles.conversionTextWrapper}>
                       <div className={styles.conversionLabel}>Contact</div>
                       <div className={styles.conversionValue}>{convertedContact?.full_name || lead.converted_contact_id}</div>
                     </div>
                   </div>
-                  <ChevronRight className={styles.conversionArrow} size={20} />
+                  <ChevronRight className={styles.conversionArrow} size={18} />
                 </div>
                 
                 <div className={styles.conversionItem} onClick={() => router.push(`/crm/pipeline/${convertedOpp?.opportunity_id || ''}`)}>
                   <div className={styles.conversionItemLeft}>
-                    <div className={styles.conversionIcon}><Briefcase size={20} /></div>
-                    <div>
+                    <div className={`${styles.conversionIcon} ${styles.iconOpp}`}><Briefcase size={18} /></div>
+                    <div className={styles.conversionTextWrapper}>
                       <div className={styles.conversionLabel}>Opportunity</div>
                       <div className={styles.conversionValue}>{convertedOpp?.name || lead.converted_opportunity_id}</div>
                     </div>
                   </div>
-                  <ChevronRight className={styles.conversionArrow} size={20} />
+                  <ChevronRight className={styles.conversionArrow} size={18} />
                 </div>
               </div>
             </div>
@@ -356,18 +422,14 @@ export default function LeadDetailPage() {
               <div className={styles.mappingSection}>
                 <h5><User size={16} /> Contact</h5>
                 <div className={styles.mappingRow}>
-                  <span className={styles.mappingFrom}>contact_name</span>
+                  <span className={styles.mappingFrom}>full_name</span>
                   <span className={styles.mappingArrow}>→</span>
-                  <span className={styles.mappingTo}>{lead.contact_name || lead.first_name + ' ' + lead.last_name}</span>
+                  <span className={styles.mappingTo}>{lead.full_name || 'Primary Contact'}</span>
                 </div>
                 <div className="form-row" style={{ marginTop: '12px' }}>
                   <div className="form-group">
                     <label className="form-label">Email</label>
                     <input className="form-input" value={contactData.email} onChange={e => setContactData(p => ({ ...p, email: e.target.value }))} placeholder="email@company.com" />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Title</label>
-                    <input className="form-input" value={contactData.title} onChange={e => setContactData(p => ({ ...p, title: e.target.value }))} placeholder="Job title" />
                   </div>
                 </div>
               </div>
@@ -385,7 +447,7 @@ export default function LeadDetailPage() {
                 <div className={styles.mappingRow}>
                   <span className={styles.mappingFrom}>pipeline_value</span>
                   <span className={styles.mappingArrow}>→</span>
-                  <span className={styles.mappingTo}>{formatCurrency(lead.estimated_value, lead.currency_code)}</span>
+                  <span className={styles.mappingTo}>{formatCurrency(lead.pipeline_value, lead.currency_code)}</span>
                 </div>
                 <div className={styles.mappingRow}>
                   <span className={styles.mappingFrom}>trade_lane / cargo</span>
@@ -408,7 +470,7 @@ export default function LeadDetailPage() {
               </div>
               <div className={styles.confirmItem}>
                 <User size={18} />
-                <span>Create Contact: {lead.contact_name || lead.first_name + ' ' + lead.last_name} (Primary)</span>
+                <span>Create Contact: {lead.full_name || 'Primary Contact'} (Primary)</span>
               </div>
               <div className={styles.confirmItem}>
                 <Briefcase size={18} />

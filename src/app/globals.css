@@ -16,13 +16,13 @@
   --primary-subtle: #E9E6FF;
 
   /* Backgrounds */
-  --bg: #FFFFFF;
-  --bg-sidebar: #1E1B39;
-  --bg-hover: rgba(106, 76, 255, 0.08);
-  --bg-active: rgba(106, 76, 255, 0.12);
-  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg: #F7F7F9;
+  --bg-sidebar: #1A1730;
+  --bg-hover: rgba(106, 76, 255, 0.06);
+  --bg-active: rgba(106, 76, 255, 0.10);
+  --bg-card: #FFFFFF;
   --bg-overlay: rgba(255, 255, 255, 0.4);
-  --bg-input: rgba(255, 255, 255, 0.9);
+  --bg-input: #FFFFFF;
 
   /* Text */
   --text-primary: #111827;
@@ -92,13 +92,13 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-xs: 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.05), 0 8px 16px rgba(0, 0, 0, 0.03);
-  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.06), 0 12px 24px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 8px 24px rgba(106, 76, 255, 0.25);
+  /* Shadows — layered elevation system */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 2px 4px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 4px 8px rgba(16, 24, 40, 0.04), 0 12px 28px rgba(16, 24, 40, 0.08);
+  --shadow-xl: 0 8px 16px rgba(16, 24, 40, 0.06), 0 20px 40px rgba(16, 24, 40, 0.10);
+  --shadow-glow: 0 8px 24px rgba(106, 76, 255, 0.20);
 
   /* Transitions */
   --transition-fast: 120ms ease;
@@ -327,10 +327,10 @@ img, svg {
 }
 
 .hover-scale {
-  transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+  transition: transform 150ms ease, box-shadow 150ms ease;
 }
 .hover-scale:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 

@@ -12,10 +12,7 @@ import { TRANSPORT_MODES, CARGO_TYPES, INCOTERMS, INCOTERM_LABELS, LEAD_SOURCES,
 import styles from './contacts.module.css';
 
 const EMPTY_CONTACT = {
-  full_name: '', email: '', phone: '', title: '', org_id: '', is_primary: false,
-  source: '', status: 'New', transport_mode: 'ROAD', route_type: 'Domestic',
-  origin_location: '', destination_location: '', cargo_type: 'General', incoterm: 'CPT',
-  est_pieces: '', est_gross_weight_kg: ''
+  full_name: '', email: '', phone: '', title: '', contact_role: 'Decision Maker', org_id: '', is_primary: false
 };
 
 export default function ContactsPage() {
@@ -288,9 +285,19 @@ export default function ContactsPage() {
             <label className="form-label">Full Name <span style={{ color: '#f43f5e' }}>*</span></label>
             <input className="form-input" value={newContact.full_name} onChange={e => setNewContact(p => ({ ...p, full_name: e.target.value }))} placeholder="Contact name" />
           </div>
-          <div className="form-group">
-            <label className="form-label">Job Title</label>
-            <input className="form-input" value={newContact.title} onChange={e => setNewContact(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Logistics Manager" />
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Job Title</label>
+              <input className="form-input" value={newContact.title} onChange={e => setNewContact(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Logistics Manager" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Contact Role</label>
+              <select className="form-select" value={newContact.contact_role} onChange={e => setNewContact(p => ({ ...p, contact_role: e.target.value }))}>
+                <option value="Decision Maker">Decision Maker</option>
+                <option value="Operations Contact">Operations Contact</option>
+                <option value="Billing Contact">Billing Contact</option>
+              </select>
+            </div>
           </div>
 
           {/* Contact Information */}
@@ -339,74 +346,7 @@ export default function ContactsPage() {
             </div>
           </div>
 
-          {/* Lead/Logistics Information */}
-          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Logistics Information</div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Source</label>
-              <select className="form-select" value={newContact.source} onChange={e => setNewContact(p => ({ ...p, source: e.target.value }))}>
-                <option value="">Select Source...</option>
-                {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Status</label>
-              <select className="form-select" value={newContact.status} onChange={e => setNewContact(p => ({ ...p, status: e.target.value }))}>
-                {LEAD_STATUSES.filter(s => s !== 'Converted').map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Transport Mode</label>
-              <select className="form-select" value={newContact.transport_mode} onChange={e => setNewContact(p => ({ ...p, transport_mode: e.target.value }))}>
-                {TRANSPORT_MODES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Route Type</label>
-              <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                <Badge variant={newContact.route_type === 'Domestic' ? 'neutral' : 'primary'} dot>{newContact.route_type}</Badge>
-              </div>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Origin Location</label>
-              <AsyncLocationSelect value={newContact.origin_location} onChange={val => setNewContact(p => ({ ...p, origin_location: val, route_type: (val && newContact.destination_location && JSON.parse(val).country !== JSON.parse(newContact.destination_location).country) ? 'International' : 'Domestic' }))} placeholder="Search origin..." />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Destination Location</label>
-              <AsyncLocationSelect value={newContact.destination_location} onChange={val => setNewContact(p => ({ ...p, destination_location: val, route_type: (val && newContact.origin_location && JSON.parse(val).country !== JSON.parse(newContact.origin_location).country) ? 'International' : 'Domestic' }))} placeholder="Search destination..." />
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Cargo Type</label>
-              <select className="form-select" value={newContact.cargo_type} onChange={e => setNewContact(p => ({ ...p, cargo_type: e.target.value }))}>
-                {CARGO_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Incoterm</label>
-              <select className="form-select" value={newContact.incoterm} onChange={e => setNewContact(p => ({ ...p, incoterm: e.target.value }))}>
-                {INCOTERMS.map(i => <option key={i} value={i}>{INCOTERM_LABELS[i]}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Shipment Details */}
-          <div className={styles.formSectionTitle} style={{ marginTop: '16px' }}>Shipment Details</div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Pieces</label>
-              <input className="form-input" type="number" value={newContact.est_pieces} onChange={e => setNewContact(p => ({ ...p, est_pieces: e.target.value }))} placeholder="0" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Gross Weight (kg)</label>
-              <input className="form-input" type="number" value={newContact.est_gross_weight_kg} onChange={e => setNewContact(p => ({ ...p, est_gross_weight_kg: e.target.value }))} placeholder="0" />
-            </div>
-          </div>
+          {/* End Form */}
         </div>
       </Modal>
 
