@@ -8,11 +8,12 @@ export default function Button({
   loading = false,
   disabled = false,
   children,
+  className = '',
   ...props
 }) {
   return (
     <button
-      className={`${styles.btn} ${styles[variant]} ${styles[size]}`}
+      className={`${styles.btn} ${styles[variant] || ''} ${styles[size] || ''} ${className}`.trim()}
       disabled={disabled || loading}
       {...props}
     >

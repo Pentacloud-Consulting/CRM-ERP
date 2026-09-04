@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, ChevronLeft, ChevronRight, Upload, Sparkles, FileText, BarChart3, Loader2 } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
+import { buildContext } from '@/lib/ai/contextBuilder';
 import styles from './AIPanel.module.css';
 
 const SAMPLE_QUERIES = [
@@ -31,34 +32,44 @@ export default function AIPanel({ open, onToggle }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = () => {
+  const { state } = useApp();
+
+  const handleSend = async () => {
     if (!query.trim() || isTyping) return;
     const userMsg = query.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMsg, type: 'text' }]);
     setQuery('');
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const lower = userMsg.toLowerCase();
-      let response;
-      if (lower.includes('otd') || lower.includes('on-time') || lower.includes('delivery rate')) {
-        response = AI_RESPONSES['otd'];
-      } else if (lower.includes('exception') || lower.includes('alert') || lower.includes('issue')) {
-        response = AI_RESPONSES['exception'];
-      } else if (lower.includes('customs') || lower.includes('dwell') || lower.includes('clearance')) {
-        response = AI_RESPONSES['customs'];
-      } else if (lower.includes('weight') || lower.includes('carrier') || lower.includes('chargeable')) {
-        response = AI_RESPONSES['weight'];
-      } else if (lower.includes('where') || lower.includes('track') || lower.includes('status')) {
-        response = { type: 'text', content: 'Based on the latest FSU data:\n\n• SHP-2026-00187 (SIN→NRT): Departed SIN at 02:30 UTC on SQ7212. ETA NRT ~09:00 UTC.\n• SHP-2026-00231 (DOH→HKG): Arrived HKG at 17:30 UTC on QR8820. Awaiting RCF scan.\n• SHP-2026-00201 (LHR→DOH): In Customs Hold at DOH — awaiting Certificate of Origin.' };
-      } else {
-        response = { type: 'text', content: `I understand you're asking about "${userMsg}". Let me check the governed metric catalog...\n\nI don't have a pre-defined metric for this query yet. I can help with:\n• OTD rates by trade lane\n• Open exceptions count\n• Customs dwell time\n• Chargeable weight by carrier\n• Shipment tracking status\n\nWould you like me to look into any of these?` };
-      }
+    try {
+      // Build full relational CRM & Operations context
+      const crmContext = buildContext(state);
+      
+      const fullPrompt = `The user is asking: "${userMsg}"\n\n` +
+        `Here is the current real-time CRM & Operations state:\n\n` +
+        `\`\`\`json\n${JSON.stringify(crmContext, null, 2)}\n\`\`\`\n\n` +
+        `Please analyze the data and answer the user's question accurately with full details.`;
 
-      setMessages(prev => [...prev, { role: 'assistant', ...response }]);
+      const res = await fetch('/api/ai/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: fullPrompt }),
+      });
+
+      if (!res.ok) throw new Error('API error');
+
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response, type: 'text' }]);
+    } catch (err) {
+      console.error('[AIPanel] Error calling AI route:', err);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an issue retrieving that information. Please check your network connection or try again.',
+        type: 'text'
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 1200 + Math.random() * 800);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -122,7 +133,10 @@ export default function AIPanel({ open, onToggle }) {
                   <div className={styles.metricDetail}>{msg.detail}</div>
                 </div>
               ) : (
-                <div className={styles.msgText}>{msg.content}</div>
+                <div 
+                  className={styles.msgText} 
+                  dangerouslySetInnerHTML={{ __html: renderFormattedContent(msg.content) }} 
+                />
               )}
             </div>
           </div>
@@ -177,4 +191,68 @@ export default function AIPanel({ open, onToggle }) {
       </div>
     </aside>
   );
+}
+
+/**
+ * Format markdown text into clean HTML for tables, headers, lists, and inline tags.
+ */
+function renderFormattedContent(text) {
+  if (!text) return '';
+
+  let formatted = text;
+
+  // 1. Process Markdown Tables
+  const tableRegex = /((?:\|[^\n]+\|\n?)+)/g;
+  formatted = formatted.replace(tableRegex, (match) => {
+    const lines = match.trim().split('\n').filter(l => l.trim().startsWith('|'));
+    if (lines.length < 2) return match;
+
+    const parseCells = line => line.split('|').slice(1, -1).map(c => c.trim());
+    const headers = parseCells(lines[0]);
+    
+    // skip line[1] if it's separator (|---|---|)
+    const startIdx = (lines[1] && (lines[1].includes(':-') || lines[1].includes('---'))) ? 2 : 1;
+    const rows = lines.slice(startIdx).map(line => parseCells(line));
+
+    let html = '<div class="ai-table-container"><table class="ai-table"><thead><tr>';
+    headers.forEach(h => { html += `<th>${formatInline(h)}</th>`; });
+    html += '</tr></thead><tbody>';
+    rows.forEach(row => {
+      html += '<tr>';
+      row.forEach(cell => { html += `<td>${formatInline(cell)}</td>`; });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    return html;
+  });
+
+  // 2. Headers
+  formatted = formatted.replace(/^### (.*?)$/gm, '<h4 class="ai-h4">$1</h4>');
+  formatted = formatted.replace(/^## (.*?)$/gm, '<h3 class="ai-h3">$1</h3>');
+  formatted = formatted.replace(/^# (.*?)$/gm, '<h2 class="ai-h2">$1</h2>');
+
+  // 3. Horizontal rules
+  formatted = formatted.replace(/^---$/gm, '<hr class="ai-hr" />');
+
+  // 4. Bullet lists
+  formatted = formatted.replace(/^\* (.*?)$/gm, '<li class="ai-li">$1</li>');
+  formatted = formatted.replace(/^- (.*?)$/gm, '<li class="ai-li">$1</li>');
+  formatted = formatted.replace(/(<li class="ai-li">.*?<\/li>\n?)+/gs, '<ul class="ai-ul">$&</ul>');
+
+  // 5. Inline formatting (bold, code, italic)
+  formatted = formatInline(formatted);
+
+  // 6. Paragraph spacing (double newlines to br)
+  formatted = formatted.replace(/\n{2,}/g, '<br/><br/>');
+  formatted = formatted.replace(/\n/g, '<br/>');
+
+  return formatted;
+}
+
+function formatInline(str) {
+  if (!str) return '';
+  return str
+    .replace(/`([^`]+)`/g, '<code class="ai-code">$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }

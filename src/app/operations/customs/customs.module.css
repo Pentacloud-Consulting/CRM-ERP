@@ -347,6 +347,51 @@
 }
 .formGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .opsDashboard {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding: 12px;
+  }
+  .heroHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .subtitle {
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .opsDashboard {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+  .opsMetric::after {
+    display: none;
+  }
+  .metricValue {
+    font-size: 18px;
+  }
+  .metricLabel {
+    font-size: 9.5px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+  .formGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
 }

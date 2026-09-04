@@ -442,7 +442,7 @@ export default function ShipmentsPage() {
                   </div>
                 )}
 
-                <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className={styles.formGrid}>
                   <div>
                     <label className="form-label">Gross Wgt (kg)</label>
                     <input className="form-input" type="number" step="0.1" value={newShipment.gross_weight_kg} onChange={e => setNewShipment(p => ({ ...p, gross_weight_kg: e.target.value }))} placeholder="0.0" />

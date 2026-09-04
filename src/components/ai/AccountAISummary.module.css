@@ -1,0 +1,169 @@
+/* ═══ FreightFlow AI — Account AI Summary Card ═══ */
+
+.container {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.container:hover {
+  border-color: rgba(139, 92, 246, 0.18);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.06);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.06);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aiIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6D4AFF, #8B6FFF);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(109, 74, 255, 0.25);
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+}
+
+.providerBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(139, 92, 246, 0.06);
+  color: #7C3AED;
+  border: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refreshBtn,
+.collapseBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.refreshBtn:hover,
+.collapseBtn:hover {
+  background: rgba(139, 92, 246, 0.06);
+  color: #6D4AFF;
+}
+
+.refreshBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.body {
+  padding: 20px;
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  justify-content: center;
+  color: #7C3AED;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.errorState {
+  padding: 16px;
+  background: rgba(220, 38, 38, 0.04);
+  border: 1px solid rgba(220, 38, 38, 0.08);
+  border-radius: 10px;
+  color: #DC2626;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.summaryContent {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #334155;
+}
+
+.summaryContent h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 16px 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.summaryContent h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  margin: 12px 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.summaryContent strong {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+.summaryContent ul {
+  padding-left: 16px;
+  margin: 6px 0;
+}
+
+.summaryContent li {
+  margin-bottom: 4px;
+  color: #475569;
+}
+
+.summaryContent li::marker {
+  color: #7C3AED;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}

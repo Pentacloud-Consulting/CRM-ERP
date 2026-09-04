@@ -220,6 +220,67 @@ tr:hover .actionButtons {
   .analyticsGrid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
-  .pageWrapper { padding: var(--space-4); }
-  .analyticsGrid { grid-template-columns: 1fr; }
+  .pageWrapper { padding: 12px; }
+  .header { margin-bottom: 12px; }
+  .title { font-size: 20px; }
+  .headerActions { width: 100%; }
+  .headerActions > button { width: 100%; justify-content: center; }
+
+  /* 2x2 Layout for KPI analytics cards on mobile */
+  .analyticsGrid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpiCard {
+    padding: 14px 12px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.8);
+  }
+  .kpiHeader {
+    margin-bottom: 8px;
+  }
+  .kpiIconWrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  .kpiIconWrapper svg {
+    width: 16px;
+    height: 16px;
+  }
+  .kpiTrend {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+  .kpiMetric {
+    font-size: 18px;
+    margin-bottom: 2px;
+    word-break: break-word;
+  }
+  .kpiLabel {
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 480px) {
+  .analyticsGrid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 10px;
+  }
+  .kpiCard {
+    padding: 12px 10px;
+    border-radius: 14px;
+  }
+  .kpiMetric {
+    font-size: 17px;
+  }
+  .kpiLabel {
+    font-size: 9.5px;
+  }
 }

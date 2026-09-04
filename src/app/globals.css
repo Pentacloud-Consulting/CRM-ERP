@@ -408,9 +408,9 @@ img, svg {
   box-shadow: 0 0 0 3px rgba(95, 199, 190, 0.15);
 }
 
-.form-row {
+.form-row, .formRow, .formRowGrid, .formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
 }
 
@@ -435,7 +435,9 @@ img, svg {
 .gridAuto { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 
 @media (max-width: 768px) {
-  .grid2, .grid3, .grid4, .grid6 {
-    grid-template-columns: 1fr;
+  .grid2, .grid3, .grid4, .grid6,
+  .form-row, .formRow, .formRowGrid, .formGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 }

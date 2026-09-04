@@ -1,103 +1,567 @@
-.chartContainer {
-  margin-top: var(--space-2);
+/* ═══ Revamped Revenue & Volume Analytics Chart ═══ */
+.analyticsChartWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
 }
 
-.flowContainer {
+.chartHeaderControls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: var(--space-6);
-  padding: 0 var(--space-4);
+  gap: 12px;
+  padding: 6px 10px;
+  background: rgba(16, 24, 40, 0.03);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.legendGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.legendDotRevenue {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6A4CFF;
+  box-shadow: 0 0 6px rgba(106, 76, 255, 0.4);
+}
+
+.legendDotVolume {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
+.legendText {
+  color: var(--text-primary);
+}
+
+.legendBadgePositive {
+  font-size: 10px;
+  font-weight: 700;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.timeframeTabs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.tfBtn {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  background: transparent;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.tfBtnActive {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.chartCanvasArea {
   position: relative;
+  width: 100%;
+  margin-top: 2px;
 }
 
-/* Base track line — muted */
-.flowLine {
+/* Custom Glassmorphic Tooltip */
+.customTooltipCard {
+  background: var(--bg-card);
+  border: 1px solid rgba(106, 76, 255, 0.15);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tooltipHeader {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  margin-bottom: 4px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.dotRevenue { width: 6px; height: 6px; border-radius: 50%; background: #6A4CFF; }
+.dotVolume { width: 6px; height: 6px; border-radius: 50%; background: #10B981; }
+
+.tooltipLabel { color: #64748B; font-weight: 500; }
+.tooltipValue { font-weight: 800; color: var(--text-primary); }
+
+.chartSummaryFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(106, 76, 255, 0.04);
+  border: 1px solid rgba(106, 76, 255, 0.08);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #475569;
+}
+
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sparkleIcon { color: var(--primary); }
+
+.summaryItemRight {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+/* ═══ Revamped Live Shipment Pipeline ═══ */
+.pipelineWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Selector Tabs Bar */
+.shipmentSelectorBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  background: rgba(16, 24, 40, 0.03);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.shipmentTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shipmentTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.shipmentTab:hover {
+  background: rgba(106, 76, 255, 0.06);
+  color: var(--primary);
+}
+
+.shipmentTabActive {
+  background: var(--bg-card);
+  border-color: rgba(106, 76, 255, 0.15);
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(106, 76, 255, 0.1);
+}
+
+.tabId {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.tabRoute {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+.shipmentTabActive .tabRoute {
+  color: #6A4CFF;
+}
+
+.shipmentMetaBadge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(139, 92, 246, 0.08);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.metaSparkle {
+  color: var(--primary);
+}
+
+/* Progress Status Bar */
+.progressMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  font-size: 11px;
+}
+
+.progressMetaLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.livePulseDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.progressStatusText {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.progressMetaRight {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+/* ═══ Desktop Horizontal Stepper ═══ */
+.desktopStepperContainer {
+  position: relative;
+  margin: 6px 0 4px 0;
+  padding: 2px 0;
+}
+
+.stepperTrack {
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
+  top: 13px;
+  left: 20px;
+  right: 20px;
   height: 3px;
-  background: rgba(16, 24, 40, 0.06);
+  background: rgba(16, 24, 40, 0.08);
+  border-radius: 2px;
   z-index: 0;
-  transform: translateY(-50%);
-  border-radius: 2px;
 }
 
-/* Progress line — gradient from completed to current */
-.flowLineActive {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 65%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary) 0%, #8B6FFF 70%, rgba(139, 111, 255, 0.3) 100%);
+.stepperProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981 0%, var(--primary) 70%, #8B6FFF 100%);
+  box-shadow: 0 0 8px rgba(106, 76, 255, 0.4);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stepperNodesRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
   z-index: 1;
-  transform: translateY(-50%);
-  transition: width 1s ease-in-out;
-  border-radius: 2px;
 }
 
-.node {
+.stepperNodeBtn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-  z-index: 2;
-  gap: var(--space-2);
+  gap: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 200ms ease;
 }
 
-/* Default (upcoming): ghost outline */
-.nodeIcon {
-  width: 48px;
-  height: 48px;
+.stepCircle {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--bg);
-  border: 2px dashed rgba(16, 24, 40, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #C4C9D4;
-  transition: all 300ms ease;
+  background: var(--bg-card);
+  border: 2px solid #CBD5E1;
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 700;
+  transition: all 200ms ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
 }
 
-/* Active node: filled + glow ring */
-.node.active .nodeIcon {
-  border: 2px solid var(--primary);
-  border-style: solid;
-  color: var(--primary);
-  background: rgba(106, 76, 255, 0.06);
-  box-shadow: 0 0 0 6px rgba(106, 76, 255, 0.08), 0 2px 8px rgba(106, 76, 255, 0.15);
-  animation: activeNodePulse 2.5s ease-in-out infinite;
-}
-
-@keyframes activeNodePulse {
-  0%, 100% { box-shadow: 0 0 0 6px rgba(106, 76, 255, 0.08), 0 2px 8px rgba(106, 76, 255, 0.15); }
-  50% { box-shadow: 0 0 0 8px rgba(106, 76, 255, 0.04), 0 2px 8px rgba(106, 76, 255, 0.2); }
-}
-
-/* Completed node: solid fill */
-.node.completed .nodeIcon {
-  border: 2px solid var(--primary);
-  border-style: solid;
-  color: #FFFFFF;
-  background: var(--primary);
-  box-shadow: 0 2px 6px rgba(106, 76, 255, 0.25);
-}
-
-.nodeLabel {
+.stepTitle {
   font-size: 11px;
   font-weight: 600;
-  color: #9CA3AF;
-  letter-spacing: 0.01em;
+  color: #64748B;
+  transition: all 200ms ease;
 }
 
-.node.active .nodeLabel {
+.completedStep .stepCircle {
+  background: #10B981;
+  border-color: #10B981;
+  color: white;
+}
+
+.completedStep .stepTitle {
+  color: #059669;
+}
+
+.activeStep .stepCircle {
+  background: linear-gradient(135deg, var(--primary), #8B6FFF);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(106, 76, 255, 0.15);
+}
+
+.activeStep .stepTitle {
   color: var(--primary);
   font-weight: 700;
 }
 
-.node.completed .nodeLabel {
-  color: var(--text-secondary);
+.selectedStep {
+  transform: translateY(-1px);
+}
+
+/* Featured Stage Card */
+.featuredStageCard {
+  background: linear-gradient(135deg, rgba(106, 76, 255, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+  border: 1px solid rgba(106, 76, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.featuredHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.featuredTitleBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.featuredIconBadge {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.badgeSuccess { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.badgePrimary { background: rgba(106, 76, 255, 0.1); color: var(--primary); }
+.badgeMuted { background: rgba(148, 163, 184, 0.1); color: #94A3B8; }
+
+.featuredTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.featuredLocation {
+  font-size: 11px;
+  color: #64748B;
+  margin: 1px 0 0 0;
+}
+
+.featuredMetaBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.featuredTime {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.activePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--primary);
+  background: rgba(106, 76, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.activePillDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulseGreen 1.5s infinite;
+}
+
+.completedPill {
+  font-size: 9px;
+  font-weight: 700;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.featuredDetail {
+  font-size: 11px;
+  color: #475569;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
+}
+
+.telemetryBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  background: rgba(106, 76, 255, 0.04);
+  border: 1px solid rgba(106, 76, 255, 0.08);
+  border-radius: 6px;
+}
+
+.telemetryStat {
+  display: flex;
+  flex-direction: column;
+}
+
+.statLabel {
+  font-size: 8px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+}
+
+.statVal { font-size: 10px; font-weight: 700; color: var(--text-primary); }
+.statValSuccess { font-size: 10px; font-weight: 700; color: #059669; }
+.statValPrimary { font-size: 10px; font-weight: 700; color: var(--primary); }
+
+.statSep {
+  width: 1px;
+  height: 14px;
+  background: rgba(106, 76, 255, 0.12);
+}
+
+/* Mobile Stream Hidden on Desktop */
+.mobileFlowContainer {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .desktopStepperContainer {
+    display: none;
+  }
+
+  .mobileFlowContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .mobileStageRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid rgba(16, 24, 40, 0.06);
+  }
+
+  .mobileIconCircle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: #94A3B8;
+    flex-shrink: 0;
+  }
+
+  .mobileIconCircle.completed { background: #10B981; color: white; }
+  .mobileIconCircle.active { background: var(--primary); color: white; }
+
+  .mobileStageInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobileStageTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobileStageName { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+  .mobileStageTime { font-size: 10px; color: #94A3B8; }
+  .mobileStageSub { font-size: 10px; color: #64748B; }
 }

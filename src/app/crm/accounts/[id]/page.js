@@ -6,6 +6,7 @@ import { useApp } from '@/lib/store/AppContext';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import AccountAISummary from '@/components/ai/AccountAISummary';
 import { formatDate, formatWeight, formatCurrency, getStatusColor } from '@/lib/utils/formatters';
 import styles from './detail.module.css';
 
@@ -217,6 +218,9 @@ export default function AccountDetailPage() {
             {/* ── INFO TAB ── */}
             {activeTab === 'info' && (
               <div>
+                {/* AI Executive Summary */}
+                <AccountAISummary orgId={id} />
+                <div style={{ height: '20px' }} />
                 <div className={styles.sectionHeader}>
                   <div>
                     <h2 className={styles.sectionTitle}>Account Information</h2>
@@ -388,7 +392,7 @@ export default function AccountDetailPage() {
                             <Badge variant={o.stage === 'Won' ? 'success' : o.stage === 'Lost' ? 'danger' : 'primary'} size="small">{o.stage || o.status}</Badge>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', marginBottom: '20px', flexGrow: 1, border: '1px solid #F1F5F9' }}>
+                          <div className="gridAuto" style={{ background: '#F8FAFC', padding: '16px', borderRadius: '12px', marginBottom: '20px', flexGrow: 1, border: '1px solid #F1F5F9' }}>
                             <div>
                               <div style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Est. Revenue</div>
                               <div style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>{formatCurrency(o.pipeline_value || o.expected_revenue, o.currency_code || account.default_currency) || '—'}</div>
@@ -606,7 +610,7 @@ export default function AccountDetailPage() {
               <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Legal Name <span style={{ color: '#f43f5e' }}>*</span></label>
               <input type="text" value={editForm.legal_name} onChange={e => setEditForm(p => ({ ...p, legal_name: e.target.value }))} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(16, 24, 40, 0.1)', fontSize: '14px' }} placeholder="Company legal name" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-row">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Industry</label>
                 <input type="text" value={editForm.industry || ''} onChange={e => setEditForm(p => ({ ...p, industry: e.target.value }))} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(16, 24, 40, 0.1)', fontSize: '14px' }} placeholder="e.g. Manufacturing, Tech" />
@@ -616,7 +620,7 @@ export default function AccountDetailPage() {
                 <input type="text" value={editForm.tax_id || ''} onChange={e => setEditForm(p => ({ ...p, tax_id: e.target.value }))} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(16, 24, 40, 0.1)', fontSize: '14px' }} placeholder="Tax / VAT ID" />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            <div className="form-row">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Organization Type</label>
                 <select value={editForm.org_type || 'Customer'} onChange={e => setEditForm(p => ({ ...p, org_type: e.target.value }))} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(16, 24, 40, 0.1)', fontSize: '14px', background: 'white' }}>
@@ -637,7 +641,7 @@ export default function AccountDetailPage() {
 
             {/* Business Information */}
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '8px' }}>Business Information</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-row">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Country</label>
                 <input type="text" value={editForm.country || ''} onChange={e => setEditForm(p => ({ ...p, country: e.target.value }))} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(16, 24, 40, 0.1)', fontSize: '14px' }} placeholder="e.g. US, DE, QA" />
@@ -649,7 +653,7 @@ export default function AccountDetailPage() {
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-row">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Account Tier</label>
                 <select value={editForm.account_tier || 'Standard'} onChange={e => setEditForm(p => ({ ...p, account_tier: e.target.value }))} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(16, 24, 40, 0.1)', fontSize: '14px', background: 'white' }}>

@@ -504,3 +504,140 @@
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 1024px) {
+  .kpiGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .mainSplit {
+    grid-template-columns: 1fr;
+  }
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+  .alertsPanel {
+    grid-column: span 1 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroHeader {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .titleRow {
+    gap: 12px;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .subtitle {
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .heroActions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+  .heroBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .contentPadding {
+    padding: 0 12px 16px;
+    gap: 12px;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .kpiCard {
+    padding: 10px 12px;
+    min-width: 0;
+  }
+
+  .kpiLabel {
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .kpiValue {
+    font-size: 16px;
+    word-break: break-word;
+  }
+
+  .kpiTrend {
+    font-size: 10px;
+  }
+
+  .pipelineContainer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .pipeStage {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 8px;
+    padding: 8px;
+    background: #F8FAFC;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+  }
+
+  .pipeStage:not(:last-child)::after {
+    display: none;
+  }
+
+  .pipeDot {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .pipeLabel {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .pipeCount {
+    display: none;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .wizardHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .kpiCard {
+    padding: 8px 10px;
+  }
+  .kpiValue {
+    font-size: 15px;
+  }
+}

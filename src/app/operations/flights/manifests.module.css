@@ -213,7 +213,8 @@
 
 /* Capacity Progress Bar */
 .capacityCell {
-  width: 140px;
+  width: 100%;
+  max-width: 160px;
 }
 .capacityHeader {
   display: flex;
@@ -420,6 +421,12 @@ tr:hover .actionButtons {
   margin-bottom: 8px;
 }
 
+.formRowGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
 /* --- Responsive --- */
 @media (max-width: 1200px) {
   .mainGrid { grid-template-columns: 1fr; }
@@ -427,5 +434,12 @@ tr:hover .actionButtons {
 }
 @media (max-width: 768px) {
   .pageWrapper { padding: var(--space-4); }
-  .kpiGrid { grid-template-columns: 1fr; }
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpiCard { padding: 10px 12px; border-radius: 12px; }
+  .kpiMetric { font-size: 16px; margin-bottom: 2px; }
+  .kpiLabel { font-size: 9.5px; line-height: 1.2; }
+  .formRowGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
 }

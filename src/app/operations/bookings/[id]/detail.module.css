@@ -338,9 +338,59 @@
   .layoutGrid > *:last-child { grid-column: span 2; }
 }
 @media (max-width: 768px) {
-  .pageWrapper { padding: var(--space-4); }
-  .heroCard { flex-direction: column; align-items: flex-start; gap: var(--space-5); }
-  .heroRight { align-items: flex-start; }
+  .pageWrapper { padding: 12px; }
+  .heroCard { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 12px; 
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+  .heroLeft {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+  }
+  .heroIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  .heroIcon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .heroTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  .heroTitle {
+    font-size: 17px;
+    font-weight: 800;
+    word-break: break-word;
+    line-height: 1.25;
+    margin: 0;
+  }
+  .heroSubtitle {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    font-size: 12px;
+    margin-bottom: 0;
+  }
+  .heroRight {
+    width: 100%;
+    align-items: stretch;
+    margin-top: 4px;
+  }
+  .heroRight > button, .heroRight > a {
+    width: 100%;
+    justify-content: center;
+  }
   .layoutGrid { grid-template-columns: 1fr; }
   .layoutGrid > *:last-child { grid-column: span 1; }
 }

@@ -41,6 +41,14 @@ const customStyles = {
     color: '#0F172A',
     fontSize: '14px',
   }),
+  placeholder: (provided) => ({
+    ...provided,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    fontSize: '13px',
+    color: '#94A3B8',
+  }),
   menu: (provided) => ({
     ...provided,
     borderRadius: '8px',

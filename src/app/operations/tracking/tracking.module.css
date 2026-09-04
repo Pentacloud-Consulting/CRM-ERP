@@ -266,12 +266,18 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .routePort {
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
 }
 .routeLine {
   flex: 1;
@@ -281,6 +287,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 16px;
 }
 .routePlane {
   position: absolute;
@@ -417,9 +424,34 @@
 @media (max-width: 1024px) {
   .splitLayout { grid-template-columns: 1fr; }
   .opsDashboard { grid-template-columns: repeat(3, 1fr); }
-  .shipmentCard { grid-template-columns: 1fr 1fr; }
+  .shipmentCard { grid-template-columns: 1fr 1.5fr 1fr 40px; }
 }
 @media (max-width: 768px) {
-  .opsDashboard { grid-template-columns: 1fr 1fr; }
-  .shipmentCard { grid-template-columns: 1fr; }
+  .pageWrapper { padding: 12px; }
+  .title { font-size: 20px; }
+  .subtitle { font-size: 12px; flex-wrap: wrap; }
+  .opsDashboard { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; }
+  .metricValue { font-size: 18px; }
+  .mapSection { height: 260px; }
+  .mapOverlay { padding: 8px 12px; top: 10px; left: 10px; gap: 8px; flex-wrap: wrap; }
+  .mapLegendItem { font-size: 11px; }
+
+  .toolbar { flex-direction: column; padding: 10px; gap: 8px; }
+  .shipmentCard {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+    position: relative;
+  }
+  .detailsBtn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+  .routeVisual {
+    gap: 8px;
+  }
+  .routePort {
+    font-size: 13.5px;
+  }
 }

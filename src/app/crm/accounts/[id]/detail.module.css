@@ -285,15 +285,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 60%;
+  width: 100%;
+  max-width: 100%;
   background: white;
   border-radius: 12px;
   padding: 16px 24px;
-  margin-top: 28px;
+  margin-top: 24px;
   border: 1px solid rgba(16, 24, 40, 0.06);
   box-shadow: 0 8px 32px rgba(0,0,0,0.04);
   z-index: 1;
-  gap: 24px;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 .metricBlock {
   display: flex;
@@ -820,24 +822,131 @@
   .navItem {
     width: auto;
   }
+  .infoList {
+    grid-template-columns: 1fr;
+  }
 }
+
 @media (max-width: 768px) {
   .pageWrapper {
-    padding: var(--space-4);
+    padding: 12px;
   }
-  .heroCard {
-    padding: var(--space-5);
+  .heroCardGlass {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .heroTopRow {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 16px;
   }
   .heroLeft {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
+    gap: 12px;
+  }
+  .heroAvatarPremium {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  .heroTitle {
+    font-size: 16px;
+  }
+  .heroSubtitle {
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
   }
   .heroInfoGrid {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
+    gap: 8px;
+    margin-top: 16px;
+    width: 100%;
+  }
+  .heroInfoItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-right: none;
+    border-bottom: 1px dashed rgba(16, 24, 40, 0.06);
+    width: 100%;
+  }
+  .heroInfoItem:last-child {
+    border-bottom: none;
+  }
+  .heroInfoValue {
+    text-align: right;
+    word-break: break-all;
+  }
+  .metricsCard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 12px;
+    gap: 10px;
+    margin-top: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .metricBlock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .metricBlock > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .metricLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: #8A8FA3;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .metricValue {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .metricTrend {
+    font-size: 9px;
+    font-weight: 600;
+    color: #10B981;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .metricDivider {
+    display: none;
+  }
+  .infoCard {
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+  }
+  .infoList {
+    grid-template-columns: 1fr;
+  }
+  .infoBadgeCard {
+    width: 100%;
+  }
+  .gridCards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .shipmentMetricsPremium {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 }
 

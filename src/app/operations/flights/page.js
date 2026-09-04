@@ -313,7 +313,7 @@ export default function ManifestsPage() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className={styles.formRowGrid}>
             <div className="form-group">
               <label className="form-label">Flight Number <span style={{ color: '#f43f5e' }}>*</span></label>
               <input className="form-input" style={{ fontSize: '16px', fontWeight: 'bold' }} value={newManifest.flight_number} onChange={e => setNewManifest(p => ({ ...p, flight_number: e.target.value }))} placeholder="e.g. QR8410" />
@@ -332,7 +332,7 @@ export default function ManifestsPage() {
             </select>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+          <div className={styles.formRowGrid} style={{ background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
             <div className="form-group">
               <label className="form-label">Origin Airport <span style={{ color: '#f43f5e' }}>*</span></label>
               <select className="form-select" value={newManifest.origin_airport} onChange={e => setNewManifest(p => ({ ...p, origin_airport: e.target.value }))}>
@@ -349,7 +349,7 @@ export default function ManifestsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className={styles.formRowGrid}>
             <div className="form-group">
               <label className="form-label">Aircraft Max Capacity (kg)</label>
               <input className="form-input" type="number" step="100" value={newManifest.max_weight_kg} onChange={e => setNewManifest(p => ({ ...p, max_weight_kg: e.target.value }))} placeholder="10000" />
@@ -380,7 +380,7 @@ export default function ManifestsPage() {
       >
         {editManifest && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className={styles.formRowGrid}>
               <div className="form-group">
                 <label className="form-label">Flight Number <span style={{ color: '#f43f5e' }}>*</span></label>
                 <input className="form-input" value={editManifest.flight_number} disabled style={{ background: '#F1F5F9' }} />
@@ -399,7 +399,7 @@ export default function ManifestsPage() {
               </select>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <div className={styles.formRowGrid} style={{ background: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
               <div className="form-group">
                 <label className="form-label">Origin Airport <span style={{ color: '#f43f5e' }}>*</span></label>
                 <select className="form-select" value={editManifest.departure_airport} onChange={e => setEditManifest(p => ({ ...p, departure_airport: e.target.value }))}>
@@ -416,7 +416,7 @@ export default function ManifestsPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className={styles.formRowGrid}>
               <div className="form-group">
                 <label className="form-label">Aircraft Max Capacity (kg)</label>
                 <input className="form-input" type="number" step="100" value={editManifest.max_weight_kg} onChange={e => setEditManifest(p => ({ ...p, max_weight_kg: e.target.value }))} placeholder="10000" />

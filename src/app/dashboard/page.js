@@ -1,12 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   Ship, Plane, Truck, PackageCheck, AlertTriangle, ShieldCheck, TrendingUp, Package,
   ArrowUpRight, Clock, CheckCircle2, XCircle, BarChart3,
   Search, Bell, MessageSquare, Settings, UserCircle2, Zap, LayoutDashboard,
   Bot, Route, ArrowDownRight, Users, FileSpreadsheet, Building2,
-  Shield, Radar, Globe, Activity, Sparkles, CircleCheck
+  Shield, Radar, Globe, Activity, Sparkles, CircleCheck,
+  ChevronLeft, ChevronRight, LayoutGrid, Layers
 } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import { eventBus } from '@/lib/store/eventBus';
@@ -18,10 +19,47 @@ import styles from './page.module.css';
 export default function Dashboard() {
   const { state } = useApp();
   const [spinningId, setSpinningId] = useState(null);
+  
+  const kpiGridRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [mobileViewMode, setMobileViewMode] = useState('carousel'); // 'carousel' | 'grid'
+  const TOTAL_CARDS = 6;
 
   const handleSpin = (id) => {
     setSpinningId(id);
     setTimeout(() => setSpinningId(null), 600);
+  };
+
+  const handleKpiScroll = () => {
+    if (!kpiGridRef.current) return;
+    const { scrollLeft, clientWidth } = kpiGridRef.current;
+    if (clientWidth === 0) return;
+    const firstCard = kpiGridRef.current.firstElementChild;
+    const cardWidth = firstCard ? firstCard.clientWidth + 14 : clientWidth * 0.82;
+    const index = Math.round(scrollLeft / cardWidth);
+    setActiveIndex(Math.min(Math.max(index, 0), TOTAL_CARDS - 1));
+  };
+
+  const scrollNext = () => {
+    if (!kpiGridRef.current) return;
+    const firstCard = kpiGridRef.current.firstElementChild;
+    const cardWidth = firstCard ? firstCard.clientWidth + 14 : 280;
+    kpiGridRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+  };
+
+  const scrollPrev = () => {
+    if (!kpiGridRef.current) return;
+    const firstCard = kpiGridRef.current.firstElementChild;
+    const cardWidth = firstCard ? firstCard.clientWidth + 14 : 280;
+    kpiGridRef.current.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+  };
+
+  const scrollToCard = (idx) => {
+    if (!kpiGridRef.current) return;
+    const firstCard = kpiGridRef.current.firstElementChild;
+    const cardWidth = firstCard ? firstCard.clientWidth + 14 : 280;
+    kpiGridRef.current.scrollTo({ left: cardWidth * idx, behavior: 'smooth' });
+    setActiveIndex(idx);
   };
 
   const metrics = useMemo(() => {
@@ -78,167 +116,176 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top KPI Cards Grid (8 Cards) */}
-        <div className={styles.kpiGrid}>
-          <Link href="/operations/shipments" onClick={() => handleSpin('kpi1')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi1' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: 'rgba(106, 76, 255, 0.08)', color: '#6A4CFF' }}>
-                <Ship size={18} className="click-spin-inner" strokeWidth={2} />
-              </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+12% <ArrowUpRight size={14} /></div>
+        {/* Mobile KPI Toolbar Header (Shown on Mobile <= 767px) */}
+        <div className={styles.mobileKpiHeader}>
+          <div className={styles.mobileKpiTitleGroup}>
+            <span className={styles.mobileKpiBadge}>
+              Metric {activeIndex + 1} of {TOTAL_CARDS}
+            </span>
+            <div className={styles.mobileKpiDots}>
+              {Array.from({ length: TOTAL_CARDS }).map((_, i) => (
+                <button
+                  key={i}
+                  className={`${styles.dot} ${activeIndex === i ? styles.activeDot : ''}`}
+                  onClick={() => scrollToCard(i)}
+                  aria-label={`Go to metric ${i + 1}`}
+                />
+              ))}
             </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.activeShipments}</div>
-              <div className={styles.kpiLabel}>Active Shipments</div>
-            </div>
-          </Link>
+          </div>
 
-          {/* ══════ PREMIUM: Operational Risk Monitor ══════ */}
-          <Link href="/operations/tracking" onClick={() => handleSpin('kpi2')} className={`${styles.riskCard} hover-scale ${spinningId === 'kpi2' ? 'is-spinning' : ''}`}>
-            <div className={styles.riskBgPattern}>
-              <svg width="100%" height="100%" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="160" cy="80" r="60" stroke="rgba(139,92,246,0.06)" strokeWidth="1" fill="none" />
-                <circle cx="160" cy="80" r="40" stroke="rgba(139,92,246,0.04)" strokeWidth="1" fill="none" />
-                <circle cx="160" cy="80" r="20" stroke="rgba(139,92,246,0.03)" strokeWidth="1" fill="none" />
-                <line x1="100" y1="80" x2="200" y2="80" stroke="rgba(139,92,246,0.04)" strokeWidth="1" />
-                <line x1="160" y1="20" x2="160" y2="140" stroke="rgba(139,92,246,0.04)" strokeWidth="1" />
-              </svg>
-            </div>
-            <div className={styles.riskTopRow}>
-              <div className={styles.riskIconBox}>
-                <Shield size={20} strokeWidth={2} />
-              </div>
-              <div className={styles.aiBadgeSmall}>
-                <Sparkles size={10} />
-                AI Protected
-              </div>
-            </div>
-            <div className={styles.riskMetricRow}>
-              {metrics.openExceptions === 0 ? (
-                <>
-                  <div className={styles.riskValueSuccess}>
-                    <CircleCheck size={22} style={{ color: '#10B981' }} />
-                    All Clear
-                  </div>
-                  <div className={styles.riskSubtitle}>No active operational risks</div>
-                </>
+          <div className={styles.mobileKpiActions}>
+            <button
+              className={styles.viewToggleBtn}
+              onClick={() => setMobileViewMode(prev => prev === 'carousel' ? 'grid' : 'carousel')}
+              title={mobileViewMode === 'carousel' ? 'Switch to Grid View' : 'Switch to Swipe View'}
+            >
+              {mobileViewMode === 'carousel' ? (
+                <><LayoutGrid size={14} /> Grid</>
               ) : (
-                <>
-                  <div className={styles.riskValue}>{metrics.openExceptions}</div>
-                  <div className={styles.riskSubtitle}>Critical Issues</div>
-                </>
+                <><Layers size={14} /> Swipe</>
               )}
-            </div>
-            <div className={styles.riskFooter}>
-              <div className={styles.riskStat}>
-                <span className={styles.riskStatValue}>98%</span>
-                <span className={styles.riskStatLabel}>Health</span>
-              </div>
-              <div className={styles.riskDivider} />
-              <div className={styles.riskStat}>
-                <span className={`${styles.riskStatValue} ${styles.riskPositive}`}>+14%</span>
-                <span className={styles.riskStatLabel}>Improved</span>
-              </div>
-              <div className={styles.riskDivider} />
-              <div className={styles.riskStat}>
-                <Activity size={12} className={styles.riskPulse} />
-                <span className={styles.riskStatLabel}>Live</span>
-              </div>
-            </div>
-          </Link>
+            </button>
 
-          {/* ══════ PREMIUM: Customs Intelligence Center ══════ */}
-          <Link href="/operations/customs" onClick={() => handleSpin('kpi3')} className={`${styles.customsCard} hover-scale ${spinningId === 'kpi3' ? 'is-spinning' : ''}`}>
-            <div className={styles.customsBgPattern}>
-              <svg width="100%" height="100%" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20,80 Q60,40 100,80 T180,80" stroke="rgba(16,185,129,0.06)" strokeWidth="1.5" fill="none" />
-                <path d="M20,60 Q80,100 140,50 T200,70" stroke="rgba(139,92,246,0.05)" strokeWidth="1" fill="none" />
-                <circle cx="40" cy="80" r="3" fill="rgba(16,185,129,0.08)" />
-                <circle cx="100" cy="70" r="3" fill="rgba(139,92,246,0.08)" />
-                <circle cx="160" cy="85" r="3" fill="rgba(16,185,129,0.08)" />
-              </svg>
-            </div>
-            <div className={styles.riskTopRow}>
-              <div className={styles.customsIconBox}>
-                <Globe size={20} strokeWidth={2} />
+            {mobileViewMode === 'carousel' && (
+              <div className={styles.navArrows}>
+                <button 
+                  className={styles.navArrowBtn} 
+                  onClick={scrollPrev}
+                  disabled={activeIndex === 0}
+                  aria-label="Previous Metric"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button 
+                  className={`${styles.navArrowBtn} ${styles.nextHighlight}`} 
+                  onClick={scrollNext}
+                  disabled={activeIndex === TOTAL_CARDS - 1}
+                  aria-label="Next Metric"
+                >
+                  <span>Next</span>
+                  <ChevronRight size={16} />
+                </button>
               </div>
-              <div className={styles.complianceBadge}>
-                <ShieldCheck size={10} />
-                Compliant
-              </div>
-            </div>
-            <div className={styles.riskMetricRow}>
-              {metrics.customsHolds === 0 ? (
-                <>
-                  <div className={styles.customsValueSuccess}>
-                    <CircleCheck size={22} style={{ color: '#10B981' }} />
-                    Healthy
-                  </div>
-                  <div className={styles.riskSubtitle}>No customs delays</div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.customsValue}>{metrics.customsHolds}</div>
-                  <div className={styles.riskSubtitle}>Active Holds</div>
-                </>
-              )}
-            </div>
-            <div className={styles.riskFooter}>
-              <div className={styles.riskStat}>
-                <span className={styles.riskStatValue}>96.8%</span>
-                <span className={styles.riskStatLabel}>Clearance</span>
-              </div>
-              <div className={styles.riskDivider} />
-              <div className={styles.riskStat}>
-                <span className={styles.riskStatValue}>18.5h</span>
-                <span className={styles.riskStatLabel}>Avg Time</span>
-              </div>
-              <div className={styles.riskDivider} />
-              <div className={styles.riskStat}>
-                <Globe size={12} style={{ color: '#10B981' }} />
-                <span className={styles.riskStatLabel}>Stable</span>
-              </div>
-            </div>
-          </Link>
+            )}
+          </div>
+        </div>
 
-          <Link href="/operations/bookings" onClick={() => handleSpin('kpi4')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi4' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: 'rgba(106, 76, 255, 0.08)', color: '#6A4CFF' }}>
-                <Plane size={18} className="click-spin-inner" strokeWidth={2} />
+        {/* Top KPI Cards Grid */}
+        <div className={styles.kpiGridWrapper}>
+          <div 
+            ref={kpiGridRef}
+            onScroll={handleKpiScroll}
+            className={`${styles.kpiGrid} ${mobileViewMode === 'grid' ? styles.gridMode : ''}`}
+          >
+            {/* 1. Active Shipments */}
+            <Link href="/operations/shipments" onClick={() => handleSpin('kpi1')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi1' ? 'is-spinning' : ''}`}>
+              <div className={styles.kpiTopRow}>
+                <div className={styles.kpiIconWrapper} style={{ background: 'rgba(106, 76, 255, 0.08)', color: '#6A4CFF' }}>
+                  <Ship size={18} className="click-spin-inner" strokeWidth={2} />
+                </div>
+                <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+12% <ArrowUpRight size={13} /></div>
               </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+18% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.pendingBookings}</div>
-              <div className={styles.kpiLabel}>Pending Bookings</div>
-            </div>
-          </Link>
+              <div className={styles.kpiInfo}>
+                <div className={styles.kpiValue}>{metrics.activeShipments}</div>
+                <div className={styles.kpiLabelRow}>
+                  <span className={styles.kpiLabel}>Active Shipments</span>
+                  <span className={styles.kpiSubText}>2 Air • 1 Ocean</span>
+                </div>
+              </div>
+            </Link>
 
-          <Link href="/crm/pipeline" onClick={() => handleSpin('kpi5')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi5' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: 'rgba(106, 76, 255, 0.08)', color: '#6A4CFF' }}>
-                <TrendingUp size={18} className="click-spin-inner" strokeWidth={2} />
+            {/* 2. Operational Risk Monitor */}
+            <Link href="/operations/tracking" onClick={() => handleSpin('kpi2')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi2' ? 'is-spinning' : ''}`}>
+              <div className={styles.kpiTopRow}>
+                <div className={styles.kpiIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10B981' }}>
+                  <ShieldCheck size={18} className="click-spin-inner" strokeWidth={2} />
+                </div>
+                <div className={`${styles.kpiBadgePill} ${styles.pillSuccess}`}>
+                  <CircleCheck size={11} />
+                  <span>All Clear</span>
+                </div>
               </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+8% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.wonDeals}</div>
-              <div className={styles.kpiLabel}>Won Deals</div>
-            </div>
-          </Link>
+              <div className={styles.kpiInfo}>
+                <div className={styles.kpiValueSuccess}>98% <span className={styles.kpiValueSub}>Health</span></div>
+                <div className={styles.kpiLabelRow}>
+                  <span className={styles.kpiLabel}>Operational Risk</span>
+                  <span className={styles.kpiSubText}>0 Critical Issues</span>
+                </div>
+              </div>
+            </Link>
 
-          <Link href="/crm/leads" onClick={() => handleSpin('kpi6')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi6' ? 'is-spinning' : ''}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={`${styles.kpiIconWrapper} click-spin`} style={{ background: 'rgba(5, 150, 105, 0.08)', color: '#059669' }}>
-                <BarChart3 size={18} className="click-spin-inner" strokeWidth={2} />
+            {/* 3. Customs Compliance */}
+            <Link href="/operations/customs" onClick={() => handleSpin('kpi3')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi3' ? 'is-spinning' : ''}`}>
+              <div className={styles.kpiTopRow}>
+                <div className={styles.kpiIconWrapper} style={{ background: 'rgba(59, 130, 246, 0.08)', color: '#3B82F6' }}>
+                  <Globe size={18} className="click-spin-inner" strokeWidth={2} />
+                </div>
+                <div className={`${styles.kpiBadgePill} ${styles.pillPrimary}`}>
+                  <ShieldCheck size={11} />
+                  <span>Compliant</span>
+                </div>
               </div>
-              <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+24% <ArrowUpRight size={14} /></div>
-            </div>
-            <div className={styles.kpiInfo}>
-              <div className={styles.kpiValue}>{metrics.newLeads}</div>
-              <div className={styles.kpiLabel}>New Leads</div>
-            </div>
-          </Link>
+              <div className={styles.kpiInfo}>
+                <div className={styles.kpiValue}>96.8%</div>
+                <div className={styles.kpiLabelRow}>
+                  <span className={styles.kpiLabel}>Customs Clearance</span>
+                  <span className={styles.kpiSubText}>18.5h Avg Dwell</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* 4. Pending Bookings */}
+            <Link href="/operations/bookings" onClick={() => handleSpin('kpi4')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi4' ? 'is-spinning' : ''}`}>
+              <div className={styles.kpiTopRow}>
+                <div className={styles.kpiIconWrapper} style={{ background: 'rgba(99, 102, 241, 0.08)', color: '#6366F1' }}>
+                  <Plane size={18} className="click-spin-inner" strokeWidth={2} />
+                </div>
+                <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+18% <ArrowUpRight size={13} /></div>
+              </div>
+              <div className={styles.kpiInfo}>
+                <div className={styles.kpiValue}>{metrics.pendingBookings}</div>
+                <div className={styles.kpiLabelRow}>
+                  <span className={styles.kpiLabel}>Pending Bookings</span>
+                  <span className={styles.kpiSubText}>Dispatch Ready</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* 5. Won Deals */}
+            <Link href="/crm/pipeline" onClick={() => handleSpin('kpi5')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi5' ? 'is-spinning' : ''}`}>
+              <div className={styles.kpiTopRow}>
+                <div className={styles.kpiIconWrapper} style={{ background: 'rgba(245, 158, 11, 0.08)', color: '#F59E0B' }}>
+                  <TrendingUp size={18} className="click-spin-inner" strokeWidth={2} />
+                </div>
+                <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+8% <ArrowUpRight size={13} /></div>
+              </div>
+              <div className={styles.kpiInfo}>
+                <div className={styles.kpiValue}>{metrics.wonDeals}</div>
+                <div className={styles.kpiLabelRow}>
+                  <span className={styles.kpiLabel}>Closed Won Deals</span>
+                  <span className={styles.kpiSubText}>$45.0k Value</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* 6. New Leads */}
+            <Link href="/crm/leads" onClick={() => handleSpin('kpi6')} className={`${styles.kpiCard} hover-scale ${spinningId === 'kpi6' ? 'is-spinning' : ''}`}>
+              <div className={styles.kpiTopRow}>
+                <div className={styles.kpiIconWrapper} style={{ background: 'rgba(14, 165, 233, 0.08)', color: '#0EA5E9' }}>
+                  <BarChart3 size={18} className="click-spin-inner" strokeWidth={2} />
+                </div>
+                <div className={`${styles.kpiTrend} ${styles.trendUp}`}>+24% <ArrowUpRight size={13} /></div>
+              </div>
+              <div className={styles.kpiInfo}>
+                <div className={styles.kpiValue}>{metrics.newLeads}</div>
+                <div className={styles.kpiLabelRow}>
+                  <span className={styles.kpiLabel}>New Leads</span>
+                  <span className={styles.kpiSubText}>100% SLA Response</span>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Two-column layout: Visual Diagrams */}
@@ -264,7 +311,7 @@ export default function Dashboard() {
                 Live Shipment Pipeline
               </h2>
             </div>
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+            <div style={{ padding: '16px 20px' }}>
               <LogisticsFlow />
             </div>
           </div>
@@ -272,7 +319,7 @@ export default function Dashboard() {
 
         {/* Executive KPIs */}
         <h2 className={styles.sectionTitle}>Key Performance Analytics</h2>
-        <div className={styles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+        <div className={styles.analyticsGrid}>
           
           <div onClick={() => handleSpin('b1')} className={`${styles.glassCard} hover-scale click-spin ${spinningId === 'b1' ? 'is-spinning' : ''}`} style={{cursor: 'pointer'}}>
             <div className={`${styles.analyticsTitle} click-spin-inner`}>Total Shipments</div>

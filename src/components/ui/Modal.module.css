@@ -19,12 +19,13 @@
   max-height: 85vh;
   animation: scaleIn 200ms ease;
   overflow: hidden;
+  width: 100%;
 }
 
-.default { width: 520px; }
-.large { width: 720px; }
-.xl { width: 900px; }
-.full { width: 95vw; max-width: 1200px; }
+.default { max-width: 520px; }
+.large { max-width: 720px; }
+.xl { max-width: 900px; }
+.full { max-width: 1200px; width: 95vw; }
 
 .header {
   display: flex;
@@ -32,6 +33,7 @@
   justify-content: space-between;
   padding: var(--space-5) var(--space-6);
   border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .title {
@@ -39,6 +41,7 @@
   font-weight: var(--font-semibold);
   color: var(--text-primary);
   margin: 0;
+  line-height: 1.3;
 }
 
 .subtitle {
@@ -68,6 +71,7 @@
   padding: var(--space-6);
   overflow-y: auto;
   flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .footer {
@@ -77,22 +81,43 @@
   justify-content: flex-end;
   gap: var(--space-3);
   background: var(--bg-sidebar);
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
-  .default, .large, .xl {
+  .overlay {
+    padding: 8px;
+  }
+
+  .default, .large, .xl, .full {
     width: 100%;
+    max-width: 100%;
   }
   
   .modal {
-    max-height: 95vh;
+    max-height: calc(100dvh - 16px);
+    border-radius: 16px;
   }
   
   .body {
-    padding: var(--space-4);
+    padding: var(--space-4) 12px;
   }
   
-  .header, .footer {
-    padding: var(--space-4);
+  .header {
+    padding: 12px 14px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .subtitle {
+    font-size: 11.5px;
+  }
+
+  .footer {
+    padding: 10px 12px;
+    gap: 8px;
   }
 }

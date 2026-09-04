@@ -206,13 +206,13 @@ export default function LeadDetailPage() {
           </div>
 
           {/* ══════ LEAD REQUIREMENTS ══════ */}
-          <div className={styles.reqCard} style={{ gridColumn: '1 / -1' }}>
+          <div className={styles.reqCardFullWidth}>
             <div className={styles.cardHeader}>
               <FileText size={16} color="#6A4CFF" />
               <h2 className={styles.cardTitle}>Lead Requirements</h2>
             </div>
-            <div className={styles.reqGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-              <div className={`${styles.reqItem} ${styles.reqItemHighlight}`} style={{ gridColumn: 'span 2' }}>
+            <div className={styles.reqGridFourCol}>
+              <div className={`${styles.reqItem} ${styles.reqItemHighlightWide}`}>
                 <div className={styles.reqLabel}><div className={styles.reqIconBg}><Anchor size={12} className={styles.reqLabelIcon} /></div> Route & Mode</div>
                 <div className={styles.reqTradeLane}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#14B8A6', background: 'rgba(20, 184, 166, 0.1)', padding: '4px 10px', borderRadius: '16px', fontSize: '12px' }}>

@@ -419,41 +419,46 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 32px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(16, 185, 129, 0.01) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.01) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.05);
   animation: scaleIn 500ms ease both;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .successBannerLeft {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+  flex: 1;
+  min-width: 240px;
 }
 
 .successIconBadge {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(16, 185, 129, 0.1);
   color: #10B981;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.04);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.04);
 }
 
 .successBannerText {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .successTitle {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #065F46;
   margin: 0;
@@ -461,20 +466,21 @@
 }
 
 .successSubtext {
-  font-size: 14px;
+  font-size: 13px;
   color: #047857;
   margin: 0;
   font-weight: 500;
 }
 
 .successBannerCta {
-  background: white;
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #065F46;
+  background: white !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  color: #065F46 !important;
+  flex-shrink: 0;
 }
 .successBannerCta:hover {
-  background: rgba(16, 185, 129, 0.05);
-  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
 }
 
 /* --- Convert Steps --- */
@@ -708,27 +714,167 @@
   line-height: 1.5;
 }
 
+.reqCardFullWidth {
+  grid-column: 1 / -1;
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #6A4CFF;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reqGridFourCol {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 16px;
+}
+
+.reqItemHighlightWide {
+  grid-column: span 2;
+  padding: 10px;
+  background: rgba(106, 76, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(106, 76, 255, 0.1);
+}
+
 /* --- Responsive --- */
 @media (max-width: 1024px) {
   .detailGrid {
     grid-template-columns: 1fr;
   }
+  .reqGridFourCol {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
   .pageWrapper {
-    padding: var(--space-4);
+    padding: 12px;
   }
+
+  .successBanner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .successBannerLeft {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .successBannerText {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .successIconBadge {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .successTitle {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .successSubtext {
+    font-size: 13px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .successBannerCta {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin-top: 4px;
+  }
+
   .heroCard {
-    padding: var(--space-5);
+    padding: 16px;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 16px;
   }
+
   .heroLeft {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
   }
-  .reqGrid {
+
+  .heroAvatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .heroAvatarInner {
+    width: 36px;
+    height: 36px;
+  }
+
+  .heroTitle {
+    font-size: 18px;
+  }
+
+  .heroRight {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .statusSelect {
+    width: 100%;
+  }
+
+  .detailGrid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .reqGrid,
+  .reqGridFourCol {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .reqItemHighlightWide {
+    grid-column: span 1;
+    width: 100%;
+  }
+
+  .reqItem {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .reqValue,
+  .reqTradeLane {
+    padding-left: 0;
+    margin-top: 2px;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  .conversionItem {
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .conversionValue {
+    font-size: 13px;
+    word-break: break-word;
+    min-width: 0;
   }
 }

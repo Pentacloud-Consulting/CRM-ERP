@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import { formatDate, formatDateTime, formatWeight, formatCurrency, formatAWBNumber } from '@/lib/utils/formatters';
 import { LOCATIONS } from '@/lib/data/seedData';
+import { getLocationName } from '@/app/crm/leads/page';
 import ComprehensiveAWB from '@/components/documents/ComprehensiveAWB';
 import styles from './detail.module.css';
 
@@ -33,7 +34,7 @@ export default function AWBDetailPage() {
   }
 
   const shipment = state.shipments.find(s => s.shipment_id === awb.shipment_id);
-  const carrier = state.organizations.find(c => c.org_id === awb.provider_id);
+  const carrier = state.organizations.find(c => c.org_id === awb.provider_id || c.org_id === awb.carrier_id);
   const account = shipment ? state.organizations.find(a => a.org_id === shipment.org_id) : null;
   const doc = state.documents.find(d => (d.doc_id === id || d.shipment_id === awb.shipment_id) && d.document_type === 'Comprehensive AWB');
 
@@ -48,8 +49,21 @@ export default function AWBDetailPage() {
   };
 
   const isIssued = !!awb.issued_at;
-  const isSent = awb.status === 'Sent' || awb.status === 'Acknowledged (FMA)';
-  const isConfirmed = awb.status === 'Acknowledged (FMA)';
+  const isSent = awb.status === 'Sent' || awb.status === 'Acknowledged (FMA)' || awb.fwb_status === 'Sent' || awb.fwb_status === 'Acknowledged (FMA)';
+  const isConfirmed = awb.status === 'Acknowledged (FMA)' || awb.fwb_status === 'Acknowledged (FMA)';
+
+  const originCode = getLocationName(
+    awb.origin_location || awb.origin_airport || awb.origin_port || shipment?.origin_location || shipment?.origin_airport || shipment?.origin_port_id || 'DOH'
+  );
+  const destCode = getLocationName(
+    awb.destination_location || awb.destination_airport || awb.destination_port || shipment?.destination_location || shipment?.destination_airport || shipment?.destination_port_id || 'LHR'
+  );
+
+  const originLocObj = LOCATIONS[originCode] || Object.values(LOCATIONS).find(l => l.code === originCode || l.name === originCode || l.city === originCode);
+  const destLocObj = LOCATIONS[destCode] || Object.values(LOCATIONS).find(l => l.code === destCode || l.name === destCode || l.city === destCode);
+
+  const originName = originLocObj ? `${originLocObj.name}` : 'Origin Port';
+  const destName = destLocObj ? `${destLocObj.name}` : 'Destination Port';
 
   return (
     <div className={styles.pageWrapper} style={{ '--primary': '#6366F1', '--primary-tint': 'rgba(99, 102, 241, 0.1)' }}>
@@ -67,12 +81,14 @@ export default function AWBDetailPage() {
             </div>
             <div>
               <div className={styles.heroTitleRow}>
-                <h1 className={styles.heroTitle}>{formatAWBNumber(awb.doc_number)}</h1>
-                <Badge variant={awb.doc_type === 'Master (MAWB)' || awb.doc_type === 'MAWB' ? 'primary' : 'neutral'}>{awb.doc_type}</Badge>
-                <Badge variant={getFwbStatusVariant(awb.status)} dot>{awb.status}</Badge>
+                <h1 className={styles.heroTitle}>{formatAWBNumber(awb.doc_number || awb.awb_number)}</h1>
+                <div className={styles.heroBadges}>
+                  <Badge variant={awb.doc_type === 'Master (MAWB)' || awb.doc_type === 'MAWB' ? 'primary' : 'neutral'}>{awb.doc_type || awb.awb_type}</Badge>
+                  <Badge variant={getFwbStatusVariant(awb.status || awb.fwb_status)} dot>{awb.status || awb.fwb_status}</Badge>
+                </div>
               </div>
               <div className={styles.heroSubtitle}>
-                <span><Plane size={16} /> {carrier ? carrier.name : 'Unknown Carrier'}</span>
+                <span><Plane size={16} /> {carrier ? carrier.name || carrier.legal_name : 'Unknown Carrier'}</span>
                 {shipment && (
                   <>
                     <span style={{ color: '#CBD5E1' }}>•</span>
@@ -101,13 +117,13 @@ export default function AWBDetailPage() {
               </div>
               <div className={styles.aviationRoute}>
                 <div className={styles.airportNode}>
-                  <div className={styles.airportCode}>{awb.origin_location}</div>
-                  <div className={styles.airportName}>Origin Port</div>
+                  <div className={styles.airportCode}>{originCode}</div>
+                  <div className={styles.airportName}>{originName}</div>
                 </div>
                 <div className={styles.flightPath}>
                   <div className={styles.flightIconWrapper}>
                     <PlaneTakeoff size={24} />
-                    {awb.status === 'Acknowledged (FMA)' ? (
+                    {isConfirmed ? (
                       <span className={styles.flightStatus}>Booked</span>
                     ) : (
                       <span className={styles.flightStatus} style={{ color: '#94A3B8', background: '#F1F5F9' }}>Pending</span>
@@ -115,8 +131,8 @@ export default function AWBDetailPage() {
                   </div>
                 </div>
                 <div className={styles.airportNode}>
-                  <div className={styles.airportCode}>{awb.destination_location}</div>
-                  <div className={styles.airportName}>Destination Port</div>
+                  <div className={styles.airportCode}>{destCode}</div>
+                  <div className={styles.airportName}>{destName}</div>
                 </div>
               </div>
             </div>
@@ -211,7 +227,7 @@ export default function AWBDetailPage() {
               </div>
               <div className={styles.aiContent}>
                 <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <li>Route {awb.origin_location}-{awb.destination_location} typically clears customs in 12 hours.</li>
+                  <li>Route {originCode}-{destCode} typically clears customs in 12 hours.</li>
                   {awb.status !== 'Acknowledged (FMA)' && <li>FWB message needs to be transmitted to {carrier?.code || 'carrier'} to avoid delays.</li>}
                   <li>Chargeable weight aligns perfectly with standard volume ratios.</li>
                 </ul>

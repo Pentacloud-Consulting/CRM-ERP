@@ -402,7 +402,7 @@
 /* Modal Form Overrides */
 .formGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
 }
 .formSection {
@@ -459,7 +459,8 @@ tr:hover .listActionButtons {
   transform: scale(1.05);
 }
 .listCapacityCell {
-  width: 140px;
+  width: 100%;
+  max-width: 160px;
 }
 
 @media (max-width: 1400px) {
@@ -468,4 +469,8 @@ tr:hover .listActionButtons {
 @media (max-width: 768px) {
   .opsDashboard { grid-template-columns: 1fr; gap: 16px; }
   .opsMetric::after { display: none; }
+  .formGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
 }

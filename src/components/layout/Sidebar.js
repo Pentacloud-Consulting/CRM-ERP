@@ -105,8 +105,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                   <div className={`click-spin ${isSpinning ? 'is-spinning' : ''}`}>
                     <Icon size={18} className={`${styles.navIcon} click-spin-inner`} />
                   </div>
-                  {!collapsed && <span className={styles.navLabel}>{item.label}</span>}
-                  {!collapsed && badgeCount > 0 && (
+                  {(!collapsed || mobileOpen) && <span className={styles.navLabel}>{item.label}</span>}
+                  {(!collapsed || mobileOpen) && badgeCount > 0 && (
                     <span className={styles.badge}>{badgeCount}</span>
                   )}
                 </Link>
@@ -118,15 +118,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         {/* Exception indicator */}
         {badges.exceptions > 0 && (
           <div className={styles.navGroup}>
-            {!collapsed && <div className={styles.navGroupLabel}>Alerts</div>}
+            {(!collapsed || mobileOpen) && <div className={styles.navGroupLabel}>Alerts</div>}
             <Link
               href="/operations/tracking"
               className={`${styles.navItem} ${styles.alertItem}`}
               title={collapsed ? 'Exceptions' : undefined}
             >
               <AlertTriangle size={18} className={styles.navIcon} />
-              {!collapsed && <span className={styles.navLabel}>Exceptions</span>}
-              {!collapsed && (
+              {(!collapsed || mobileOpen) && <span className={styles.navLabel}>Exceptions</span>}
+              {(!collapsed || mobileOpen) && (
                 <span className={`${styles.badge} ${styles.dangerBadge}`}>{badges.exceptions}</span>
               )}
             </Link>
@@ -134,7 +134,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         )}
       </nav>
 
-      {!collapsed && (
+      {(!collapsed || mobileOpen) && (
         <div className={styles.footer}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>JD</div>

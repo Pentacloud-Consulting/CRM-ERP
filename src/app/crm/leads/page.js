@@ -363,7 +363,7 @@ export default function LeadsPage() {
                 {showCompanyAutocomplete && newLead.company_name && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '10px', zIndex: 10, maxHeight: '150px', overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
                     {state.organizations.filter(a => a.legal_name.toLowerCase().includes(newLead.company_name.toLowerCase())).map((a, aIdx) => (
-                      <div key={a.org_id || aIdx} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9', fontSize: '14px', fontWeight: 500 }} onClick={() => { setNewLead(p => ({ ...p, company_name: a.legal_name })); setShowCompanyAutocomplete(false); }}>
+                      <div key={a.org_id || aIdx} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9', fontSize: '14px', fontWeight: 500 }} onMouseDown={(e) => { e.preventDefault(); setNewLead(p => ({ ...p, company_name: a.legal_name })); setShowCompanyAutocomplete(false); }}>
                         {a.legal_name}
                       </div>
                     ))}
